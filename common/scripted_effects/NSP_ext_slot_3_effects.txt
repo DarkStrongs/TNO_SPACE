@@ -1,0 +1,23 @@
+#############################################################################
+#  扩展槽 3（空壳）。子模组要接入时，整个文件用同名文件覆盖掉，把五个钩子填上自己的内容。
+#  ⚠ 一个槽只能给一个子模组用：先到 documentation/SUBMOD_API.md 的登记表看哪个槽空着。
+#  五个钩子都要保留（哪怕是空的），否则本体调用时会报「未知效果」。
+#  你自己的其他效果可以直接写在这个文件里，也可以另开文件（文件名别和本体重复就行）。
+#############################################################################
+
+# 注册数据：载荷 / 火箭 / 目的地 / 研发（NSP_reg_*）。新开局、打开主窗、每天都会跑，必须可重复执行。
+NSP_slot3_register = { }
+
+# 解锁刷新之后（NSP_rd_apply_unlocks 末尾）。在这里改 NSP_pl_unl / NSP_ve_unl / NSP_dest_unl / NSP_mod_unl 之类。
+NSP_slot3_on_unlocks = { }
+
+# 规划器算完之后（NSP_recalc_planner 末尾，NSP_dirty 加一之前）。
+#   可读：p 载荷 / ve 火箭 / s 发射场 / d 目的地（临时变量）；
+#   可改：NSP_calc_act_dv、NSP_calc_req_dv（改了要自己重算 NSP_calc_margin）、NSP_calc_rel_final、NSP_calc_cost 等。
+NSP_slot3_on_recalc = { }
+
+# 任务成功（NSP_apply_objectives 里，卫星 / 目标结算之后）。可读：p / d / nsp_mid（临时变量）。
+NSP_slot3_on_success = { }
+
+# 每日结算末尾（NSP_daily_tick）。
+NSP_slot3_on_daily = { }

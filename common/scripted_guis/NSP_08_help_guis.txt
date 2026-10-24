@@ -1,0 +1,53 @@
+#############################################################################
+#  帮助层 NSP_help_window（i 按钮，挂外壳；最后注册，叠在主窗其他子窗之上）
+#
+#  ⛔ 文件名前的数字 = 注册顺序（引擎按文件名排序创建 scripted gui）：
+#     外壳 NSP_home_window 必须最先创建，parent_window_name 才挂得上；帮助层、乘组窗口最后创建，叠在最上面。
+#############################################################################
+
+scripted_gui = {
+	NSP_help = {
+		context_type = player_context
+		window_name = "NSP_help_window"
+		parent_window_name = NSP_home_window
+		dirty = NSP_dirty
+		visible = {
+			check_variable = { NSP_help_arr^num > 0 }
+			NOT = { has_country_flag = NSP_planner_open }
+			NOT = { has_country_flag = NSP_rd_open }
+		}
+
+		dynamic_lists = {
+			NSP_help_grid = {
+				array = NSP_help_arr        # 只有 1 个元素，内容无所谓
+				value = v
+				index = i
+				change_scope = no
+				entry_container = "NSP_help_box_[GetNSPHelpBox]"
+			}
+		}
+
+		effects = {
+			NSP_help_prev_click  = { subtract_from_variable = { NSP_help_page = 1 } NSP_help_refresh = yes }
+			NSP_help_next_click  = { add_to_variable = { NSP_help_page = 1 } NSP_help_refresh = yes }
+			NSP_help_toc_click   = { set_variable = { NSP_help_page = 0 } NSP_help_refresh = yes }
+			NSP_help_close_click = { NSP_help_close = yes }
+			NSP_help_link_1_click = { set_variable = { NSP_help_page = 1 } NSP_help_refresh = yes }
+			NSP_help_link_2_click = { set_variable = { NSP_help_page = 2 } NSP_help_refresh = yes }
+			NSP_help_link_3_click = { set_variable = { NSP_help_page = 3 } NSP_help_refresh = yes }
+			NSP_help_link_4_click = { set_variable = { NSP_help_page = 4 } NSP_help_refresh = yes }
+			NSP_help_link_5_click = { set_variable = { NSP_help_page = 5 } NSP_help_refresh = yes }
+			NSP_help_link_6_click = { set_variable = { NSP_help_page = 6 } NSP_help_refresh = yes }
+		}
+
+		triggers = {
+			NSP_help_prev_click_enabled = { check_variable = { NSP_help_page > 0 } }
+			NSP_help_next_click_enabled = { check_variable = { NSP_help_page < NSP_help_last } }
+			NSP_help_toc_click_enabled  = { check_variable = { NSP_help_page > 0 } }
+		}
+
+		properties = {
+			NSP_help_overlay = { frame = NSP_help_frame }
+		}
+	}
+}

@@ -1,0 +1,72 @@
+on_actions = {
+	#########################################################################
+	# 写法对齐 TNOAR `DS_deep_state_on_actions.txt`（2026-10-20）
+	#
+	# ⛔⛔ scope 真相（实机 error.log 实锤，别再改回去）：
+	#   [23:45:15] trigger.cpp:460: NSP_space_on_actions.txt:13:
+	#        tag: Invalid Scope, supported: Country|Character|Combatant, provided: None
+	#   → 本文件 **on_startup 的 effect 上下文 scope 是 None**（不是国家），
+	#     所以在 on_startup 里写 tag = / has_country_flag 都不合法，
+	#     必须靠【 USA = { } 显式切 scope 】——原作者的写法本来是对的。
+	#   → **on_daily / on_weekly 的 effect 上下文 scope 是 Country**（那个 tag 没报错，
+	#     且 TNOAR on_daily 里 tag = USA 实机长期可用）→ 这里照 AR 用 tag 限定。
+	#
+	# ⚠ 通用 on_startup / on_daily / on_weekly 都是【按国家逐个触发】的
+	#   （TNOAR DS_deep_state_on_actions.txt:12-15 实证），所以：
+	#     · on_startup 虽会被 100+ 个国家各跑一遍 `USA = { ... }`，
+	#       靠 NSP_program_active 幂等守卫让 NSP_init 实际只执行一次；
+	#     · on_daily 用 tag = USA + global flag 闸门，别的国家直接跳过。
+	#########################################################################
+
+	on_startup = {
+		effect = {
+			USA = {
+				if = {
+					limit = { NOT = { has_country_flag = NSP_program_active } }
+					NSP_init = yes
+				}
+			}
+			# AR 同款：全局旗标记"本局初始化过了"（与具体国家解耦）
+			set_global_flag = NSP_initialised
+		}
+	}
+
+	on_daily = {
+		effect = {
+			# 老存档自愈：on_startup 只在【开新局】触发，读档永远等不到它
+			# （TNOAR DS_deep_state_on_actions.txt:41 同款结论）。
+			#   没有这道闸门 → 装 mod 之前开的档永远不会有太空按钮。
+			#   NSP_init 是幂等覆盖（先 clear_array 再重播种），老存档本身
+			#   没有 NSP 数据，首次挂上不会抹掉任何东西。
+			if = {
+				limit = {
+					tag = USA
+					NOT = { has_global_flag = NSP_initialised }
+				}
+				NSP_init = yes
+				set_global_flag = NSP_initialised
+			}
+			# 研发进度、任务阶段每日推进（原在 on_weekly）
+			if = {
+				limit = {
+					tag = USA
+					has_global_flag = NSP_initialised
+				}
+				NSP_daily_tick = yes
+			}
+		}
+	}
+
+	on_weekly = {
+		effect = {
+			# 同上：Country scope → 用 tag 限定，只跑一次
+			if = {
+				limit = {
+					tag = USA
+					has_global_flag = NSP_initialised
+				}
+				NSP_weekly_tick = yes
+			}
+		}
+	}
+}

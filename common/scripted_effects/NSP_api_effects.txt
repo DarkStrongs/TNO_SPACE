@@ -1,0 +1,749 @@
+#############################################################################
+#  NSP_api_effects.txt：对外接口
+#    1. 子模组注册 API：NSP_reg_*（说明见 documentation/SUBMOD_API.md）
+#    2. 本体属性表 NSP_api_base_tables + 钩子分发 NSP_hook_*
+#    3. 事件接口 NSP_ev_*（文件末尾；说明见 documentation/EVENT_API.md）
+#############################################################################
+
+#############################################################################
+#  TNO_SPACE 扩展 API（给第三方 / 子模组的子模组用）
+#  说明文档：documentation/SUBMOD_API.md；示例子模组：documentation/examples/NSP_addon_example/
+#
+#  ⭐ 所有 NSP_reg_* 都是「按 id 写入」，不是「追加」：
+#     - 同一个 id 反复注册只会覆盖成同样的值，可以放进每次刷新都跑的钩子里；
+#     - 数组不够长时，中间缺的格子会用「锁定 / 空」的值补齐，所以 id 可以跳着用；
+#     - 进度、状态类数组（研发进度、是否已解锁等）只补长度，不会被覆盖。
+#  ⭐ 参数一律用临时变量传（set_temp_variable），调用后临时变量自动失效。
+#     没写的参数读作 0；需要 -1 之类默认值的参数，文档里都写了。
+#  ⭐ id 段约定（防止两个子模组撞号，见 SUBMOD_API.md §2）：
+#     载荷 0..49 / 火箭 0..49 / 目的地 0..31 / 研发 0..199 归本体；子模组从 50 / 50 / 16 / 200 起，
+#     并在文档的登记表里写上自己占用的号段。
+#############################################################################
+
+# 清空全部 reg_* 参数。每个主注册效果（payload / vehicle / dest / rd / rd_small）执行完都会调用，
+# 钩子分发时每个槽之前也会调用，所以上一次注册的参数不会漏到下一次。
+NSP_reg_clear = {
+	set_temp_variable = { reg_art = 0 }
+	set_temp_variable = { reg_art_frame = 0 }
+	set_temp_variable = { reg_body = 0 }
+	set_temp_variable = { reg_bonus = 0 }
+	set_temp_variable = { reg_col = 0 }
+	set_temp_variable = { reg_cost = 0 }
+	set_temp_variable = { reg_crew_rd = 0 }
+	set_temp_variable = { reg_crewed = 0 }
+	set_temp_variable = { reg_custom_art = 0 }
+	set_temp_variable = { reg_days = 0 }
+	set_temp_variable = { reg_dest = 0 }
+	set_temp_variable = { reg_dry = 0 }
+	set_temp_variable = { reg_dv = 0 }
+	set_temp_variable = { reg_fuel = 0 }
+	set_temp_variable = { reg_heavy = 0 }
+	set_temp_variable = { reg_icon = 0 }
+	set_temp_variable = { reg_id = 0 }
+	set_temp_variable = { reg_isp = 0 }
+	set_temp_variable = { reg_mass = 0 }
+	set_temp_variable = { reg_pad_rd = 0 }
+	set_temp_variable = { reg_rel = 0 }
+	set_temp_variable = { reg_req1 = 0 }
+	set_temp_variable = { reg_req2 = 0 }
+	set_temp_variable = { reg_row = 0 }
+	set_temp_variable = { reg_site = 0 }
+	set_temp_variable = { reg_slots = 0 }
+	set_temp_variable = { reg_tech = 0 }
+	set_temp_variable = { reg_track = 0 }
+	set_temp_variable = { reg_uk1 = 0 }
+	set_temp_variable = { reg_uk2 = 0 }
+	set_temp_variable = { reg_unlock_rd = 0 }
+	set_temp_variable = { reg_uv1 = 0 }
+	set_temp_variable = { reg_uv2 = 0 }
+	set_temp_variable = { reg_view = 0 }
+	set_temp_variable = { reg_xp = 0 }
+}
+
+# ---------------------------------------------------------------------------
+# 载荷
+#   必填：reg_id  reg_mass（吨）  reg_cost（原型成本，百万）  reg_rel（基础可靠性 0..100）
+#   选填：reg_icon      任务卡图标 = GFX_NSP_mission_icons 帧号 1..12（帧 = 本体载荷 id + 1，见 NSP_space.gfx 注释；默认 11 科研卫星）
+#         reg_crewed    1 = 载人（吃载人加成、有乘组 / 返程阶段、去带 crew_rd 的目的地要研发）
+#         reg_slots     载荷类修正槽位 1..4；0 = 默认 2 个，-1 = 没有槽位
+#         （必填）reg_unlock_rd 解锁它的研发 id；-1 = 开局就有。⚠ 不写会读成 0 = 研发 0「红石」
+#         reg_custom_art 1 = 规划器大图用你自己的 sprite：本地化键 NSP_PLART_<id> 写 sprite 名，
+#                       reg_art_frame 写帧号（默认 1）；0 = 用本体图集 GFX_NSP_payload_art 的第 id+1 帧
+#   目的地另外用 NSP_reg_allow 登记；名称、徽章写在本地化（NSP_PL_NAME_<id> 等，见文档）。
+# ---------------------------------------------------------------------------
+NSP_reg_payload = {
+	set_temp_variable = { t_rn = reg_id } add_to_temp_variable = { t_rn = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_mass^num < t_rn } } add_to_array = { NSP_pl_mass = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_cost^num < t_rn } } add_to_array = { NSP_pl_cost = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_rel^num < t_rn } } add_to_array = { NSP_pl_rel = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_icon^num < t_rn } } add_to_array = { NSP_pl_icon = 11 } }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_next^num < t_rn } } add_to_array = { NSP_pl_next = 1 } }   # 任务编号：只补不改
+	while_loop_effect = { limit = { check_variable = { NSP_pl_unl^num < t_rn } } add_to_array = { NSP_pl_unl = 0 } }     # 解锁状态：只补不改
+	while_loop_effect = { limit = { check_variable = { NSP_pl_crewed^num < t_rn } } add_to_array = { NSP_pl_crewed = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_urd^num < t_rn } } add_to_array = { NSP_pl_urd = -2 } }     # -2 = 空号或本体旧代码管
+	while_loop_effect = { limit = { check_variable = { NSP_pl_cart^num < t_rn } } add_to_array = { NSP_pl_cart = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_afr^num < t_rn } } add_to_array = { NSP_pl_afr = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_pslots^num < t_rn } } add_to_array = { NSP_pl_pslots = 2 } }
+	set_variable = { NSP_pl_mass^reg_id = reg_mass }
+	set_variable = { NSP_pl_cost^reg_id = reg_cost }
+	set_variable = { NSP_pl_rel^reg_id = reg_rel }
+	if = { limit = { check_variable = { reg_icon = 0 } } set_temp_variable = { reg_icon = 11 } }
+	set_variable = { NSP_pl_icon^reg_id = reg_icon }
+	set_variable = { NSP_pl_crewed^reg_id = reg_crewed }
+	set_variable = { NSP_pl_urd^reg_id = reg_unlock_rd }
+	set_variable = { NSP_pl_cart^reg_id = reg_custom_art }
+	if = { limit = { check_variable = { reg_art_frame = 0 } } set_temp_variable = { reg_art_frame = 1 } }
+	set_variable = { NSP_pl_afr^reg_id = reg_art_frame }
+	if = { limit = { check_variable = { reg_slots = 0 } } set_temp_variable = { reg_slots = 2 } }   # 0 = 默认 2 个，-1 = 没有槽位
+	if = { limit = { check_variable = { reg_slots < 0 } } set_temp_variable = { reg_slots = 0 } }
+	set_variable = { NSP_pl_pslots^reg_id = reg_slots }
+	NSP_api_pad_matrix = yes
+	NSP_reg_clear = yes
+}
+
+# 只改载人标记（本体载荷也能用）：reg_id  reg_crewed
+NSP_reg_payload_crewed = {
+	set_temp_variable = { t_rn = reg_id } add_to_temp_variable = { t_rn = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_crewed^num < t_rn } } add_to_array = { NSP_pl_crewed = 0 } }
+	set_variable = { NSP_pl_crewed^reg_id = reg_crewed }
+}
+
+# ---------------------------------------------------------------------------
+# 载荷 × 目的地 许可表 NSP_pd_ok^(载荷 × 32 + 目的地)，所以目的地 id 最多 0..31
+#   NSP_reg_allow：reg_id = 载荷，reg_dest = 目的地 → 允许
+#   NSP_reg_deny ：同上 → 禁止（可以用来改本体规则）
+# ---------------------------------------------------------------------------
+NSP_api_pad_matrix = {
+	set_temp_variable = { t_mn = NSP_pl_mass^num } multiply_temp_variable = { t_mn = 32 }
+	while_loop_effect = { limit = { check_variable = { NSP_pd_ok^num < t_mn } } add_to_array = { NSP_pd_ok = 0 } }
+}
+NSP_reg_allow = {
+	NSP_api_pad_matrix = yes
+	set_temp_variable = { t_mi = reg_id } multiply_temp_variable = { t_mi = 32 } add_to_temp_variable = { t_mi = reg_dest }
+	if = { limit = { check_variable = { NSP_pd_ok^num > t_mi } } set_variable = { NSP_pd_ok^t_mi = 1 } }
+}
+NSP_reg_deny = {
+	NSP_api_pad_matrix = yes
+	set_temp_variable = { t_mi = reg_id } multiply_temp_variable = { t_mi = 32 } add_to_temp_variable = { t_mi = reg_dest }
+	if = { limit = { check_variable = { NSP_pd_ok^num > t_mi } } set_variable = { NSP_pd_ok^t_mi = 0 } }
+}
+
+# ---------------------------------------------------------------------------
+# 火箭
+#   必填：reg_id  reg_dry（干重 t）  reg_fuel（推进剂 t）  reg_isp（秒）  reg_cost  reg_rel
+#   选填：reg_heavy     1 = 重型（小发射场 2 / 4 / 6 / 7 不能发射）
+#   ⚠ 下面三个凡是「研发 id / 发射场 id」的参数都必须明写（-1 = 无），不写会读成 0：
+#         reg_pad_rd    需要哪个研发完成才有发射台；-1 = 不需要
+#         reg_site      只能从哪个发射场发射；-1 = 不限
+#         reg_slots     发射类修正槽位 1..4；0 = 默认 2 个，-1 = 没有槽位
+#         reg_unlock_rd 解锁它的研发 id；-1 = 开局就有
+#   选填：reg_custom_art / reg_art_frame  同载荷，本地化键 NSP_VEART_<id>
+# ---------------------------------------------------------------------------
+NSP_reg_vehicle = {
+	set_temp_variable = { t_rn = reg_id } add_to_temp_variable = { t_rn = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_dry^num < t_rn } } add_to_array = { NSP_ve_dry = 10 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_fuel^num < t_rn } } add_to_array = { NSP_ve_fuel = 10 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_isp^num < t_rn } } add_to_array = { NSP_ve_isp = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_cost^num < t_rn } } add_to_array = { NSP_ve_cost = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_rel^num < t_rn } } add_to_array = { NSP_ve_rel = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_heavy^num < t_rn } } add_to_array = { NSP_ve_heavy = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_unl^num < t_rn } } add_to_array = { NSP_ve_unl = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_urd^num < t_rn } } add_to_array = { NSP_ve_urd = -2 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_pad^num < t_rn } } add_to_array = { NSP_ve_pad = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_site^num < t_rn } } add_to_array = { NSP_ve_site = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_cart^num < t_rn } } add_to_array = { NSP_ve_cart = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_afr^num < t_rn } } add_to_array = { NSP_ve_afr = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_lslots^num < t_rn } } add_to_array = { NSP_ve_lslots = 2 } }
+	set_variable = { NSP_ve_dry^reg_id = reg_dry }
+	set_variable = { NSP_ve_fuel^reg_id = reg_fuel }
+	set_variable = { NSP_ve_isp^reg_id = reg_isp }
+	set_variable = { NSP_ve_cost^reg_id = reg_cost }
+	set_variable = { NSP_ve_rel^reg_id = reg_rel }
+	set_variable = { NSP_ve_heavy^reg_id = reg_heavy }
+	set_variable = { NSP_ve_pad^reg_id = reg_pad_rd }
+	set_variable = { NSP_ve_site^reg_id = reg_site }
+	set_variable = { NSP_ve_urd^reg_id = reg_unlock_rd }
+	set_variable = { NSP_ve_cart^reg_id = reg_custom_art }
+	if = { limit = { check_variable = { reg_art_frame = 0 } } set_temp_variable = { reg_art_frame = 1 } }
+	set_variable = { NSP_ve_afr^reg_id = reg_art_frame }
+	if = { limit = { check_variable = { reg_slots = 0 } } set_temp_variable = { reg_slots = 2 } }   # 0 = 默认 2 个，-1 = 没有槽位
+	if = { limit = { check_variable = { reg_slots < 0 } } set_temp_variable = { reg_slots = 0 } }
+	set_variable = { NSP_ve_lslots^reg_id = reg_slots }
+	NSP_reg_clear = yes
+}
+
+# 只改修正槽位（本体载荷 / 火箭也能用）：reg_id  reg_slots（0..4，这里 0 就是没有槽位）
+NSP_reg_payload_slots = {
+	set_temp_variable = { t_rn = reg_id } add_to_temp_variable = { t_rn = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_pslots^num < t_rn } } add_to_array = { NSP_pl_pslots = 2 } }
+	set_variable = { NSP_pl_pslots^reg_id = reg_slots }
+	NSP_reg_clear = yes
+}
+NSP_reg_vehicle_slots = {
+	set_temp_variable = { t_rn = reg_id } add_to_temp_variable = { t_rn = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_lslots^num < t_rn } } add_to_array = { NSP_ve_lslots = 2 } }
+	set_variable = { NSP_ve_lslots^reg_id = reg_slots }
+	NSP_reg_clear = yes
+}
+
+# 只改火箭的发射台 / 发射场限制（本体火箭也能用）：reg_id  reg_pad_rd（-1 不限）  reg_site（-1 不限）
+NSP_reg_vehicle_limits = {
+	set_temp_variable = { t_rn = reg_id } add_to_temp_variable = { t_rn = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_pad^num < t_rn } } add_to_array = { NSP_ve_pad = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_site^num < t_rn } } add_to_array = { NSP_ve_site = -1 } }
+	set_variable = { NSP_ve_pad^reg_id = reg_pad_rd }
+	set_variable = { NSP_ve_site^reg_id = reg_site }
+}
+
+# ---------------------------------------------------------------------------
+# 目的地（id 0..31）
+#   必填：reg_id  reg_dv（所需 Delta-V）
+#   选填：reg_xp        成功后的太空科技经验（不写按 5）
+#         reg_body      卫星显示在哪个天体：3 地球 / 9 月球 / 4 火星 / 2 金星 …（不写按 3 地球）
+#                       -1 = 逃逸地球规则（水手号奇数金星、偶数火星，其他火星）；-2 = 不显示卫星
+#         reg_view      Mission Control 哪个视图：0 地球 / 1 月球 / 2 行星际
+#         reg_row       该视图的第几条轨道行：0 / 1 / 2（界面只有 3 行）
+#   必填（-1 = 无）：reg_crew_rd   载人前往需要的研发 id；-1 = 不需要
+#                   reg_unlock_rd 解锁它的研发 id；-1 = 开局就有
+#         reg_custom_art / reg_art_frame  规划器轨迹图，本地化键 NSP_TRAJART_<id>
+#   新目的地会排到规划器列表末尾；想插到中间，用 NSP_reg_dest_order 重排。
+# ---------------------------------------------------------------------------
+NSP_reg_dest = {
+	set_temp_variable = { t_rn = reg_id } add_to_temp_variable = { t_rn = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_dv^num < t_rn } } add_to_array = { NSP_dest_dv = 99 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_unl^num < t_rn } } add_to_array = { NSP_dest_unl = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_urd^num < t_rn } } add_to_array = { NSP_dest_urd = -2 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_xp^num < t_rn } } add_to_array = { NSP_dest_xp = 5 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_body^num < t_rn } } add_to_array = { NSP_dest_body = 3 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_view^num < t_rn } } add_to_array = { NSP_dest_view = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_row^num < t_rn } } add_to_array = { NSP_dest_row = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_crd^num < t_rn } } add_to_array = { NSP_dest_crd = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_cart^num < t_rn } } add_to_array = { NSP_dest_cart = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_afr^num < t_rn } } add_to_array = { NSP_dest_afr = 1 } }
+	set_variable = { NSP_dest_dv^reg_id = reg_dv }
+	if = { limit = { check_variable = { reg_xp = 0 } } set_temp_variable = { reg_xp = 5 } }
+	set_variable = { NSP_dest_xp^reg_id = reg_xp }
+	if = { limit = { check_variable = { reg_body = 0 } } set_temp_variable = { reg_body = 3 } }
+	set_variable = { NSP_dest_body^reg_id = reg_body }
+	set_variable = { NSP_dest_view^reg_id = reg_view }
+	set_variable = { NSP_dest_row^reg_id = reg_row }
+	set_variable = { NSP_dest_crd^reg_id = reg_crew_rd }
+	set_variable = { NSP_dest_urd^reg_id = reg_unlock_rd }
+	set_variable = { NSP_dest_cart^reg_id = reg_custom_art }
+	if = { limit = { check_variable = { reg_art_frame = 0 } } set_temp_variable = { reg_art_frame = 1 } }
+	set_variable = { NSP_dest_afr^reg_id = reg_art_frame }
+	if = { limit = { NOT = { is_in_array = { array = NSP_dest_ids value = reg_id } } } add_to_array = { NSP_dest_ids = reg_id } }
+	NSP_reg_clear = yes
+}
+
+# 只改目的地的 XP / 天体 / 视图行 / 载人研发（本体目的地也能用）
+#   reg_id  reg_xp  reg_body  reg_view  reg_row  reg_crew_rd —— 这里不做默认值替换，全部照写
+NSP_reg_dest_attrs = {
+	set_temp_variable = { t_rn = reg_id } add_to_temp_variable = { t_rn = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_xp^num < t_rn } } add_to_array = { NSP_dest_xp = 5 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_body^num < t_rn } } add_to_array = { NSP_dest_body = 3 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_view^num < t_rn } } add_to_array = { NSP_dest_view = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_row^num < t_rn } } add_to_array = { NSP_dest_row = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_crd^num < t_rn } } add_to_array = { NSP_dest_crd = -1 } }
+	set_variable = { NSP_dest_xp^reg_id = reg_xp }
+	set_variable = { NSP_dest_body^reg_id = reg_body }
+	set_variable = { NSP_dest_view^reg_id = reg_view }
+	set_variable = { NSP_dest_row^reg_id = reg_row }
+	set_variable = { NSP_dest_crd^reg_id = reg_crew_rd }
+}
+
+# 把目的地 reg_id 挪到规划器列表里 reg_dest（目的地 id）的后面；reg_dest = -1 → 挪到最前
+NSP_reg_dest_order = {
+	if = { limit = { is_in_array = { array = NSP_dest_ids value = reg_id } } remove_from_array = { array = NSP_dest_ids value = reg_id } }
+	set_temp_variable = { t_ri = 0 }
+	if = {
+		limit = { NOT = { check_variable = { reg_dest = -1 } } }
+		set_temp_variable = { t_ri = NSP_dest_ids^num }
+		for_each_loop = { array = NSP_dest_ids value = t_rv index = t_rk  if = { limit = { check_variable = { t_rv = reg_dest } } set_temp_variable = { t_ri = t_rk } add_to_temp_variable = { t_ri = 1 } } }
+	}
+	add_to_array = { array = NSP_dest_ids value = reg_id index = t_ri }
+}
+
+# ---------------------------------------------------------------------------
+# 研发项目
+#   必填：reg_id（≥ 200 给子模组）  reg_track（分类 0..5）  reg_col（0..7）  reg_row（0..4）
+#         reg_cost  reg_days  reg_tech（完成后加的太空科技）
+#         reg_req1 / reg_req2  前置研发 id，-1 = 无（必须明写，不写会读成 0 = 研发 0「红石」）
+#   卡面：改在本地化写 NSP_RDART_<id>: "GFX_你的图"（239×117 单张；可直接填本体的 GFX_NSP_rdart_<id> 借图）
+#   选填：reg_art     旧字段，只存数据
+#         reg_bonus   1 = 完成后研发槽 +1
+#         reg_uk1 / reg_uv1 / reg_uk2 / reg_uv2  完成时一次性效果（种类 / 数值，种类表见文档；11 = 支持度）
+#   格位：研发树格子 分类 × 40 + 行 × 8 + 列 必须是空的（NSP_rd_blank），占了就不放上树，只登记数据。
+#   卡片名称 / 描述 / 解锁说明写在本地化 NSP_RD_NAME_<id> / NSP_RD_DESC_<id> / NSP_RD_UNLOCK_<id>。
+# ---------------------------------------------------------------------------
+NSP_reg_rd = {
+	set_temp_variable = { t_rn = reg_id } add_to_temp_variable = { t_rn = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_trk^num < t_rn } } add_to_array = { NSP_rd_trk = -1 } }   # 空号：分类 -1，和占位 87 一样不会出现在树上
+	while_loop_effect = { limit = { check_variable = { NSP_rd_col^num < t_rn } } add_to_array = { NSP_rd_col = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_row^num < t_rn } } add_to_array = { NSP_rd_row = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_req1^num < t_rn } } add_to_array = { NSP_rd_req1 = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_req2^num < t_rn } } add_to_array = { NSP_rd_req2 = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_cost^num < t_rn } } add_to_array = { NSP_rd_cost = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_days^num < t_rn } } add_to_array = { NSP_rd_days = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_tech^num < t_rn } } add_to_array = { NSP_rd_tech = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_art^num < t_rn } } add_to_array = { NSP_rd_art = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_state^num < t_rn } } add_to_array = { NSP_rd_state = 0 } }   # 状态：只补不改
+	while_loop_effect = { limit = { check_variable = { NSP_rd_prog^num < t_rn } } add_to_array = { NSP_rd_prog = 0 } }     # 进度：只补不改
+	while_loop_effect = { limit = { check_variable = { NSP_rd_deff^num < t_rn } } add_to_array = { NSP_rd_deff = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_bonus^num < t_rn } } add_to_array = { NSP_rd_bonus = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_uk1^num < t_rn } } add_to_array = { NSP_rd_uk1 = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_uv1^num < t_rn } } add_to_array = { NSP_rd_uv1 = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_uk2^num < t_rn } } add_to_array = { NSP_rd_uk2 = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_uv2^num < t_rn } } add_to_array = { NSP_rd_uv2 = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_small^num < t_rn } } add_to_array = { NSP_rd_small = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_sart^num < t_rn } } add_to_array = { NSP_rd_sart = 1 } }
+	set_variable = { NSP_rd_trk^reg_id = reg_track }
+	set_variable = { NSP_rd_col^reg_id = reg_col }
+	set_variable = { NSP_rd_row^reg_id = reg_row }
+	set_variable = { NSP_rd_req1^reg_id = reg_req1 }
+	set_variable = { NSP_rd_req2^reg_id = reg_req2 }
+	set_variable = { NSP_rd_cost^reg_id = reg_cost }
+	set_variable = { NSP_rd_days^reg_id = reg_days }
+	set_variable = { NSP_rd_tech^reg_id = reg_tech }
+	set_variable = { NSP_rd_art^reg_id = reg_art }
+	set_variable = { NSP_rd_bonus^reg_id = reg_bonus }
+	set_variable = { NSP_rd_uk1^reg_id = reg_uk1 } set_variable = { NSP_rd_uv1^reg_id = reg_uv1 }
+	set_variable = { NSP_rd_uk2^reg_id = reg_uk2 } set_variable = { NSP_rd_uv2^reg_id = reg_uv2 }
+	if = { limit = { check_variable = { NSP_rd_state^reg_id < 2 } } set_variable = { NSP_rd_deff^reg_id = reg_days } }   # 研发中 / 已完成的不改工期
+	if = { limit = { check_variable = { NSP_rd_count < t_rn } } set_variable = { NSP_rd_count = t_rn } }
+	# 放上研发树（格位空才放；同一 id 已经在这格就跳过）
+	set_temp_variable = { t_rc = reg_track } multiply_temp_variable = { t_rc = 40 }
+	set_temp_variable = { t_rr = reg_row } multiply_temp_variable = { t_rr = 8 }
+	add_to_temp_variable = { t_rc = t_rr } add_to_temp_variable = { t_rc = reg_col }
+	if = {
+		limit = { check_variable = { NSP_rd_index^num > t_rc } check_variable = { NSP_rd_index^t_rc = NSP_rd_blank } }
+		set_variable = { NSP_rd_index^t_rc = reg_id }
+	}
+	NSP_reg_clear = yes
+}
+
+# 把研发 reg_id 标成小科技方卡；方卡图写本地化 NSP_RDSART_<id>: "GFX_你的图"（72×72 单张）
+NSP_reg_rd_small = {
+	set_temp_variable = { t_rn = reg_id } add_to_temp_variable = { t_rn = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_small^num < t_rn } } add_to_array = { NSP_rd_small = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_sart^num < t_rn } } add_to_array = { NSP_rd_sart = 1 } }
+	set_variable = { NSP_rd_small^reg_id = 1 }
+	set_variable = { NSP_rd_sart^reg_id = reg_art }
+	NSP_reg_clear = yes
+}
+
+# ---------------------------------------------------------------------------
+# 通用解锁：按 *_urd 表，把 urd ≥ -1 的载荷 / 火箭 / 目的地设成解锁或锁定
+#   -2 = 本体旧代码自己管（NSP_unlock_payloads_vehicles 等），这里不碰
+#   本体在 NSP_rd_apply_unlocks 末尾调用，子模组不用自己调
+# ---------------------------------------------------------------------------
+NSP_api_apply_unlocks = {
+	for_each_loop = {
+		array = NSP_pl_urd value = t_ru index = t_ri
+		if = {
+			limit = { check_variable = { t_ru > -2 } }
+			set_variable = { NSP_pl_unl^t_ri = 0 }
+			if = { limit = { check_variable = { t_ru = -1 } } set_variable = { NSP_pl_unl^t_ri = 1 } }
+			else_if = { limit = { check_variable = { NSP_rd_state^t_ru = 3 } } set_variable = { NSP_pl_unl^t_ri = 1 } }
+		}
+	}
+	for_each_loop = {
+		array = NSP_ve_urd value = t_ru index = t_ri
+		if = {
+			limit = { check_variable = { t_ru > -2 } }
+			set_variable = { NSP_ve_unl^t_ri = 0 }
+			if = { limit = { check_variable = { t_ru = -1 } } set_variable = { NSP_ve_unl^t_ri = 1 } }
+			else_if = { limit = { check_variable = { NSP_rd_state^t_ru = 3 } } set_variable = { NSP_ve_unl^t_ri = 1 } }
+		}
+	}
+	for_each_loop = {
+		array = NSP_dest_urd value = t_ru index = t_ri
+		if = {
+			limit = { check_variable = { t_ru > -2 } }
+			set_variable = { NSP_dest_unl^t_ri = 0 }
+			if = { limit = { check_variable = { t_ru = -1 } } set_variable = { NSP_dest_unl^t_ri = 1 } }
+			else_if = { limit = { check_variable = { NSP_rd_state^t_ru = 3 } } set_variable = { NSP_dest_unl^t_ri = 1 } }
+		}
+	}
+}
+
+#############################################################################
+#  钩子分发 + 本体数据属性表
+#  - NSP_api_base_tables：把原来散在各处写死的规则（哪些载荷载人、载荷能去哪、目的地的经验 / 天体 / 轨道行……）
+#    改成数组，用 API 写进去。子模组的 register 钩子在它之后跑，所以子模组可以改本体的这些值。
+#  - NSP_hook_*：依次调用 3 个扩展槽（NSP_ext_slot_N_effects.txt）。
+#  #############################################################################
+
+NSP_api_base_tables = {
+	# ---- 载人载荷：0 双子星 / 1 阿波罗 / 4 水星 / 8 天空实验室 ----
+	for_loop_effect = { start = 0 end = 12 value = t_bp  set_temp_variable = { reg_id = t_bp } set_temp_variable = { reg_crewed = 0 } NSP_reg_payload_crewed = yes }
+	set_temp_variable = { reg_crewed = 1 }
+	set_temp_variable = { reg_id = 0 } NSP_reg_payload_crewed = yes
+	set_temp_variable = { reg_id = 1 } NSP_reg_payload_crewed = yes
+	set_temp_variable = { reg_id = 4 } NSP_reg_payload_crewed = yes
+	set_temp_variable = { reg_id = 8 } NSP_reg_payload_crewed = yes
+
+	# ---- 载荷 × 目的地（原 NSP_dest_allowed 第一段）----
+	#   目的地：0 近地 / 1 交会 / 2 静止 / 3 极地 / 4 地月转移 / 5 逃逸 / 6 中地球 / 7 月球轨道
+	NSP_api_pad_matrix = yes
+	while_loop_effect = { limit = { check_variable = { NSP_pd_ok^num < 384 } } add_to_array = { NSP_pd_ok = 0 } }
+	for_loop_effect = { start = 0 end = 384 value = t_bi  set_variable = { NSP_pd_ok^t_bi = 0 } }   # 只清本体 12 个载荷的行（12 × 32）
+	set_temp_variable = { reg_id = 0 }  set_temp_variable = { reg_dest = 0 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 1 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 3 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 4 } NSP_reg_allow = yes   # 双子星
+	set_temp_variable = { reg_id = 1 }  set_temp_variable = { reg_dest = 0 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 4 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 7 } NSP_reg_allow = yes   # 阿波罗
+	set_temp_variable = { reg_id = 2 }  set_temp_variable = { reg_dest = 0 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 2 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 3 } NSP_reg_allow = yes   # TIROS
+	set_temp_variable = { reg_id = 3 }  set_temp_variable = { reg_dest = 4 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 5 } NSP_reg_allow = yes   # 水手
+	set_temp_variable = { reg_id = 4 }  set_temp_variable = { reg_dest = 0 } NSP_reg_allow = yes   # 水星
+	set_temp_variable = { reg_id = 5 }  set_temp_variable = { reg_dest = 0 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 2 } NSP_reg_allow = yes   # Syncom
+	set_temp_variable = { reg_id = 6 }  set_temp_variable = { reg_dest = 0 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 3 } NSP_reg_allow = yes   # 雨云
+	set_temp_variable = { reg_id = 7 }  set_temp_variable = { reg_dest = 4 } NSP_reg_allow = yes   # 勘测者
+	set_temp_variable = { reg_id = 8 }  set_temp_variable = { reg_dest = 0 } NSP_reg_allow = yes   # 天空实验室
+	set_temp_variable = { reg_id = 9 }  set_temp_variable = { reg_dest = 0 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 3 } NSP_reg_allow = yes   # 试验性载荷
+	set_temp_variable = { reg_id = 10 } set_temp_variable = { reg_dest = 0 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 3 } NSP_reg_allow = yes set_temp_variable = { reg_dest = 6 } NSP_reg_allow = yes   # 科研卫星
+	set_temp_variable = { reg_id = 11 } set_temp_variable = { reg_dest = 7 } NSP_reg_allow = yes   # 月球轨道器
+
+	# ---- 目的地属性：经验 / 天体 / Mission Control 视图与行 / 载人所需研发 ----
+	#   天体 -1 = 逃逸地球，由 NSP_sat_on_success 里的旧规则决定（水手号奇数金星、偶数火星）
+	set_temp_variable = { reg_id = 0 } set_temp_variable = { reg_xp = 5 }  set_temp_variable = { reg_body = 3 }  set_temp_variable = { reg_view = 0 } set_temp_variable = { reg_row = 0 } set_temp_variable = { reg_crew_rd = -1 } NSP_reg_dest_attrs = yes
+	set_temp_variable = { reg_id = 1 } set_temp_variable = { reg_xp = 8 }  set_temp_variable = { reg_body = 3 }  set_temp_variable = { reg_view = 0 } set_temp_variable = { reg_row = 0 } set_temp_variable = { reg_crew_rd = -1 } NSP_reg_dest_attrs = yes
+	set_temp_variable = { reg_id = 2 } set_temp_variable = { reg_xp = 8 }  set_temp_variable = { reg_body = 3 }  set_temp_variable = { reg_view = 0 } set_temp_variable = { reg_row = 2 } set_temp_variable = { reg_crew_rd = -1 } NSP_reg_dest_attrs = yes
+	set_temp_variable = { reg_id = 3 } set_temp_variable = { reg_xp = 6 }  set_temp_variable = { reg_body = 3 }  set_temp_variable = { reg_view = 0 } set_temp_variable = { reg_row = 0 } set_temp_variable = { reg_crew_rd = -1 } NSP_reg_dest_attrs = yes
+	set_temp_variable = { reg_id = 4 } set_temp_variable = { reg_xp = 12 } set_temp_variable = { reg_body = 9 }  set_temp_variable = { reg_view = 1 } set_temp_variable = { reg_row = 0 } set_temp_variable = { reg_crew_rd = 30 } NSP_reg_dest_attrs = yes
+	set_temp_variable = { reg_id = 5 } set_temp_variable = { reg_xp = 10 } set_temp_variable = { reg_body = -1 } set_temp_variable = { reg_view = 2 } set_temp_variable = { reg_row = 2 } set_temp_variable = { reg_crew_rd = -1 } NSP_reg_dest_attrs = yes
+	set_temp_variable = { reg_id = 6 } set_temp_variable = { reg_xp = 7 }  set_temp_variable = { reg_body = 3 }  set_temp_variable = { reg_view = 0 } set_temp_variable = { reg_row = 1 } set_temp_variable = { reg_crew_rd = -1 } NSP_reg_dest_attrs = yes
+	set_temp_variable = { reg_id = 7 } set_temp_variable = { reg_xp = 12 } set_temp_variable = { reg_body = 9 }  set_temp_variable = { reg_view = 1 } set_temp_variable = { reg_row = 1 } set_temp_variable = { reg_crew_rd = 30 } NSP_reg_dest_attrs = yes
+
+	# ---- 火箭发射限制：2 土星 IB 要研发 52（LC-34/37），3 土星 V 要研发 53 且只能从 5 肯尼迪发射 ----
+	for_loop_effect = { start = 0 end = 9 value = t_bv  set_temp_variable = { reg_id = t_bv } set_temp_variable = { reg_pad_rd = -1 } set_temp_variable = { reg_site = -1 } NSP_reg_vehicle_limits = yes }
+	set_temp_variable = { reg_id = 2 } set_temp_variable = { reg_pad_rd = 52 } set_temp_variable = { reg_site = -1 } NSP_reg_vehicle_limits = yes
+	set_temp_variable = { reg_id = 3 } set_temp_variable = { reg_pad_rd = 53 } set_temp_variable = { reg_site = 5 }  NSP_reg_vehicle_limits = yes
+
+	# ---- 自定义图标记：本体全部用图集，只补长度 ----
+	set_temp_variable = { t_bn = NSP_pl_mass^num }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_cart^num < t_bn } } add_to_array = { NSP_pl_cart = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_afr^num < t_bn } } add_to_array = { NSP_pl_afr = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_pl_urd^num < t_bn } } add_to_array = { NSP_pl_urd = -2 } }
+	set_temp_variable = { t_bn = NSP_ve_dry^num }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_cart^num < t_bn } } add_to_array = { NSP_ve_cart = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_afr^num < t_bn } } add_to_array = { NSP_ve_afr = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_ve_urd^num < t_bn } } add_to_array = { NSP_ve_urd = -2 } }
+	set_temp_variable = { t_bn = NSP_dest_dv^num }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_cart^num < t_bn } } add_to_array = { NSP_dest_cart = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_afr^num < t_bn } } add_to_array = { NSP_dest_afr = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_dest_urd^num < t_bn } } add_to_array = { NSP_dest_urd = -2 } }
+}
+
+# ---- 钩子分发 ----
+NSP_hook_register   = { NSP_reg_clear = yes NSP_slot1_register = yes NSP_reg_clear = yes NSP_slot2_register = yes NSP_reg_clear = yes NSP_slot3_register = yes NSP_reg_clear = yes }
+NSP_hook_on_unlocks = { NSP_slot1_on_unlocks = yes NSP_slot2_on_unlocks = yes NSP_slot3_on_unlocks = yes }
+NSP_hook_on_recalc  = { NSP_slot1_on_recalc = yes NSP_slot2_on_recalc = yes NSP_slot3_on_recalc = yes }
+NSP_hook_on_success = { NSP_slot1_on_success = yes NSP_slot2_on_success = yes NSP_slot3_on_success = yes }
+NSP_hook_on_daily   = { NSP_slot1_on_daily = yes NSP_slot2_on_daily = yes NSP_slot3_on_daily = yes }
+
+# 注册：本体属性表 + 各槽 register。由 NSP_rd_apply_unlocks 调用。
+NSP_api_register = {
+	NSP_api_base_tables = yes
+	NSP_hook_register = yes
+}
+
+#############################################################################
+#  事件接口 NSP_ev_*：在事件选项（或决议、国策）里直接调用，不用改本体任何文件
+#  说明文档：documentation/EVENT_API.md；示例：documentation/examples/NSP_event_api_example/
+#
+#  用法：先用临时变量写参数，再调用效果。每个效果自带选项提示（custom_effect_tooltip），
+#        实际改动都在 hidden_effect 里，所以选项里不用再写提示。
+#    option = {
+#        name = my_event.1.a
+#        set_temp_variable = { ev_val = 0.5 }  NSP_ev_add_budget = yes      # 经费 +0.5B
+#        set_temp_variable = { ev_id = 53 }    NSP_ev_complete_rd = yes     # 立即完成研发 53
+#        NSP_ev_this_mission = yes                                           # 选中「本次任务」
+#        set_temp_variable = { ev_val = 10 }   NSP_ev_mission_rel = yes     # 本次任务成功率 +10
+#    }
+#  参数：ev_val 数值（单位见各效果）/ ev_id 研发 id / ev_mid 任务 id（-1 = 没有任务，效果什么也不做）
+#        ev_silent = 1 时不显示自带提示（想自己写提示时用）
+#  每个效果执行完会把 ev_val、ev_id 清零；ev_mid 保留，选一次任务可以连用几个任务效果。
+#############################################################################
+
+# ---- 内部：效果结束后的公共收尾（刷新显示、清参数）----
+NSP_ev_finish = {
+	hidden_effect = {
+		if = { limit = { check_variable = { NSP_popularity > 100 } } set_variable = { NSP_popularity = 100 } }
+		if = { limit = { check_variable = { NSP_popularity < 0 } } set_variable = { NSP_popularity = 0 } }
+		NSP_budget_disp = yes
+		NSP_recalc_home = yes
+		if = { limit = { has_country_flag = NSP_planner_open } NSP_recalc_planner = yes }
+		add_to_variable = { NSP_dirty = 1 }
+	}
+	set_temp_variable = { ev_val = 0 }
+	set_temp_variable = { ev_id = 0 }
+}
+
+# ---------------------------------------------------------------------------
+# 国家层面
+# ---------------------------------------------------------------------------
+
+# 经费 +ev_val（单位 B，可为负；内部按百万记账，0.5 = 5 亿美元）
+NSP_ev_add_budget = {
+	if = {
+		limit = { NOT = { check_variable = { ev_silent = 1 } } }
+		if = { limit = { check_variable = { ev_val < 0 } } custom_effect_tooltip = NSP_EV_TT_BUDGET_N }
+		else = { custom_effect_tooltip = NSP_EV_TT_BUDGET_P }
+	}
+	hidden_effect = {
+		set_temp_variable = { nsp_evm = ev_val }
+		multiply_temp_variable = { nsp_evm = 1000 }
+		add_to_variable = { NSP_space_budget = nsp_evm }
+	}
+	NSP_ev_finish = yes
+}
+
+# NASA公众支持度 +ev_val（点，可为负；结果限制在 0..100）
+NSP_ev_add_popularity = {
+	if = {
+		limit = { NOT = { check_variable = { ev_silent = 1 } } }
+		if = { limit = { check_variable = { ev_val < 0 } } custom_effect_tooltip = NSP_EV_TT_POP_N }
+		else = { custom_effect_tooltip = NSP_EV_TT_POP_P }
+	}
+	hidden_effect = { add_to_variable = { NSP_popularity = ev_val } }
+	NSP_ev_finish = yes
+}
+
+# 太空科技经验 +ev_val（点，只能为正；够门槛会立即升级，照常给升级奖励、弹 nsp.11）
+NSP_ev_add_tech = {
+	if = { limit = { NOT = { check_variable = { ev_silent = 1 } } check_variable = { ev_val > 0 } } custom_effect_tooltip = NSP_EV_TT_TECH }
+	hidden_effect = {
+		if = {
+			limit = { check_variable = { ev_val > 0 } }
+			add_to_variable = { NSP_tech = ev_val }
+			NSP_tech_tier_check = yes
+		}
+	}
+	NSP_ev_finish = yes
+}
+
+# ---------------------------------------------------------------------------
+# 研发
+# ---------------------------------------------------------------------------
+
+# 立即完成研发 ev_id（不管前置是否完成、是否在研；已完成的什么也不做）
+#   和正常完成一样：给太空科技经验、一次性奖励、研发槽奖励，重算解锁
+NSP_ev_complete_rd = {
+	if = { limit = { NOT = { check_variable = { ev_silent = 1 } } check_variable = { ev_id > -1 } check_variable = { NSP_rd_state^num > ev_id } NOT = { check_variable = { NSP_rd_state^ev_id = 3 } } } custom_effect_tooltip = NSP_EV_TT_RD_DONE }
+	hidden_effect = {
+		set_temp_variable = { p = ev_id }
+		if = {
+			limit = {
+				check_variable = { p > -1 }
+				check_variable = { NSP_rd_state^num > p }
+				NOT = { check_variable = { NSP_rd_state^p = 3 } }
+			}
+			if = { limit = { is_in_array = { array = NSP_rd_queue value = p } } remove_from_array = { array = NSP_rd_queue value = p } }
+			if = { limit = { check_variable = { NSP_rd_bonus^p = 1 } } add_to_variable = { NSP_rd_slots = 1 } }
+			set_variable = { NSP_rd_state^p = 3 }
+			set_variable = { NSP_rd_prog^p = 100 }
+			add_to_variable = { NSP_tech = NSP_rd_tech^p }
+			set_variable = { NSP_arg_rd = p }
+			NSP_rd_on_complete = yes
+			NSP_rd_apply_unlocks = yes
+			NSP_tech_tier_check = yes
+			NSP_rd_recalc = yes
+		}
+	}
+	NSP_ev_finish = yes
+}
+
+# 正在研发的 ev_id 进度 +ev_val（百分点）；到 100 立即完成。没在研发时什么也不做
+NSP_ev_rd_progress = {
+	if = { limit = { NOT = { check_variable = { ev_silent = 1 } } check_variable = { ev_id > -1 } is_in_array = { array = NSP_rd_queue value = ev_id } }
+		if = { limit = { check_variable = { ev_val < 0 } } custom_effect_tooltip = NSP_EV_TT_RD_PROG_N }
+		else = { custom_effect_tooltip = NSP_EV_TT_RD_PROG_P }
+	}
+	hidden_effect = {
+		set_temp_variable = { p = ev_id }
+		if = {
+			limit = { check_variable = { p > -1 } is_in_array = { array = NSP_rd_queue value = p } }
+			add_to_variable = { NSP_rd_prog^p = ev_val }
+			if = { limit = { check_variable = { NSP_rd_prog^p < 0 } } set_variable = { NSP_rd_prog^p = 0 } }
+			if = {
+				limit = { check_variable = { NSP_rd_prog^p > 99.9 } }
+				set_temp_variable = { ev_silent = 1 }
+				NSP_ev_complete_rd = yes
+				set_temp_variable = { ev_silent = 0 }
+			}
+			NSP_rd_recalc = yes
+		}
+	}
+	NSP_ev_finish = yes
+}
+
+# ---------------------------------------------------------------------------
+# 进行中的任务：先选任务（写 ev_mid），再调用下面的效果
+# ---------------------------------------------------------------------------
+
+# 选中「本次任务」：本体任务事件（nsp.1..7）和由它们触发的事件里，就是事件说的那个任务
+NSP_ev_this_mission = {
+	set_temp_variable = { ev_mid = NSP_evt_mid }
+}
+
+# 选中最新开始、还没结束的任务；没有进行中的任务时 ev_mid = -1
+#   直接读 NSP_newest_mid（任务开始 / 结束时由 NSP_newest_mid_update 维护），不在这里循环：
+#   选项 tooltip 生成时循环 / 条件块里的临时变量运算不可靠，会导致提示整条消失
+NSP_ev_newest_mission = {
+	set_temp_variable = { ev_mid = NSP_newest_mid }
+}
+
+# 重算 NSP_newest_mid：任务开始、每日结算删除已结束任务、开新局时调用
+NSP_newest_mid_update = {
+	set_variable = { NSP_newest_mid = -1 }
+	for_each_loop = {
+		array = NSP_missions value = nsp_evq
+		if = { limit = { check_variable = { nsp_evq > NSP_newest_mid } } set_variable = { NSP_newest_mid = nsp_evq } }
+	}
+}
+
+# 任务 ev_mid 的成功率 +ev_val（百分点，可为负；结果限制在 0..100）
+#   已经掷过骰的任务（发射阶段起）照样生效：结局按新成功率重新对照那次的骰子
+NSP_ev_mission_rel = {
+	if = {
+		limit = { NOT = { check_variable = { ev_silent = 1 } } check_variable = { ev_mid > -1 } is_in_array = { array = NSP_missions value = ev_mid } }
+		if = { limit = { check_variable = { ev_val < 0 } } custom_effect_tooltip = NSP_EV_TT_MREL_N }
+		else = { custom_effect_tooltip = NSP_EV_TT_MREL_P }
+	}
+	hidden_effect = {
+		set_temp_variable = { nsp_mid = ev_mid }
+		if = {
+			limit = { check_variable = { nsp_mid > -1 } is_in_array = { array = NSP_missions value = nsp_mid } }
+			add_to_variable = { NSP_m_rel^nsp_mid = ev_val }
+			if = { limit = { check_variable = { NSP_m_rel^nsp_mid < 0 } } set_variable = { NSP_m_rel^nsp_mid = 0 } }
+			if = { limit = { check_variable = { NSP_m_rel^nsp_mid > 100 } } set_variable = { NSP_m_rel^nsp_mid = 100 } }
+			# 已预掷：让失败类型和新成功率一致（发射动画、发射判定读 fkind）
+			if = {
+				limit = { check_variable = { NSP_m_roll^num > nsp_mid } check_variable = { NSP_m_roll^nsp_mid > -1 } check_variable = { NSP_m_fkind^num > nsp_mid } }
+				if = {
+					limit = { check_variable = { NSP_m_roll^nsp_mid < NSP_m_rel^nsp_mid } }
+					set_variable = { NSP_m_fkind^nsp_mid = 0 }
+				}
+				else_if = {
+					limit = { check_variable = { NSP_m_fkind^nsp_mid = 0 } }
+					set_variable = { NSP_m_fkind^nsp_mid = 5 }   # 已过发射：算在轨失败
+					if = {
+						limit = { check_variable = { NSP_m_phase^nsp_mid < 6 } }   # 还没发射：和预掷一样随机台上 / 空中 / 在轨
+						set_temp_variable_to_random = { var = nsp_k min = 0 max = 100 }
+						if = { limit = { check_variable = { nsp_k < 25 } } set_variable = { NSP_m_fkind^nsp_mid = 3 } }
+						else_if = { limit = { check_variable = { nsp_k < 60 } } set_variable = { NSP_m_fkind^nsp_mid = 4 } }
+					}
+				}
+			}
+		}
+	}
+	NSP_ev_finish = yes
+}
+
+# 载人任务 ev_mid 的返程可靠性 +ev_val（百分点，可为负；0..100）
+NSP_ev_mission_return_rel = {
+	if = {
+		limit = { NOT = { check_variable = { ev_silent = 1 } } check_variable = { ev_mid > -1 } is_in_array = { array = NSP_missions value = ev_mid } check_variable = { NSP_m_crewed^num > ev_mid } check_variable = { NSP_m_crewed^ev_mid = 1 } }   # 只对载人任务显示
+		if = { limit = { check_variable = { ev_val < 0 } } custom_effect_tooltip = NSP_EV_TT_MRET_N }
+		else = { custom_effect_tooltip = NSP_EV_TT_MRET_P }
+	}
+	hidden_effect = {
+		set_temp_variable = { nsp_mid = ev_mid }
+		if = {
+			limit = { check_variable = { nsp_mid > -1 } is_in_array = { array = NSP_missions value = nsp_mid } check_variable = { NSP_m_rrel^num > nsp_mid } }
+			add_to_variable = { NSP_m_rrel^nsp_mid = ev_val }
+			if = { limit = { check_variable = { NSP_m_rrel^nsp_mid < 0 } } set_variable = { NSP_m_rrel^nsp_mid = 0 } }
+			if = { limit = { check_variable = { NSP_m_rrel^nsp_mid > 100 } } set_variable = { NSP_m_rrel^nsp_mid = 100 } }
+		}
+	}
+	NSP_ev_finish = yes
+}
+
+# 任务 ev_mid 的当前阶段推迟 ev_val 天（负数 = 提前；当前阶段最少剩 1 天）
+NSP_ev_mission_delay = {
+	set_temp_variable = { ev_abs = ev_val } multiply_temp_variable = { ev_abs = -1 }   # 负数分支显示用（= -ev_val），不放进条件块
+	if = {
+		limit = { NOT = { check_variable = { ev_silent = 1 } } check_variable = { ev_mid > -1 } is_in_array = { array = NSP_missions value = ev_mid } }
+		if = { limit = { check_variable = { ev_val < 0 } } custom_effect_tooltip = NSP_EV_TT_MDAY_N }
+		else = { custom_effect_tooltip = NSP_EV_TT_MDAY_P }
+	}
+	hidden_effect = {
+		set_temp_variable = { nsp_mid = ev_mid }
+		if = {
+			limit = { check_variable = { nsp_mid > -1 } is_in_array = { array = NSP_missions value = nsp_mid } }
+			set_temp_variable = { nsp_old = NSP_m_phase_left^nsp_mid }
+			add_to_variable = { NSP_m_phase_left^nsp_mid = ev_val }
+			if = { limit = { check_variable = { NSP_m_phase_left^nsp_mid < 1 } } set_variable = { NSP_m_phase_left^nsp_mid = 1 } }
+			set_temp_variable = { nsp_dd = NSP_m_phase_left^nsp_mid }
+			subtract_from_temp_variable = { nsp_dd = nsp_old }
+			add_to_variable = { NSP_m_total_left^nsp_mid = nsp_dd }
+			if = { limit = { check_variable = { NSP_m_total_left^nsp_mid < 0 } } set_variable = { NSP_m_total_left^nsp_mid = 0 } }
+		}
+	}
+	NSP_ev_finish = yes
+}
+
+# ---------------------------------------------------------------------------
+# 下一次任务：在规划器里显示，点「启动任务」时生效并清零；可多次叠加
+# ---------------------------------------------------------------------------
+
+# 下一次任务成功率 +ev_val（百分点，可为负）
+NSP_ev_next_rel = {
+	if = {
+		limit = { NOT = { check_variable = { ev_silent = 1 } } }
+		if = { limit = { check_variable = { ev_val < 0 } } custom_effect_tooltip = NSP_EV_TT_NREL_N }
+		else = { custom_effect_tooltip = NSP_EV_TT_NREL_P }
+	}
+	hidden_effect = { add_to_variable = { NSP_ev_next_rel = ev_val } }
+	NSP_ev_finish = yes
+}
+
+# 下一次任务成本 +ev_val%（负数 = 便宜；-20 = 打八折；最多 -90）
+NSP_ev_next_cost = {
+	set_temp_variable = { ev_abs = ev_val } multiply_temp_variable = { ev_abs = -1 }   # 负数分支显示用（= -ev_val），不放进条件块
+	if = {
+		limit = { NOT = { check_variable = { ev_silent = 1 } } }
+		if = { limit = { check_variable = { ev_val < 0 } } custom_effect_tooltip = NSP_EV_TT_NCOST_N }
+		else = { custom_effect_tooltip = NSP_EV_TT_NCOST_P }
+	}
+	hidden_effect = {
+		add_to_variable = { NSP_ev_next_cost = ev_val }
+		if = { limit = { check_variable = { NSP_ev_next_cost < -90 } } set_variable = { NSP_ev_next_cost = -90 } }
+	}
+	NSP_ev_finish = yes
+}
+
+# ---------------------------------------------------------------------------
+# 调试：事件接口测试事件（events/NSP_debug_events.txt）的读数
+#   把要核对的数值抄进 NSP_dbg_* 变量，事件描述里显示
+# ---------------------------------------------------------------------------
+NSP_ev_dbg_readout = {
+	NSP_budget_disp = yes
+	set_variable = { NSP_dbg_rd = NSP_rd_sel }
+	set_variable = { NSP_dbg_rd_state = -1 }
+	set_variable = { NSP_dbg_rd_prog = 0 }
+	if = {
+		limit = { check_variable = { NSP_rd_sel > -1 } check_variable = { NSP_rd_state^num > NSP_rd_sel } }
+		set_variable = { NSP_dbg_rd_state = NSP_rd_state^NSP_rd_sel }
+		set_variable = { NSP_dbg_rd_prog = NSP_rd_prog^NSP_rd_sel }
+	}
+	NSP_ev_newest_mission = yes
+	set_variable = { NSP_dbg_mid = ev_mid }
+	set_variable = { NSP_dbg_rel = 0 }
+	set_variable = { NSP_dbg_rrel = 0 }
+	set_variable = { NSP_dbg_roll = -1 }
+	set_variable = { NSP_dbg_fkind = 0 }
+	set_variable = { NSP_dbg_phase = 0 }
+	set_variable = { NSP_dbg_left = 0 }
+	set_variable = { NSP_dbg_total = 0 }
+	if = {
+		limit = { check_variable = { ev_mid > -1 } }
+		set_temp_variable = { m = ev_mid }
+		set_variable = { NSP_dbg_rel = NSP_m_rel^m }
+		if = { limit = { check_variable = { NSP_m_rrel^num > m } } set_variable = { NSP_dbg_rrel = NSP_m_rrel^m } }
+		if = { limit = { check_variable = { NSP_m_roll^num > m } } set_variable = { NSP_dbg_roll = NSP_m_roll^m } }
+		if = { limit = { check_variable = { NSP_m_fkind^num > m } } set_variable = { NSP_dbg_fkind = NSP_m_fkind^m } }
+		set_variable = { NSP_dbg_phase = NSP_m_phase^m }
+		set_variable = { NSP_dbg_left = NSP_m_phase_left^m }
+		set_variable = { NSP_dbg_total = NSP_m_total_left^m }
+	}
+	set_temp_variable = { ev_mid = -1 }
+}

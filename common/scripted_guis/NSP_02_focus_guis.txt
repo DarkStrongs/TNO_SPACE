@@ -1,0 +1,781 @@
+#############################################################################
+#  太阳系行星聚焦：动画层 NSP_focus_fx、聚焦中 NSP_focus_in、退出动画 NSP_focus_out（都挂外壳）
+#  NSP_fmode：0 无 / 1 进入（聚焦中）/ 2 退出（倒放后停在原位）
+#
+#  ⛔ 文件名前的数字 = 注册顺序（引擎按文件名排序创建 scripted gui）：
+#     外壳 NSP_home_window 必须最先创建，parent_window_name 才挂得上；帮助层、乘组窗口最后创建，叠在最上面。
+#############################################################################
+
+scripted_gui = {
+
+	#########################################################################
+	# 聚焦动画层：常驻（不看 NSP_fmode），按钮 click_enabled 切换 = 状态切换 = 动画重新开始
+	#########################################################################
+	NSP_focus_fx = {
+		context_type = player_context
+		window_name = "NSP_focus_fx_window"
+		# ⚠ dirty 必须挂：click_enabled 只在 NSP_dirty 变化时重算
+		dirty = NSP_dirty
+		parent_window_name = NSP_home_window
+		visible = { NOT = { has_country_flag = NSP_planner_open } NOT = { has_country_flag = NSP_rd_open } check_variable = { NSP_view = 2 } }
+		triggers = {
+			# ---- 聚焦动画：进入 / 退出（click_enabled 切换 = 重播动画） ----
+			NSP_fin_mercury_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 1 } }
+			NSP_fin_venus_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 1 } }
+			NSP_fin_earth_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 1 } }
+			NSP_fin_mars_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 1 } }
+			NSP_fin_jupiter_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 1 } }
+			NSP_fin_saturn_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 1 } }
+			NSP_fin_uranus_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 1 } }
+			NSP_fin_neptune_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 1 } }
+			NSP_fout_mercury_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 2 } }
+			NSP_fout_venus_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 2 } }
+			NSP_fout_earth_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 2 } }
+			NSP_fout_mars_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 2 } }
+			NSP_fout_jupiter_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 2 } }
+			NSP_fout_saturn_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 2 } }
+			NSP_fout_uranus_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 2 } }
+			NSP_fout_neptune_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 2 } }
+
+			# ---- 聚焦行星的卫星轨道（第 n 颗） ----
+			# 卫星轨道：聚焦该行星 且 卫星数 >= i（禁用 → 启用时 AnimationTime 刷新，shader 淡入）
+			NSP_sat_mercury_1_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^1 > 0 } }
+			NSP_sat_mercury_2_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^1 > 1 } }
+			NSP_sat_mercury_3_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^1 > 2 } }
+			NSP_sat_mercury_4_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^1 > 3 } }
+			NSP_sat_mercury_5_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^1 > 4 } }
+			NSP_sat_mercury_6_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^1 > 5 } }
+			NSP_sat_mercury_7_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^1 > 6 } }
+			NSP_sat_mercury_8_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^1 > 7 } }
+			NSP_sat_mercury_9_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^1 > 8 } }
+			NSP_sat_mercury_10_click_enabled = { check_variable = { NSP_focus = 1 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^1 > 9 } }
+			NSP_sat_venus_1_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^2 > 0 } }
+			NSP_sat_venus_2_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^2 > 1 } }
+			NSP_sat_venus_3_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^2 > 2 } }
+			NSP_sat_venus_4_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^2 > 3 } }
+			NSP_sat_venus_5_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^2 > 4 } }
+			NSP_sat_venus_6_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^2 > 5 } }
+			NSP_sat_venus_7_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^2 > 6 } }
+			NSP_sat_venus_8_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^2 > 7 } }
+			NSP_sat_venus_9_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^2 > 8 } }
+			NSP_sat_venus_10_click_enabled = { check_variable = { NSP_focus = 2 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^2 > 9 } }
+			NSP_sat_earth_1_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^3 > 0 } }
+			NSP_sat_earth_2_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^3 > 1 } }
+			NSP_sat_earth_3_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^3 > 2 } }
+			NSP_sat_earth_4_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^3 > 3 } }
+			NSP_sat_earth_5_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^3 > 4 } }
+			NSP_sat_earth_6_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^3 > 5 } }
+			NSP_sat_earth_7_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^3 > 6 } }
+			NSP_sat_earth_8_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^3 > 7 } }
+			NSP_sat_earth_9_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^3 > 8 } }
+			NSP_sat_earth_10_click_enabled = { check_variable = { NSP_focus = 3 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^3 > 9 } }
+			NSP_sat_mars_1_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^4 > 0 } }
+			NSP_sat_mars_2_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^4 > 1 } }
+			NSP_sat_mars_3_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^4 > 2 } }
+			NSP_sat_mars_4_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^4 > 3 } }
+			NSP_sat_mars_5_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^4 > 4 } }
+			NSP_sat_mars_6_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^4 > 5 } }
+			NSP_sat_mars_7_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^4 > 6 } }
+			NSP_sat_mars_8_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^4 > 7 } }
+			NSP_sat_mars_9_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^4 > 8 } }
+			NSP_sat_mars_10_click_enabled = { check_variable = { NSP_focus = 4 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^4 > 9 } }
+			NSP_sat_jupiter_1_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^5 > 0 } }
+			NSP_sat_jupiter_2_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^5 > 1 } }
+			NSP_sat_jupiter_3_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^5 > 2 } }
+			NSP_sat_jupiter_4_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^5 > 3 } }
+			NSP_sat_jupiter_5_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^5 > 4 } }
+			NSP_sat_jupiter_6_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^5 > 5 } }
+			NSP_sat_jupiter_7_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^5 > 6 } }
+			NSP_sat_jupiter_8_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^5 > 7 } }
+			NSP_sat_jupiter_9_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^5 > 8 } }
+			NSP_sat_jupiter_10_click_enabled = { check_variable = { NSP_focus = 5 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^5 > 9 } }
+			NSP_sat_saturn_1_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^6 > 0 } }
+			NSP_sat_saturn_2_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^6 > 1 } }
+			NSP_sat_saturn_3_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^6 > 2 } }
+			NSP_sat_saturn_4_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^6 > 3 } }
+			NSP_sat_saturn_5_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^6 > 4 } }
+			NSP_sat_saturn_6_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^6 > 5 } }
+			NSP_sat_saturn_7_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^6 > 6 } }
+			NSP_sat_saturn_8_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^6 > 7 } }
+			NSP_sat_saturn_9_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^6 > 8 } }
+			NSP_sat_saturn_10_click_enabled = { check_variable = { NSP_focus = 6 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^6 > 9 } }
+			NSP_sat_uranus_1_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^7 > 0 } }
+			NSP_sat_uranus_2_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^7 > 1 } }
+			NSP_sat_uranus_3_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^7 > 2 } }
+			NSP_sat_uranus_4_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^7 > 3 } }
+			NSP_sat_uranus_5_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^7 > 4 } }
+			NSP_sat_uranus_6_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^7 > 5 } }
+			NSP_sat_uranus_7_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^7 > 6 } }
+			NSP_sat_uranus_8_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^7 > 7 } }
+			NSP_sat_uranus_9_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^7 > 8 } }
+			NSP_sat_uranus_10_click_enabled = { check_variable = { NSP_focus = 7 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^7 > 9 } }
+			NSP_sat_neptune_1_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^8 > 0 } }
+			NSP_sat_neptune_2_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^8 > 1 } }
+			NSP_sat_neptune_3_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^8 > 2 } }
+			NSP_sat_neptune_4_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^8 > 3 } }
+			NSP_sat_neptune_5_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^8 > 4 } }
+			NSP_sat_neptune_6_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^8 > 5 } }
+			NSP_sat_neptune_7_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^8 > 6 } }
+			NSP_sat_neptune_8_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^8 > 7 } }
+			NSP_sat_neptune_9_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^8 > 8 } }
+			NSP_sat_neptune_10_click_enabled = { check_variable = { NSP_focus = 8 } check_variable = { NSP_fmode = 1 } check_variable = { NSP_sat_cnt^8 > 9 } }
+
+			# ---- 选中的卫星轨道线 ----
+			# 选中轨道线：NSP_sat_sel = 槽位，NSP_sat_sel_b = 天体（点右侧图标切换）
+			NSP_satH_l_1_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus > 0 } NOT = { check_variable = { NSP_focus = 6 } } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 0 } check_variable = { NSP_sat_cur > 0 } }
+			NSP_satH_s_1_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus = 6 } check_variable = { NSP_sat_sel_b = 6 } check_variable = { NSP_sat_sel = 0 } check_variable = { NSP_sat_cur > 0 } }
+			NSP_satH_l_2_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus > 0 } NOT = { check_variable = { NSP_focus = 6 } } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 1 } check_variable = { NSP_sat_cur > 1 } }
+			NSP_satH_s_2_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus = 6 } check_variable = { NSP_sat_sel_b = 6 } check_variable = { NSP_sat_sel = 1 } check_variable = { NSP_sat_cur > 1 } }
+			NSP_satH_l_3_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus > 0 } NOT = { check_variable = { NSP_focus = 6 } } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 2 } check_variable = { NSP_sat_cur > 2 } }
+			NSP_satH_s_3_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus = 6 } check_variable = { NSP_sat_sel_b = 6 } check_variable = { NSP_sat_sel = 2 } check_variable = { NSP_sat_cur > 2 } }
+			NSP_satH_l_4_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus > 0 } NOT = { check_variable = { NSP_focus = 6 } } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 3 } check_variable = { NSP_sat_cur > 3 } }
+			NSP_satH_s_4_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus = 6 } check_variable = { NSP_sat_sel_b = 6 } check_variable = { NSP_sat_sel = 3 } check_variable = { NSP_sat_cur > 3 } }
+			NSP_satH_l_5_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus > 0 } NOT = { check_variable = { NSP_focus = 6 } } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 4 } check_variable = { NSP_sat_cur > 4 } }
+			NSP_satH_s_5_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus = 6 } check_variable = { NSP_sat_sel_b = 6 } check_variable = { NSP_sat_sel = 4 } check_variable = { NSP_sat_cur > 4 } }
+			NSP_satH_l_6_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus > 0 } NOT = { check_variable = { NSP_focus = 6 } } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 5 } check_variable = { NSP_sat_cur > 5 } }
+			NSP_satH_s_6_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus = 6 } check_variable = { NSP_sat_sel_b = 6 } check_variable = { NSP_sat_sel = 5 } check_variable = { NSP_sat_cur > 5 } }
+			NSP_satH_l_7_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus > 0 } NOT = { check_variable = { NSP_focus = 6 } } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 6 } check_variable = { NSP_sat_cur > 6 } }
+			NSP_satH_s_7_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus = 6 } check_variable = { NSP_sat_sel_b = 6 } check_variable = { NSP_sat_sel = 6 } check_variable = { NSP_sat_cur > 6 } }
+			NSP_satH_l_8_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus > 0 } NOT = { check_variable = { NSP_focus = 6 } } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 7 } check_variable = { NSP_sat_cur > 7 } }
+			NSP_satH_s_8_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus = 6 } check_variable = { NSP_sat_sel_b = 6 } check_variable = { NSP_sat_sel = 7 } check_variable = { NSP_sat_cur > 7 } }
+			NSP_satH_l_9_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus > 0 } NOT = { check_variable = { NSP_focus = 6 } } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 8 } check_variable = { NSP_sat_cur > 8 } }
+			NSP_satH_s_9_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus = 6 } check_variable = { NSP_sat_sel_b = 6 } check_variable = { NSP_sat_sel = 8 } check_variable = { NSP_sat_cur > 8 } }
+			NSP_satH_l_10_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus > 0 } NOT = { check_variable = { NSP_focus = 6 } } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 9 } check_variable = { NSP_sat_cur > 9 } }
+			NSP_satH_s_10_click_enabled = { check_variable = { NSP_fmode = 1 } check_variable = { NSP_focus = 6 } check_variable = { NSP_sat_sel_b = 6 } check_variable = { NSP_sat_sel = 9 } check_variable = { NSP_sat_cur > 9 } }
+		}
+		ai_enabled = { always = no }
+	}
+
+	#########################################################################
+	# 行星聚焦动画：独立窗口（挂 NSP_home_window），每次显示重新 play_on_show
+	# NSP_fmode：0 无 / 1 进入（聚焦中）/ 2 退出（倒放后停在原位）
+	#########################################################################
+	NSP_focus_in = {
+		context_type = player_context
+		window_name = "NSP_focus_in_window"
+		# ⚠ dirty 必须挂：dynamic_lists 只在 NSP_dirty 变化时重建条目
+		dirty = NSP_dirty
+		parent_window_name = NSP_home_window
+		visible = { NOT = { has_country_flag = NSP_planner_open } NOT = { has_country_flag = NSP_rd_open } check_variable = { NSP_view = 2 } check_variable = { NSP_fmode = 1 } }
+		effects = {
+			# ---- 返回 / 调试 ----
+			NSP_focus_back_click = { set_variable = { NSP_fmode = 2 } add_to_variable = { NSP_dirty = 1 } NSP_fanim_refresh = yes }
+			NSP_sat_dbg_add_click = { set_temp_variable = { t_P = NSP_focus } NSP_sat_add = yes }   # 调试
+			NSP_sat_dbg_sub_click = { set_temp_variable = { t_P = NSP_focus } NSP_sat_sub = yes }
+
+			# ---- 右侧卫星图标（点击显示该卫星轨道） ----
+			NSP_sat_mk_0_click = { set_temp_variable = { t_P = NSP_focus } set_temp_variable = { t_i = 0 } NSP_sat_select = yes }
+			NSP_sat_mk_1_click = { set_temp_variable = { t_P = NSP_focus } set_temp_variable = { t_i = 1 } NSP_sat_select = yes }
+			NSP_sat_mk_2_click = { set_temp_variable = { t_P = NSP_focus } set_temp_variable = { t_i = 2 } NSP_sat_select = yes }
+			NSP_sat_mk_3_click = { set_temp_variable = { t_P = NSP_focus } set_temp_variable = { t_i = 3 } NSP_sat_select = yes }
+			NSP_sat_mk_4_click = { set_temp_variable = { t_P = NSP_focus } set_temp_variable = { t_i = 4 } NSP_sat_select = yes }
+			NSP_sat_mk_5_click = { set_temp_variable = { t_P = NSP_focus } set_temp_variable = { t_i = 5 } NSP_sat_select = yes }
+			NSP_sat_mk_6_click = { set_temp_variable = { t_P = NSP_focus } set_temp_variable = { t_i = 6 } NSP_sat_select = yes }
+			NSP_sat_mk_7_click = { set_temp_variable = { t_P = NSP_focus } set_temp_variable = { t_i = 7 } NSP_sat_select = yes }
+			NSP_sat_mk_8_click = { set_temp_variable = { t_P = NSP_focus } set_temp_variable = { t_i = 8 } NSP_sat_select = yes }
+			NSP_sat_mk_9_click = { set_temp_variable = { t_P = NSP_focus } set_temp_variable = { t_i = 9 } NSP_sat_select = yes }
+		}
+		triggers = {
+			# ---- 返回 / 调试 ----
+			NSP_sat_dbg_add_visible = { is_debug = yes }   # 只在 -debug 模式显示
+			NSP_sat_dbg_sub_visible = { is_debug = yes }
+
+			# ---- 右侧卫星图标（点击显示该卫星轨道） ----
+			NSP_sat_mk_0_visible = { check_variable = { NSP_sat_cur > 0 } }
+			NSP_sat_mk_1_visible = { check_variable = { NSP_sat_cur > 1 } }
+			NSP_sat_mk_2_visible = { check_variable = { NSP_sat_cur > 2 } }
+			NSP_sat_mk_3_visible = { check_variable = { NSP_sat_cur > 3 } }
+			NSP_sat_mk_4_visible = { check_variable = { NSP_sat_cur > 4 } }
+			NSP_sat_mk_5_visible = { check_variable = { NSP_sat_cur > 5 } }
+			NSP_sat_mk_6_visible = { check_variable = { NSP_sat_cur > 6 } }
+			NSP_sat_mk_7_visible = { check_variable = { NSP_sat_cur > 7 } }
+			NSP_sat_mk_8_visible = { check_variable = { NSP_sat_cur > 8 } }
+			NSP_sat_mk_9_visible = { check_variable = { NSP_sat_cur > 9 } }
+			NSP_sat_mks_0_visible = { check_variable = { NSP_sat_cur > 0 } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 0 } }
+			NSP_sat_mks_1_visible = { check_variable = { NSP_sat_cur > 1 } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 1 } }
+			NSP_sat_mks_2_visible = { check_variable = { NSP_sat_cur > 2 } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 2 } }
+			NSP_sat_mks_3_visible = { check_variable = { NSP_sat_cur > 3 } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 3 } }
+			NSP_sat_mks_4_visible = { check_variable = { NSP_sat_cur > 4 } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 4 } }
+			NSP_sat_mks_5_visible = { check_variable = { NSP_sat_cur > 5 } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 5 } }
+			NSP_sat_mks_6_visible = { check_variable = { NSP_sat_cur > 6 } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 6 } }
+			NSP_sat_mks_7_visible = { check_variable = { NSP_sat_cur > 7 } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 7 } }
+			NSP_sat_mks_8_visible = { check_variable = { NSP_sat_cur > 8 } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 8 } }
+			NSP_sat_mks_9_visible = { check_variable = { NSP_sat_cur > 9 } check_variable = { NSP_sat_sel_b = NSP_focus } check_variable = { NSP_sat_sel = 9 } }
+		}
+		ai_enabled = { always = no }
+	}
+
+	NSP_focus_out = {
+		context_type = player_context
+		window_name = "NSP_focus_out_window"
+		# ⚠ 同上：缺 dirty 则条目不重建、倒放不重播
+		dirty = NSP_dirty
+		parent_window_name = NSP_home_window
+		visible = { NOT = { has_country_flag = NSP_planner_open } NOT = { has_country_flag = NSP_rd_open } check_variable = { NSP_view = 2 } check_variable = { NSP_fmode = 2 } }
+		effects = {
+			# ---- 轨道命中区（558 项，机械重复：每颗行星的轨道切成小方块按钮，见 interface/NSP_space.gui / NSP_focus.gui）----
+			#   点击 → NSP_focus_planet（nsp_fp = 1 水星 … 8 海王星）；可见 → NSP_ss_hit_visible
+			NSP_fo_mercury_s0_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s1_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s2_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s3_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s4_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s5_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s6_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s7_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s8_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s9_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s10_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s11_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s12_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s13_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s14_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s15_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s16_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s17_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s18_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s19_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s20_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s21_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s22_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s23_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s24_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s25_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s26_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_mercury_s27_click = { set_temp_variable = { nsp_fp = 1 } NSP_focus_planet = yes }
+			NSP_fo_venus_s0_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s1_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s2_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s3_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s4_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s5_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s6_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s7_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s8_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s9_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s10_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s11_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s12_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s13_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s14_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s15_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s16_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s17_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s18_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s19_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s20_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s21_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s22_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s23_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s24_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s25_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s26_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s27_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s28_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s29_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s30_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s31_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s32_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s33_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s34_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s35_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s36_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s37_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s38_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_venus_s39_click = { set_temp_variable = { nsp_fp = 2 } NSP_focus_planet = yes }
+			NSP_fo_earth_s0_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s1_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s2_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s3_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s4_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s5_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s6_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s7_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s8_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s9_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s10_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s11_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s12_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s13_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s14_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s15_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s16_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s17_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s18_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s19_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s20_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s21_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s22_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s23_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s24_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s25_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s26_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s27_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s28_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s29_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s30_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s31_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s32_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s33_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s34_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s35_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s36_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s37_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s38_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s39_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s40_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s41_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s42_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s43_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s44_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s45_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s46_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s47_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s48_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s49_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s50_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s51_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s52_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s53_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_earth_s54_click = { set_temp_variable = { nsp_fp = 3 } NSP_focus_planet = yes }
+			NSP_fo_mars_s0_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s1_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s2_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s3_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s4_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s5_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s6_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s7_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s8_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s9_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s10_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s11_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s12_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s13_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s14_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s15_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s16_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s17_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s18_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s19_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s20_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s21_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s22_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s23_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s24_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s25_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s26_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s27_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s28_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s29_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s30_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s31_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s32_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s33_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s34_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s35_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s36_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s37_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s38_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s39_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s40_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s41_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s42_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s43_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s44_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s45_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s46_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s47_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s48_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s49_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s50_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s51_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s52_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s53_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s54_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s55_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s56_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s57_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s58_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s59_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s60_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s61_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s62_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s63_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s64_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s65_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s66_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_mars_s67_click = { set_temp_variable = { nsp_fp = 4 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s0_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s1_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s2_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s3_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s4_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s5_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s6_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s7_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s8_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s9_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s10_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s11_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s12_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s13_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s14_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s15_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s16_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s17_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s18_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s19_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s20_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s21_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s22_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s23_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s24_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s25_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s26_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s27_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s28_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s29_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s30_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s31_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s32_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s33_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s34_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s35_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s36_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s37_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s38_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s39_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s40_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s41_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s42_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s43_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s44_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s45_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s46_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s47_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s48_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s49_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s50_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s51_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s52_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s53_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s54_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s55_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s56_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s57_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s58_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s59_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s60_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s61_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s62_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s63_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s64_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s65_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s66_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_jupiter_s67_click = { set_temp_variable = { nsp_fp = 5 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s0_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s1_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s2_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s3_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s4_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s5_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s6_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s7_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s8_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s9_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s10_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s11_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s12_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s13_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s14_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s15_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s16_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s17_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s18_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s19_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s20_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s21_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s22_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s23_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s24_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s25_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s26_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s27_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s28_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s29_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s30_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s31_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s32_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s33_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s34_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s35_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s36_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s37_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s38_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s39_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s40_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s41_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s42_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s43_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s44_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s45_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s46_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s47_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s48_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s49_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s50_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s51_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s52_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s53_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s54_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s55_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s56_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s57_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s58_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s59_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s60_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s61_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s62_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s63_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s64_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s65_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s66_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s67_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s68_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s69_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s70_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s71_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s72_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s73_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s74_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s75_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s76_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s77_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s78_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s79_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s80_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s81_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_saturn_s82_click = { set_temp_variable = { nsp_fp = 6 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s0_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s1_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s2_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s3_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s4_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s5_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s6_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s7_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s8_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s9_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s10_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s11_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s12_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s13_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s14_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s15_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s16_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s17_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s18_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s19_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s20_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s21_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s22_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s23_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s24_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s25_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s26_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s27_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s28_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s29_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s30_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s31_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s32_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s33_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s34_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s35_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s36_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s37_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s38_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s39_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s40_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s41_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s42_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s43_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s44_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s45_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s46_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s47_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s48_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s49_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s50_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s51_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s52_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s53_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s54_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s55_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s56_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s57_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s58_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s59_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s60_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s61_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s62_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s63_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s64_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s65_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s66_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s67_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s68_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s69_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s70_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s71_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s72_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s73_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s74_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s75_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s76_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s77_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s78_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s79_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s80_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s81_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s82_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s83_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s84_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s85_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s86_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s87_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s88_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s89_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s90_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s91_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s92_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s93_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s94_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s95_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s96_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s97_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s98_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s99_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s100_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_uranus_s101_click = { set_temp_variable = { nsp_fp = 7 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s0_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s1_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s2_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s3_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s4_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s5_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s6_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s7_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s8_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s9_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s10_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s11_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s12_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s13_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s14_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s15_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s16_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s17_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s18_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s19_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s20_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s21_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s22_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s23_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s24_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s25_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s26_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s27_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s28_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s29_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s30_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s31_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s32_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s33_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s34_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s35_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s36_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s37_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s38_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s39_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s40_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s41_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s42_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s43_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s44_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s45_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s46_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s47_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s48_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s49_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s50_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s51_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s52_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s53_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s54_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s55_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s56_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s57_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s58_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s59_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s60_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s61_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s62_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s63_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s64_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s65_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s66_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s67_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s68_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s69_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s70_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s71_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s72_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s73_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s74_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s75_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s76_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s77_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s78_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s79_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s80_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s81_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s82_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s83_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s84_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s85_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s86_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s87_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s88_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s89_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s90_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s91_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s92_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s93_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s94_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s95_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s96_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s97_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s98_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s99_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s100_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s101_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s102_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s103_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s104_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s105_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s106_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s107_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s108_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s109_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s110_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s111_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s112_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+			NSP_fo_neptune_s113_click = { set_temp_variable = { nsp_fp = 8 } NSP_focus_planet = yes }
+		}
+		triggers = {
+		}
+		ai_enabled = { always = no }
+	}
+}

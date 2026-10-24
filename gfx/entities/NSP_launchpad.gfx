@@ -1,0 +1,27 @@
+# =============================================================================
+#  r43 地图发射架 mesh · 先例：MD gfx/entities/landmarks.gfx（Shuttle_mesh / landmark_statue_of_liberty_mesh）
+#  一个带骨骼 mesh + 三段动画；动画名在 gfx/models/NSP/launchpad/NSP_launchpad_anims.asset 声明
+#  ⭐ meshsettings 把 shader 覆盖成 HOI4 的 PdxMeshAdvanced（导出时写的是 PdxMeshStandard）
+#  ⚠ r43c（2026-10-21 实机截图：模型全白）贴图通道照 MD shuttle 实测：
+#     normal = (128,128,0,128)，specular 全 0。原来写的是 normal B/A=255、specular A=255
+# =============================================================================
+objectTypes = {
+	pdxmesh = {
+		name = "NSP_launchpad_mesh"
+		file = "gfx/models/NSP/launchpad/nsp_launchpad.mesh"
+
+		animation = { id = "empty"  type = "NSP_launchpad_empty_anim" }
+		animation = { id = "ready"  type = "NSP_launchpad_ready_anim" }
+		animation = { id = "launch" type = "NSP_launchpad_launch_anim" }
+		animation = { id = "fail_pad" type = "NSP_launchpad_fail_pad_anim" }   # r48
+		animation = { id = "fail_air" type = "NSP_launchpad_fail_air_anim" }   # r48
+
+		meshsettings = {
+			index = 0
+			texture_diffuse = "nsp_launchpad_diffuse.dds"
+			texture_normal = "nsp_launchpad_normal.dds"
+			texture_specular = "nsp_launchpad_specular.dds"
+			shader = "PdxMeshAdvancedSnow"   # r94j：同 MD 建筑 / 地标（航天飞机），跟随地图光照，避免视角切换时忽明忽暗
+		}
+	}
+}

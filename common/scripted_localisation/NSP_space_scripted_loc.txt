@@ -1,0 +1,586 @@
+# NSP_space_scripted_loc.txt
+
+#############################################################################
+#  NSP scripted localisation
+#  大量使用 Dynamic Scripted Localisation：localization_key 里写 [?变量]，
+#  先代入数值再查键，一行代替一串 if。
+#############################################################################
+
+# ---------------- 主界面 ----------------
+defined_text = { name = GetNSPProgramBadge   text = { localization_key = "NSP_BADGE_[?NSP_program]" } }
+defined_text = { name = GetNSPProgramName    text = { localization_key = "NSP_PROG_NAME_[?NSP_program]" } }
+defined_text = { name = GetNSPProgramStarted text = { localization_key = "NSP_PROG_STARTED_[?NSP_program]" } }
+defined_text = { name = GetNSPObjDescA       text = { localization_key = "NSP_OBJ_DESC_[?NSP_obj_a]" } }
+defined_text = { name = GetNSPObjDescB       text = { localization_key = "NSP_OBJ_DESC_[?NSP_obj_b]" } }
+
+defined_text = { name = GetNSPOrbit0 text = { localization_key = "NSP_ORBIT_[?NSP_view]_0" } }
+defined_text = { name = GetNSPOrbit1 text = { localization_key = "NSP_ORBIT_[?NSP_view]_1" } }
+defined_text = { name = GetNSPOrbit2 text = { localization_key = "NSP_ORBIT_[?NSP_view]_2" } }
+
+# Mission Control 条目（v = 任务 id）
+defined_text = { name = GetNSPMissionPayload text = { localization_key = "NSP_PL_SHORT_[?NSP_m_payload^v]" } }
+defined_text = { name = GetNSPMissionPhase   text = { localization_key = "NSP_PHASE_LINE_[?NSP_m_phase^v]" } }
+# 历史卡片
+defined_text = { name = GetNSPHistResult
+	text = { trigger = { is_in_array = { array = NSP_hist_fail value = v } } localization_key = "NSP_HIST_FAIL" }
+	text = { localization_key = "NSP_HIST_OK" }
+}
+# 历史 tooltip：载荷 / 火箭 / 发射场 / 结束日期
+defined_text = { name = GetNSPHistPL   text = { localization_key = "NSP_PL_NAME_[?NSP_m_payload^v]" } }
+defined_text = { name = GetNSPHistVE   text = { trigger = { check_variable = { NSP_m_veh^num > v } } localization_key = "NSP_VE_NAME_[?NSP_m_veh^v]" } text = { localization_key = NSP_SAT_UNKNOWN } }
+defined_text = { name = GetNSPHistSite
+	text = { trigger = { check_variable = { NSP_m_site^num > v } check_variable = { NSP_m_site^v > -1 } } localization_key = "NSP_SITE_[?NSP_m_site^v]" }
+	text = { localization_key = NSP_SITE_0 }
+}
+defined_text = { name = GetNSPHistEnd
+	text = { trigger = { check_variable = { NSP_m_end^num > v } check_variable = { NSP_m_end^v > 0 } } localization_key = NSP_IE_END_D }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPHistDest text = { localization_key = "NSP_DEST_[?NSP_m_dest^v]" } }
+# 开局历史档案：NSP_m_arch^v > -1 时用 NSP_ARCH_*_k
+defined_text = { name = GetNSPHistName
+	text = { trigger = { check_variable = { NSP_m_arch^num > v } check_variable = { NSP_m_arch^v > -1 } } localization_key = "NSP_ARCH_NAME_[?NSP_m_arch^v]" }
+	text = { localization_key = NSP_IE_NAME_N }
+}
+defined_text = { name = GetNSPHistEta
+	text = { trigger = { check_variable = { NSP_m_arch^num > v } check_variable = { NSP_m_arch^v > -1 } } localization_key = "NSP_ARCH_ETA_[?NSP_m_arch^v]" }
+	text = { trigger = { check_variable = { NSP_m_end^num > v } check_variable = { NSP_m_end^v > 0 } } localization_key = NSP_IE_ETA_D }   # 有结束日期
+	text = { localization_key = NSP_IE_ETA_N }
+}
+defined_text = { name = GetNSPHistTT
+	text = { trigger = { check_variable = { NSP_m_arch^num > v } check_variable = { NSP_m_arch^v > -1 } } localization_key = "NSP_ARCH_TT_[?NSP_m_arch^v]" }
+	text = { localization_key = NSP_IE_TT_N }
+}
+
+# ---------------- 规划器 ----------------
+defined_text = { name = GetNSPPayloadBadge text = { localization_key = "NSP_PLBADGE_[?NSP_sel_payload]" } }
+# 规划器大图。*_cart = 1（子模组自带图）→ 本地化 NSP_PLART_<id> / NSP_VEART_<id> / NSP_TRAJART_<id> 写 sprite 名；否则用本体图集
+defined_text = { name = GetNSPPayloadArt
+	text = { trigger = { check_variable = { NSP_pl_cart^NSP_sel_payload = 1 } } localization_key = "NSP_PLART_[?NSP_sel_payload]" }
+	text = { localization_key = NSP_ART_BASE_PL }
+}
+defined_text = { name = GetNSPVehicleArt
+	text = { trigger = { check_variable = { NSP_ve_cart^NSP_sel_vehicle = 1 } } localization_key = "NSP_VEART_[?NSP_sel_vehicle]" }
+	text = { localization_key = NSP_ART_BASE_VE }
+}
+defined_text = { name = GetNSPTrajArt
+	text = { trigger = { check_variable = { NSP_dest_cart^NSP_sel_dest = 1 } } localization_key = "NSP_TRAJART_[?NSP_sel_dest]" }
+	text = { localization_key = NSP_ART_BASE_TRAJ }
+}
+defined_text = { name = GetNSPPayloadShort text = { localization_key = "NSP_PL_SHORT_[?NSP_sel_payload]" } }
+defined_text = { name = GetNSPPayloadName  text = { localization_key = "NSP_PL_NAME_[?NSP_sel_payload]" } }
+defined_text = { name = GetNSPPayloadType  text = { localization_key = "NSP_PL_TYPE_[?NSP_sel_payload]" } }
+defined_text = { name = GetNSPVehicleName  text = { localization_key = "NSP_VE_NAME_[?NSP_sel_vehicle]" } }
+defined_text = { name = GetNSPVehicleType  text = { localization_key = "NSP_VE_TYPE_[?NSP_sel_vehicle]" } }
+defined_text = { name = GetNSPSiteName     text = { localization_key = "NSP_SITE_[?NSP_sel_site]" } }
+defined_text = { name = GetNSPSiteShort    text = { localization_key = "NSP_SITE_SHORT_[?NSP_sel_site]" } }
+defined_text = { name = GetNSPDestName     text = { localization_key = "NSP_DEST_[?NSP_sel_dest]" } }
+defined_text = { name = GetNSPDestPhrase   text = { localization_key = "NSP_DEST_PHRASE_[?NSP_sel_dest]" } }
+
+# 列表条目（v = 索引）
+defined_text = { name = GetNSPSiteRow  text = { localization_key = "NSP_SITE_[?v]" } }
+defined_text = { name = GetNSPSiteDescRow text = { localization_key = "NSP_SITE_DESC_[?v]" } }
+defined_text = { name = GetNSPDestRow  text = { localization_key = "NSP_DEST_[?v]" } }
+defined_text = { name = GetNSPModName  text = { localization_key = "NSP_MOD_NAME_[?v]" } }
+defined_text = { name = GetNSPModDesc  text = { localization_key = "NSP_MOD_DESC_[?v]" } }
+defined_text = { name = GetNSPModIntro text = { localization_key = "NSP_MOD_INTRO_[?v]" } }   # 延迟第二层
+defined_text = { name = GetNSPPhaseRow text = { localization_key = "NSP_PHASE_[?v]" } }
+# GetNSPTLNum → 移到文件末尾（按载人 / 无人编号）
+defined_text = { name = GetNSPTLName text = { localization_key = "NSP_TL_NAME_[?v]" } }
+
+# 着色数值
+defined_text = {
+	name = GetNSPMargin
+	text = { trigger = { NOT = { set_temp_variable = { nsp_lt = NSP_calc_margin } check_variable = { nsp_lt < 0 } } } localization_key = NSP_MARGIN_G }
+	text = { localization_key = NSP_MARGIN_R }
+}
+defined_text = {
+	name = GetNSPLeft
+	text = { trigger = { NOT = { set_temp_variable = { nsp_lt = NSP_calc_left } check_variable = { nsp_lt < 0 } } } localization_key = NSP_LEFT_G }
+	text = { localization_key = NSP_LEFT_R }
+}
+defined_text = {
+	name = GetNSPReqAlter
+	text = { trigger = { set_temp_variable = { nsp_lt = NSP_mod_sel^3 } check_variable = { nsp_lt = 1 } } localization_key = NSP_REQ_ALTER_G }
+	text = { localization_key = NSP_REQ_ALTER_R }
+}
+defined_text = {
+	name = GetNSPReqDock
+	text = { trigger = { set_temp_variable = { nsp_lt = NSP_mod_sel^4 } check_variable = { nsp_lt = 1 } } localization_key = NSP_REQ_DOCK_G }
+	text = { localization_key = NSP_REQ_DOCK_R }
+}
+
+# 目标卡状态（标题行右侧）
+defined_text = { name = GetNSPObjStatA text = { trigger = { check_variable = { NSP_obj_a_done < NSP_obj_a_req } } localization_key = NSP_OBJ_STAT_TODO_A } text = { localization_key = NSP_OBJ_STAT_DONE } }
+defined_text = { name = GetNSPObjStatB text = { trigger = { check_variable = { NSP_obj_b_done < NSP_obj_b_req } } localization_key = NSP_OBJ_STAT_TODO_B } text = { localization_key = NSP_OBJ_STAT_DONE } }
+
+# 计划页签 tooltip（dynamic_lists 条目，v = 计划号 / -1 未知 / -2 锁定占位 / -3 上一页 / -4 下一页）
+defined_text = {
+	name = GetNSPPtabTT
+	text = { trigger = { check_variable = { v = -1 } } localization_key = NSP_PROG_UNKNOWN_TT }
+	text = { trigger = { check_variable = { v = -2 } } localization_key = NSP_PROG_LOCKED_TT }
+	text = { trigger = { check_variable = { v = -3 } } localization_key = NSP_PROG_PREV_TT }
+	text = { trigger = { check_variable = { v = -4 } } localization_key = NSP_PROG_NEXT_TT }
+	text = { trigger = { set_temp_variable = { t_pu = NSP_prog_unlocked^v } check_variable = { t_pu = 1 } } localization_key = NSP_PTAB_OPEN_TT }
+	text = { localization_key = NSP_PTAB_LOCKED_TT }
+}
+defined_text = { name = GetNSPPtabName text = { localization_key = "NSP_PROG_NAME_[?v]" } }
+defined_text = { name = GetNSPPtabDate text = { localization_key = "NSP_PROG_UNL_DATE_[?v]" } }   # 未解锁计划的公布日期
+
+# 轨道行 tooltip
+defined_text = { name = GetNSPOrbitDesc0 text = { localization_key = "NSP_ORBIT_DESC_[?NSP_view]_0" } }
+defined_text = { name = GetNSPOrbitAct0
+	text = { trigger = { check_variable = { NSP_orbit_filter = 1 } check_variable = { NSP_orbit_sel = 0 } } localization_key = "NSP_ORBIT_ACT_ON" }
+	text = { localization_key = "NSP_ORBIT_ACT_OFF" }
+}
+defined_text = { name = GetNSPOrbitDesc1 text = { localization_key = "NSP_ORBIT_DESC_[?NSP_view]_1" } }
+defined_text = { name = GetNSPOrbitAct1
+	text = { trigger = { check_variable = { NSP_orbit_filter = 1 } check_variable = { NSP_orbit_sel = 1 } } localization_key = "NSP_ORBIT_ACT_ON" }
+	text = { localization_key = "NSP_ORBIT_ACT_OFF" }
+}
+defined_text = { name = GetNSPOrbitDesc2 text = { localization_key = "NSP_ORBIT_DESC_[?NSP_view]_2" } }
+defined_text = { name = GetNSPOrbitAct2
+	text = { trigger = { check_variable = { NSP_orbit_filter = 1 } check_variable = { NSP_orbit_sel = 2 } } localization_key = "NSP_ORBIT_ACT_ON" }
+	text = { localization_key = "NSP_ORBIT_ACT_OFF" }
+}
+defined_text = { name = GetNSPPayLast
+	text = { trigger = { check_variable = { NSP_pay_last > 0 } } localization_key = "NSP_PAY_LAST_VAL" }
+	text = { localization_key = "NSP_PAY_LAST_NONE" }
+}
+
+# 太空科技等级名称（11 级起都是「深空」）
+defined_text = { name = GetNSPTierName
+	# ⚠ 实机截图（2026-10-22）：localization_key = "NSP_TIER_NAME_[?NSP_tech_tier|0]" 动态拼键显示为空（其他不带 |0 格式的拼键正常，疑为 |0 所致）→ 改成逐级写死；先拷进 temp 再比较（直读国家变量会得 0）
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier > 10 } } localization_key = NSP_TIER_NAME_11 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 2 } } localization_key = NSP_TIER_NAME_2 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 3 } } localization_key = NSP_TIER_NAME_3 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 4 } } localization_key = NSP_TIER_NAME_4 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 5 } } localization_key = NSP_TIER_NAME_5 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 6 } } localization_key = NSP_TIER_NAME_6 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 7 } } localization_key = NSP_TIER_NAME_7 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 8 } } localization_key = NSP_TIER_NAME_8 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 9 } } localization_key = NSP_TIER_NAME_9 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 10 } } localization_key = NSP_TIER_NAME_10 }
+	text = { localization_key = NSP_TIER_NAME_1 }
+}
+# 下一级是 4 / 7 / 10 级 → tooltip 多写一条研发槽
+defined_text = { name = GetNSPTierNextSlot
+	text = { trigger = { OR = { check_variable = { NSP_tech_tier = 3 } check_variable = { NSP_tech_tier = 6 } check_variable = { NSP_tech_tier = 9 } } } localization_key = NSP_TIER_NEXT_SLOT }
+	text = { localization_key = NSP_EMPTY }
+}
+# 刚升到 4 / 7 / 10 级 → 事件里写里程碑
+defined_text = { name = GetNSPTierSlotNote
+	text = { trigger = { OR = { check_variable = { NSP_tech_tier = 4 } check_variable = { NSP_tech_tier = 7 } check_variable = { NSP_tech_tier = 10 } } } localization_key = NSP_TIER_SLOT_NOTE }
+	text = { localization_key = NSP_EMPTY }
+}
+
+# 下一级名称（同 GetNSPTierName，逐级写死）
+defined_text = { name = GetNSPTierNameNext
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier > 9 } } localization_key = NSP_TIER_NAME_11 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 1 } } localization_key = NSP_TIER_NAME_2 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 2 } } localization_key = NSP_TIER_NAME_3 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 3 } } localization_key = NSP_TIER_NAME_4 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 4 } } localization_key = NSP_TIER_NAME_5 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 5 } } localization_key = NSP_TIER_NAME_6 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 6 } } localization_key = NSP_TIER_NAME_7 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 7 } } localization_key = NSP_TIER_NAME_8 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 8 } } localization_key = NSP_TIER_NAME_9 }
+	text = { trigger = { set_temp_variable = { t_tier = NSP_tech_tier } check_variable = { t_tier = 9 } } localization_key = NSP_TIER_NAME_10 }
+	text = { localization_key = NSP_TIER_NAME_1 }
+}
+# 当前等级已拿到的里程碑研发槽
+defined_text = { name = GetNSPTierSlotsGot
+	text = { localization_key = NSP_TIER_SLOTS_GOT }   # 0 也显示（用户要求研发槽写进效果）
+}
+# 下一级是 4 / 7 / 10 级 → 圆圈 tooltip 写里程碑
+defined_text = { name = GetNSPTierNextSlotLine
+	text = { trigger = { OR = { check_variable = { NSP_tech_tier = 3 } check_variable = { NSP_tech_tier = 6 } check_variable = { NSP_tech_tier = 9 } } } localization_key = NSP_TIER_NEXT_SLOT_LINE }
+	text = { localization_key = NSP_EMPTY }
+}
+# 下一个里程碑提示
+defined_text = { name = GetNSPTierMilestone
+	text = { trigger = { check_variable = { NSP_tech_tier < 4 } } localization_key = NSP_TIER_MS_4 }
+	text = { trigger = { check_variable = { NSP_tech_tier < 7 } } localization_key = NSP_TIER_MS_7 }
+	text = { trigger = { check_variable = { NSP_tech_tier < 10 } } localization_key = NSP_TIER_MS_10 }
+	text = { localization_key = NSP_EMPTY }
+}
+
+# ---------------- 乘组 ----------------
+defined_text = { name = GetNSPCandName0 text = { localization_key = "NSP_ASTRO_[?NSP_crew_cand^0]" } }
+defined_text = { name = GetNSPCandName1 text = { localization_key = "NSP_ASTRO_[?NSP_crew_cand^1]" } }
+defined_text = { name = GetNSPCandName2 text = { localization_key = "NSP_ASTRO_[?NSP_crew_cand^2]" } }
+defined_text = { name = GetNSPCandName3 text = { localization_key = "NSP_ASTRO_[?NSP_crew_cand^3]" } }
+defined_text = { name = GetNSPCrewMission text = { localization_key = "NSP_PL_SHORT_[?NSP_crew_pl]" } }
+defined_text = { name = GetNSPSeatRole
+	text = { trigger = { check_variable = { NSP_crew_seats = 1 } } localization_key = NSP_SEAT_PILOT }
+	text = { trigger = { check_variable = { NSP_crew_seat = 0 } } localization_key = NSP_SEAT_CMD }
+	text = { trigger = { check_variable = { NSP_crew_seats = 2 } } localization_key = NSP_SEAT_PILOT }
+	text = { trigger = { check_variable = { NSP_crew_seat = 1 } } localization_key = NSP_SEAT_CMP }
+	text = { localization_key = NSP_SEAT_LMP }
+}
+# 最近结束的任务（事件用）
+defined_text = { name = GetNSPLastShort text = { localization_key = "NSP_PL_SHORT_[?NSP_m_payload^NSP_last_mission]" } }
+defined_text = { name = GetNSPLastCrewA text = { localization_key = "NSP_ASTRO_[?NSP_m_crew0^NSP_last_mission]" } }
+defined_text = { name = GetNSPLastCrewB text = { localization_key = "NSP_ASTRO_[?NSP_m_crew1^NSP_last_mission]" } }
+defined_text = { name = GetNSPLastCrewC text = { localization_key = "NSP_ASTRO_[?NSP_m_crew2^NSP_last_mission]" } }
+defined_text = { name = GetNSPLastCrew
+	text = { trigger = { set_temp_variable = { t_lm = NSP_last_mission } check_variable = { NSP_m_crew0^num > t_lm } check_variable = { NSP_m_crew2^t_lm > -1 } } localization_key = NSP_CREW_LAST_3 }
+	text = { trigger = { set_temp_variable = { t_lm = NSP_last_mission } check_variable = { NSP_m_crew0^num > t_lm } check_variable = { NSP_m_crew1^t_lm > -1 } } localization_key = NSP_CREW_LAST_2 }
+	text = { trigger = { set_temp_variable = { t_lm = NSP_last_mission } check_variable = { NSP_m_crew0^num > t_lm } check_variable = { NSP_m_crew0^t_lm > -1 } } localization_key = NSP_CREW_LAST_1 }
+	text = { localization_key = NSP_CREW_LAST_0 }
+}
+# 历史卡片 tooltip 的乘组行（v = 任务 id）
+defined_text = { name = GetNSPHCrewNA text = { localization_key = "NSP_ASTRO_[?NSP_m_crew0^v]" } }
+defined_text = { name = GetNSPHCrewA   # 生还绿名 / 遇难红名（遇难）
+	text = { trigger = { check_variable = { NSP_m_kia^num > v } check_variable = { NSP_m_kia^v = 1 } } localization_key = NSP_HCREW_KIA_A }
+	text = { localization_key = NSP_HCREW_OK_A }
+}
+defined_text = { name = GetNSPHCrewNB text = { localization_key = "NSP_ASTRO_[?NSP_m_crew1^v]" } }
+defined_text = { name = GetNSPHCrewB   # 生还绿名 / 遇难红名（遇难）
+	text = { trigger = { check_variable = { NSP_m_kia^num > v } check_variable = { NSP_m_kia^v = 1 } } localization_key = NSP_HCREW_KIA_B }
+	text = { localization_key = NSP_HCREW_OK_B }
+}
+defined_text = { name = GetNSPHCrewNC text = { localization_key = "NSP_ASTRO_[?NSP_m_crew2^v]" } }
+defined_text = { name = GetNSPHCrewC   # 生还绿名 / 遇难红名（遇难）
+	text = { trigger = { check_variable = { NSP_m_kia^num > v } check_variable = { NSP_m_kia^v = 1 } } localization_key = NSP_HCREW_KIA_C }
+	text = { localization_key = NSP_HCREW_OK_C }
+}
+defined_text = { name = GetNSPHistCrew
+	text = { trigger = { check_variable = { NSP_m_crew0^num > v } check_variable = { NSP_m_crew2^v > -1 } } localization_key = NSP_HCREW_3 }
+	text = { trigger = { check_variable = { NSP_m_crew0^num > v } check_variable = { NSP_m_crew1^v > -1 } } localization_key = NSP_HCREW_2 }
+	text = { trigger = { check_variable = { NSP_m_crew0^num > v } check_variable = { NSP_m_crew0^v > -1 } } localization_key = NSP_HCREW_1 }
+	text = { localization_key = NSP_EMPTY }
+}
+# 时间线行号：无人任务没有 4 乘组 / 7 返程，发射 / 在轨的行号前移一位
+defined_text = { name = GetNSPTLNum
+	text = { trigger = { check_variable = { NSP_calc_crewed = 0 } check_variable = { v = 5 } } localization_key = NSP_TL_NU_5 }
+	text = { trigger = { check_variable = { NSP_calc_crewed = 0 } check_variable = { v = 6 } } localization_key = NSP_TL_NU_6 }
+	text = { localization_key = "NSP_TL_N_[?v]" }
+}
+# 发射事件
+defined_text = { name = GetNSPEvtShort text = { localization_key = "NSP_PL_SHORT_[?NSP_m_payload^NSP_evt_mid]" } }
+defined_text = { name = GetNSPEvtDest  text = { localization_key = "NSP_DEST_[?NSP_m_dest^NSP_evt_mid]" } }
+defined_text = { name = GetNSPEvtNext
+	text = { trigger = { set_temp_variable = { t_em = NSP_evt_mid } set_temp_variable = { t_ep = NSP_m_payload^t_em } check_variable = { NSP_pl_crewed^t_ep = 1 } } localization_key = NSP_EVT_NEXT_CREW }
+	text = { localization_key = NSP_EVT_NEXT_UNCREW }
+}
+defined_text = { name = GetNSPLaunchFail
+	text = { trigger = { set_temp_variable = { t_lm = NSP_last_mission } check_variable = { NSP_m_fkind^t_lm = 3 } } localization_key = NSP_LFAIL_PAD }
+	text = { localization_key = NSP_LFAIL_AIR }
+}
+defined_text = { name = GetNSPLastCrewSafe
+	text = { trigger = { set_temp_variable = { t_lm = NSP_last_mission } check_variable = { NSP_m_crew0^num > t_lm } check_variable = { NSP_m_crew2^t_lm > -1 } } localization_key = NSP_CREW_SAFE_3 }
+	text = { trigger = { set_temp_variable = { t_lm = NSP_last_mission } check_variable = { NSP_m_crew0^num > t_lm } check_variable = { NSP_m_crew1^t_lm > -1 } } localization_key = NSP_CREW_SAFE_2 }
+	text = { trigger = { set_temp_variable = { t_lm = NSP_last_mission } check_variable = { NSP_m_crew0^num > t_lm } check_variable = { NSP_m_crew0^t_lm > -1 } } localization_key = NSP_CREW_SAFE_1 }
+	text = { localization_key = NSP_CREW_SAFE_0 }
+}
+
+# 启动任务 tooltip 改成 TNO 决议式（先决条件 £trigger_yes / £trigger_no 逐条 + 启动后的效果）；行 tooltip 仍只列未满足项。
+# 条件提示：只列出「没满足」的条件（红色，带具体数值和怎么解决）；全部满足时给一行绿色结论。
+# 取代原来的 [!xxx_click_enabled]（会把已满足的条件也全部列出来）。
+# 每条 defined_text：条件不满足 → 一行原因；满足 → 空串。
+defined_text = { name = GetNSPCondPL text = { localization_key = "NSP_PL_NAME_[?NSP_sel_payload]" } }
+defined_text = { name = GetNSPCondVE text = { localization_key = "NSP_VE_NAME_[?NSP_sel_vehicle]" } }
+defined_text = { name = GetNSPCondDest text = { localization_key = "NSP_DEST_[?NSP_sel_dest]" } }
+defined_text = { name = GetNSPCondSite text = { localization_key = "NSP_SITE_[?NSP_sel_site]" } }
+
+defined_text = { name = GetNSPStartHead
+	text = { trigger = { NSP_can_start_mission = yes } localization_key = NSP_COND_START_OK }
+	text = { localization_key = NSP_COND_START_NO }
+}
+defined_text = { name = GetNSPSiteHead
+	text = { trigger = { set_temp_variable = { t_S = v } NSP_site_allowed = yes } localization_key = NSP_COND_PICK_OK }
+	text = { localization_key = NSP_COND_PICK_NO }
+}
+defined_text = { name = GetNSPDestHead
+	text = { trigger = { set_temp_variable = { t_D = v } NSP_dest_allowed = yes } localization_key = NSP_COND_PICK_OK }
+	text = { localization_key = NSP_COND_PICK_NO }
+}
+defined_text = { name = GetNSPPalHead
+	text = { trigger = { set_temp_variable = { t_M = v } NOT = { NSP_mod_fits = yes } } localization_key = NSP_COND_MOD_NOFIT }
+	text = { trigger = { set_temp_variable = { t_M = v } check_variable = { NSP_mod_sel^t_M = 1 } } localization_key = NSP_COND_MOD_ON }
+	text = { trigger = { set_temp_variable = { t_M = v } NSP_can_add_mod = yes } localization_key = NSP_COND_MOD_OK }
+	text = { trigger = { set_temp_variable = { t_M = v } check_variable = { NSP_mod_type^t_M = 0 } } localization_key = NSP_COND_MOD_FULL_L }
+	text = { localization_key = NSP_COND_MOD_FULL_P }
+}
+defined_text = { name = GetNSPCS_PL
+	text = { trigger = { check_variable = { NSP_pl_unl^NSP_sel_payload = 1 } } localization_key = NSP_COND_Y_PL }
+	text = { localization_key = NSP_COND_S_PL }
+}
+defined_text = { name = GetNSPCS_VE
+	text = { trigger = { check_variable = { NSP_ve_unl^NSP_sel_vehicle = 1 } } localization_key = NSP_COND_Y_VE }
+	text = { localization_key = NSP_COND_S_VE }
+}
+defined_text = { name = GetNSPCS_PAD
+	text = { trigger = { NSP_ve_pad_ok = yes } localization_key = NSP_COND_Y_PAD }
+	text = { localization_key = NSP_COND_S_PAD }
+}
+defined_text = { name = GetNSPCS_DEST
+	text = { trigger = { set_temp_variable = { t_D = NSP_sel_dest } NSP_dest_allowed = yes } localization_key = NSP_COND_Y_DEST }
+	text = { localization_key = NSP_COND_S_DEST }
+}
+defined_text = { name = GetNSPCS_SITE
+	text = { trigger = { set_temp_variable = { t_S = NSP_sel_site } NSP_site_allowed = yes } localization_key = NSP_COND_Y_SITE }
+	text = { localization_key = NSP_COND_S_SITE }
+}
+defined_text = { name = GetNSPCS_ALT
+	text = { trigger = { set_temp_variable = { t_M = 3 } NOT = { NSP_needs_mod = yes } } localization_key = NSP_EMPTY }
+	text = { trigger = { set_temp_variable = { t_M = 3 } NSP_mod_selected = yes } localization_key = NSP_COND_Y_ALT }
+	text = { localization_key = NSP_COND_S_ALT }
+}
+defined_text = { name = GetNSPCS_DOCK
+	text = { trigger = { set_temp_variable = { t_M = 4 } NOT = { NSP_needs_mod = yes } } localization_key = NSP_EMPTY }
+	text = { trigger = { set_temp_variable = { t_M = 4 } NSP_mod_selected = yes } localization_key = NSP_COND_Y_DOCK }
+	text = { localization_key = NSP_COND_S_DOCK }
+}
+defined_text = { name = GetNSPCS_MARGIN
+	text = { trigger = { NOT = { check_variable = { NSP_calc_margin < 0 } } } localization_key = NSP_COND_Y_MARGIN }
+	text = { localization_key = NSP_COND_S_MARGIN }
+}
+defined_text = { name = GetNSPCS_BUDGET
+	text = { trigger = { NOT = { check_variable = { NSP_calc_left < 0 } } } localization_key = NSP_COND_Y_BUDGET }
+	text = { localization_key = NSP_COND_S_BUDGET }
+}
+defined_text = { name = GetNSPCT_UNL
+	text = { trigger = { set_temp_variable = { t_S = v } check_variable = { NSP_site_unl^t_S = 1 } } localization_key = NSP_EMPTY }
+	text = { localization_key = NSP_COND_T_UNL }
+}
+defined_text = { name = GetNSPCT_HEAVY
+	text = { trigger = { set_temp_variable = { t_S = v } OR = { check_variable = { NSP_ve_heavy^NSP_sel_vehicle = 0 } AND = { NOT = { check_variable = { t_S = 2 } } NOT = { check_variable = { t_S = 4 } } NOT = { check_variable = { t_S = 6 } } NOT = { check_variable = { t_S = 7 } } } } } localization_key = NSP_EMPTY }
+	text = { localization_key = NSP_COND_T_HEAVY }
+}
+defined_text = { name = GetNSPCT_SATV
+	text = { trigger = { set_temp_variable = { t_S = v } NSP_ve_site_ok = yes } localization_key = NSP_EMPTY }
+	text = { localization_key = NSP_COND_T_SATV }
+}
+defined_text = { name = GetNSPCD_UNL
+	text = { trigger = { set_temp_variable = { t_D = v } check_variable = { NSP_dest_unl^t_D = 1 } } localization_key = NSP_EMPTY }
+	text = { localization_key = NSP_COND_D_UNL }
+}
+defined_text = { name = GetNSPCD_PL
+	text = { trigger = { set_temp_variable = { t_D = v } NSP_dest_allowed_pl = yes } localization_key = NSP_EMPTY }
+	text = { localization_key = NSP_COND_D_PL }
+}
+defined_text = { name = GetNSPCD_CREW
+	text = { trigger = { set_temp_variable = { t_D = v } NSP_dest_crew_ok = yes } localization_key = NSP_EMPTY }
+	text = { localization_key = NSP_COND_D_CREW }
+}
+
+# 发射场占用（规划器发射场行 tooltip）
+defined_text = { name = GetNSPCT_BUSY
+	text = { trigger = { set_temp_variable = { t_S = v } NOT = { NSP_site_busy = yes } } localization_key = NSP_EMPTY }
+	text = { localization_key = NSP_COND_T_BUSY }
+}
+# 地图发射场标记状态
+defined_text = { name = GetNSPLSiteState0
+	text = { trigger = { check_variable = { NSP_f_lsite_0 = 2 } } localization_key = NSP_LSITE_BUSY }
+	text = { localization_key = NSP_LSITE_FREE }
+}
+defined_text = { name = GetNSPLSiteState1
+	text = { trigger = { check_variable = { NSP_f_lsite_1 = 2 } } localization_key = NSP_LSITE_BUSY }
+	text = { localization_key = NSP_LSITE_FREE }
+}
+defined_text = { name = GetNSPLSiteState2
+	text = { trigger = { check_variable = { NSP_f_lsite_2 = 2 } } localization_key = NSP_LSITE_BUSY }
+	text = { localization_key = NSP_LSITE_FREE }
+}
+defined_text = { name = GetNSPLSiteState3
+	text = { trigger = { check_variable = { NSP_f_lsite_3 = 2 } } localization_key = NSP_LSITE_BUSY }
+	text = { localization_key = NSP_LSITE_FREE }
+}
+defined_text = { name = GetNSPLSiteState4
+	text = { trigger = { check_variable = { NSP_f_lsite_4 = 2 } } localization_key = NSP_LSITE_BUSY }
+	text = { localization_key = NSP_LSITE_FREE }
+}
+defined_text = { name = GetNSPLSiteState5
+	text = { trigger = { check_variable = { NSP_f_lsite_5 = 2 } } localization_key = NSP_LSITE_BUSY }
+	text = { localization_key = NSP_LSITE_FREE }
+}
+defined_text = { name = GetNSPLSiteState6
+	text = { trigger = { check_variable = { NSP_f_lsite_6 = 2 } } localization_key = NSP_LSITE_BUSY }
+	text = { localization_key = NSP_LSITE_FREE }
+}
+defined_text = { name = GetNSPLSiteState7
+	text = { trigger = { check_variable = { NSP_f_lsite_7 = 2 } } localization_key = NSP_LSITE_BUSY }
+	text = { localization_key = NSP_LSITE_FREE }
+}
+
+# 聚焦动画 A/B 切换（NSP_anim_ab = 0/1）
+
+# ===========================================================================
+# 乘组选拔窗口 / 任务卡暂停
+# ===========================================================================
+defined_text = { name = GetNSPMEEta text = { localization_key = "NSP_ME_ETA_P[?NSP_m_paused^v]" } }
+defined_text = { name = GetNSPCrewRowName text = { localization_key = "NSP_ASTRO_[?v]" } }
+defined_text = { name = GetNSPCrewRole0
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_seats } check_variable = { nsp_t = 1 } } localization_key = NSP_SEAT_PILOT }
+	text = { localization_key = NSP_SEAT_CMD }
+}
+defined_text = { name = GetNSPCrewRole1
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_seats } check_variable = { nsp_t = 2 } } localization_key = NSP_SEAT_PILOT }
+	text = { localization_key = NSP_SEAT_CMP }
+}
+defined_text = { name = GetNSPCrewRole2 text = { localization_key = NSP_SEAT_LMP } }
+defined_text = { name = GetNSPCrewRoleT0
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_seats } check_variable = { nsp_t < 1 } } localization_key = NSP_CREW_NA }
+	text = { localization_key = NSP_CREW_R0 }
+}
+defined_text = { name = GetNSPCrewSeat0
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_seats } check_variable = { nsp_t < 1 } } localization_key = NSP_CREW_BLANK }
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_sel0 } check_variable = { nsp_t < 0 } } localization_key = NSP_CREW_UNSET }
+	text = { localization_key = NSP_CREW_S0_FULL }
+}
+defined_text = { name = GetNSPCrewSelName0 text = { localization_key = "NSP_ASTRO_[?NSP_crew_sel0]" } }
+defined_text = { name = GetNSPCrewRoleT1
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_seats } check_variable = { nsp_t < 2 } } localization_key = NSP_CREW_NA }
+	text = { localization_key = NSP_CREW_R1 }
+}
+defined_text = { name = GetNSPCrewSeat1
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_seats } check_variable = { nsp_t < 2 } } localization_key = NSP_CREW_BLANK }
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_sel1 } check_variable = { nsp_t < 0 } } localization_key = NSP_CREW_UNSET }
+	text = { localization_key = NSP_CREW_S1_FULL }
+}
+defined_text = { name = GetNSPCrewSelName1 text = { localization_key = "NSP_ASTRO_[?NSP_crew_sel1]" } }
+defined_text = { name = GetNSPCrewRoleT2
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_seats } check_variable = { nsp_t < 3 } } localization_key = NSP_CREW_NA }
+	text = { localization_key = NSP_CREW_R2 }
+}
+defined_text = { name = GetNSPCrewSeat2
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_seats } check_variable = { nsp_t < 3 } } localization_key = NSP_CREW_BLANK }
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_sel2 } check_variable = { nsp_t < 0 } } localization_key = NSP_CREW_UNSET }
+	text = { localization_key = NSP_CREW_S2_FULL }
+}
+defined_text = { name = GetNSPCrewSelName2 text = { localization_key = "NSP_ASTRO_[?NSP_crew_sel2]" } }
+# 卡牌顶栏飞行次数（空座不显示）
+defined_text = { name = GetNSPCrewFlT0
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_sel0 } check_variable = { nsp_t < 0 } } localization_key = NSP_CREW_BLANK }
+	text = { localization_key = NSP_CREW_FLV_0 }
+}
+defined_text = { name = GetNSPCrewFlT1
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_sel1 } check_variable = { nsp_t < 0 } } localization_key = NSP_CREW_BLANK }
+	text = { localization_key = NSP_CREW_FLV_1 }
+}
+defined_text = { name = GetNSPCrewFlT2
+	text = { trigger = { set_temp_variable = { nsp_t = NSP_crew_sel2 } check_variable = { nsp_t < 0 } } localization_key = NSP_CREW_BLANK }
+	text = { localization_key = NSP_CREW_FLV_2 }
+}
+# 确定键文字：选满绿色，未选满灰色
+defined_text = { name = GetNSPCrewOkT
+	text = { trigger = { check_variable = { NSP_crew_ok_frame = 1 } } localization_key = NSP_CREW_OK_G }
+	text = { localization_key = NSP_CREW_OK_N }
+}
+
+# 规划面板 性能 / 可靠性 / 成本 tooltip 的加成明细：值为 0 的行不显示，正负分色
+defined_text = { name = GetNSPBD_dv_mod
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_dv_mod } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_DV_MOD_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_dv_mod } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_DV_MOD_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_dv_tech
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_dv_tech } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_DV_TECH_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_dv_tech } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_DV_TECH_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_req_site
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_req_site } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_REQ_SITE_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_req_site } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_REQ_SITE_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_req_tech
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_req_tech } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_REQ_TECH_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_req_tech } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_REQ_TECH_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_pl_mod
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_pl_mod } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_PL_MOD_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_pl_mod } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_PL_MOD_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_pl_rd
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_pl_rd } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_PL_RD_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_pl_rd } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_PL_RD_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_pl_tech
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_pl_tech } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_PL_TECH_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_pl_tech } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_PL_TECH_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_pl_dir
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_pl_dir } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_PL_DIR_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_pl_dir } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_PL_DIR_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_pl_half
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_pl_half } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_PL_HALF_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_pl_half } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_PL_HALF_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_ve_mod
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_mod } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_VE_MOD_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_mod } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_VE_MOD_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_ve_rd
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_rd } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_VE_RD_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_rd } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_VE_RD_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_ve_tier
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_tier } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_VE_TIER_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_tier } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_VE_TIER_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_ve_tech
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_tech } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_VE_TECH_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_tech } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_VE_TECH_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_ve_dir
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_dir } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_VE_DIR_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_dir } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_VE_DIR_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_ve_half
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_half } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_VE_HALF_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_ve_half } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_VE_HALF_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_c_mod
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_c_mod } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_C_MOD_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_c_mod } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_C_MOD_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_cp_site
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_cp_site } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_CP_SITE_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_cp_site } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_CP_SITE_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_cp_tech
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_cp_tech } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_CP_TECH_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_cp_tech } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_CP_TECH_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_cp_dir
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_cp_dir } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_CP_DIR_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_cp_dir } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_CP_DIR_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_cp_rd
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_cp_rd } check_variable = { nsp_bdt > 0 } } localization_key = NSP_BD_CP_RD_P }
+	text = { trigger = { set_temp_variable = { nsp_bdt = NSP_bd_cp_rd } check_variable = { nsp_bdt < 0 } } localization_key = NSP_BD_CP_RD_N }
+	text = { localization_key = NSP_EMPTY }
+}
+
+# ---- 事件接口（NSP_ev_*）----
+defined_text = { name = GetNSPEvRDName text = { localization_key = "NSP_RD_N_[?ev_id]" } }
+defined_text = { name = GetNSPBD_rel_ev
+	text = { trigger = { check_variable = { NSP_ev_next_rel > 0 } } localization_key = NSP_BD_REL_EV_P }
+	text = { trigger = { check_variable = { NSP_ev_next_rel < 0 } } localization_key = NSP_BD_REL_EV_N }
+	text = { localization_key = NSP_EMPTY }
+}
+defined_text = { name = GetNSPBD_cp_ev
+	text = { trigger = { check_variable = { NSP_ev_next_cost > 0 } } localization_key = NSP_BD_CP_EV_P }
+	text = { trigger = { check_variable = { NSP_ev_next_cost < 0 } } localization_key = NSP_BD_CP_EV_N }
+	text = { localization_key = NSP_EMPTY }
+}

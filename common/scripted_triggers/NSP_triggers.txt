@@ -1,0 +1,356 @@
+#############################################################################
+#  scripted triggers（全部条件判断）
+#
+#  目录
+#    1. 数据表判断（读 NSP_api_effects 的属性表，下面各段都会调用）
+#    2. 发射场
+#    3. 目的地
+#    4. 修正
+#    5. 规划器：载荷 / 火箭切换箭头、开始任务门槛
+#    6. 主页：Mission Control 卡片、计划页签、太阳系命中块
+#    7. 研发
+#
+#  传参：scripted trigger 不收参数，调用前先写临时变量：t_S 发射场 / t_D 目的地 / t_M 修正 / t_v 计划页签条目。
+#  下标含义（载荷 / 火箭 / 发射场 / 目的地 / 修正）见 documentation/CODE_MAP.md 第 3 节。
+#  HOI4 没有 >= / <=：写成 NOT = { check_variable = { a < b } }。
+#  被调用的判断写在调用者前面。
+#############################################################################
+
+# ===========================================================================
+# 1. 数据表判断（读 NSP_api_effects 的属性表，下面各段都会调用）
+# ===========================================================================
+
+# 数据表驱动的判断（数据在 NSP_api_effects.txt / 子模组 NSP_reg_*）
+# 载荷 NSP_sel_payload 能否去目的地 t_D
+NSP_pl_dest_ok = {
+	set_temp_variable = { t_pdi = NSP_sel_payload }
+	multiply_temp_variable = { t_pdi = 32 }
+	add_to_temp_variable = { t_pdi = t_D }
+	check_variable = { NSP_pd_ok^num > t_pdi }
+	check_variable = { NSP_pd_ok^t_pdi = 1 }
+}
+
+# 载人载荷去目的地 t_D 所需的研发已完成（无人载荷 / 目的地不要求时恒真）
+NSP_dest_crew_ok = {
+	OR = {
+		NOT = { check_variable = { NSP_pl_crewed^NSP_sel_payload = 1 } }
+		check_variable = { NSP_dest_crd^t_D < 0 }
+		AND = { set_temp_variable = { t_crd = NSP_dest_crd^t_D } check_variable = { NSP_rd_state^t_crd = 3 } }
+	}
+}
+
+# 当前火箭需要的发射台研发已完成
+NSP_ve_pad_ok = {
+	OR = {
+		check_variable = { NSP_ve_pad^NSP_sel_vehicle < 0 }
+		AND = { set_temp_variable = { t_vpd = NSP_ve_pad^NSP_sel_vehicle } check_variable = { NSP_rd_state^t_vpd = 3 } }
+	}
+}
+
+# 当前火箭能否从发射场 t_S 发射（只看「限定发射场」这一条）
+NSP_ve_site_ok = {
+	OR = {
+		check_variable = { NSP_ve_site^NSP_sel_vehicle < 0 }
+		check_variable = { NSP_ve_site^NSP_sel_vehicle = t_S }
+	}
+}
+
+# ===========================================================================
+# 2. 发射场
+# ===========================================================================
+
+# 小型发射场：Wallops / White Sands / Poker Flat（成本 +5%、工期 +15%）
+NSP_small_site = {
+	OR = {
+		check_variable = { NSP_sel_site = 2 }
+		check_variable = { NSP_sel_site = 4 }
+		check_variable = { NSP_sel_site = 7 }
+	}
+}
+
+# 发射场 t_S 是否被占用 —— 有进行中的本国任务从这里发射，且还没过「发射」阶段（NSP_m_phase 0..4）
+#   升空后（进入在轨阶段 5）或任务结束移出 NSP_missions，发射场就空出来。老任务没有发射场记录，不算占用。
+NSP_site_busy = {
+	# 改读 NSP_lsite_update 算好的数组 NSP_lsite_busy（旧写法用 any_of，没有任务时也会判成占用）
+	check_variable = { NSP_lsite_busy^num > t_S }
+	check_variable = { NSP_lsite_busy^t_S = 1 }
+}
+
+# 发射场 t_S 能否发射当前火箭：已解锁 / 小型发射场不能发重型 / 没被占用 / 火箭的限定发射场
+NSP_site_allowed = {
+	custom_trigger_tooltip = {   # 发射场要研发解锁
+		tooltip = NSP_TT_SITE_LOCKED
+		check_variable = { NSP_site_unl^t_S = 1 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_SITE_HEAVY
+		OR = {
+			check_variable = { NSP_ve_heavy^NSP_sel_vehicle = 0 }
+			AND = {
+				NOT = { check_variable = { t_S = 2 } }
+				NOT = { check_variable = { t_S = 4 } }
+				NOT = { check_variable = { t_S = 6 } }
+				NOT = { check_variable = { t_S = 7 } }
+			}
+		}
+	}
+	custom_trigger_tooltip = {   # 同一发射场同时只能准备一次发射
+		tooltip = NSP_TT_SITE_BUSY
+		NOT = { NSP_site_busy = yes }
+	}
+	custom_trigger_tooltip = {   # 土星 V 只能从肯尼迪航天中心（39 号发射复合体）发射
+		tooltip = NSP_TT_SITE_SATV
+		NSP_ve_site_ok = yes   # 火箭 site 表（本体：土星 V → 5 肯尼迪）
+	}
+}
+
+# 任务 nsp_pm 是否从卡角发射（CCAFS = 0 / KSC = 5，老任务没有发射场记录 = -1）
+NSP_pad_cape_mission = {
+	OR = {
+		NOT = { check_variable = { NSP_m_site^num > nsp_pm } }
+		check_variable = { NSP_m_site^nsp_pm = -1 }
+		check_variable = { NSP_m_site^nsp_pm = 0 }
+		check_variable = { NSP_m_site^nsp_pm = 5 }
+	}
+}
+
+# ===========================================================================
+# 3. 目的地
+# ===========================================================================
+
+# 目的地是否允许当前载荷
+NSP_dest_allowed = {
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_DEST_PAYLOAD
+		NSP_pl_dest_ok = yes   # 查许可表 NSP_pd_ok（本体规则在 NSP_api_base_tables，子模组用 NSP_reg_allow）
+	}
+	# 目的地需研发解锁
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_DEST_LOCKED
+		check_variable = { NSP_dest_unl^t_D = 1 }
+	}
+	# 载人（双子星 / 阿波罗）去地月转移需研发「月球返回再入」（研发 id 30）
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_CREW_TLI
+		NSP_dest_crew_ok = yes   # 目的地 crew_rd 表（本体：地月转移 / 月球轨道 → 研发 30）
+	}
+}
+
+# 目的地条件里「载荷能否前往」那一段（条件提示单独显示用；逻辑与 NSP_dest_allowed 第一段一致）
+NSP_dest_allowed_pl = {
+		NSP_pl_dest_ok = yes
+}
+
+# ===========================================================================
+# 4. 修正
+# ===========================================================================
+
+# 某修正当前是否已选
+NSP_mod_selected = {
+	check_variable = { NSP_mod_sel^t_M = 1 }
+}
+
+# 修正 t_M 是否适用于当前载荷 / 火箭（调色板与自动卸下共用）
+#   3 先进双子星改装：仅双子星；9/10/11：仅土星 IB / V；14/15/16/19：仅载人；18 RTG：仅无人
+NSP_mod_fits = {
+	if = {
+		limit = { check_variable = { t_M = 3 } }
+		check_variable = { NSP_sel_payload = 0 }
+	}
+	else_if = {
+		limit = { OR = { check_variable = { t_M = 9 } check_variable = { t_M = 10 } check_variable = { t_M = 11 } } }
+		OR = { check_variable = { NSP_sel_vehicle = 2 } check_variable = { NSP_sel_vehicle = 3 } }
+	}
+	else_if = {
+		limit = { OR = { check_variable = { t_M = 14 } check_variable = { t_M = 15 } check_variable = { t_M = 16 } check_variable = { t_M = 19 } } }
+		check_variable = { NSP_pl_crewed^NSP_sel_payload = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { t_M = 18 } }
+		NOT = { check_variable = { NSP_pl_crewed^NSP_sel_payload = 1 } }
+	}
+	else = { always = yes }
+}
+
+# 当前组合是否“要求”某修正（显示在 Required Modifiers）
+NSP_needs_mod = {
+	OR = {
+		AND = {
+			check_variable = { t_M = 3 }
+			check_variable = { NSP_sel_payload = 0 }
+			check_variable = { NSP_sel_dest = 4 }
+		}
+		AND = {
+			check_variable = { t_M = 4 }
+			check_variable = { NSP_sel_dest = 1 }
+		}
+	}
+}
+
+# 能否把修正放进槽位
+NSP_can_add_mod = {
+	set_temp_variable = { t_type = NSP_mod_type^t_M }
+	if = {
+		limit = { check_variable = { t_type = 0 } }
+		custom_trigger_tooltip = {
+			tooltip = NSP_TT_LSLOTS_FULL
+			check_variable = { NSP_launch_slots^num < NSP_calc_lslots }
+		}
+	}
+	else = {
+		custom_trigger_tooltip = {
+			tooltip = NSP_TT_PSLOTS_FULL
+			check_variable = { NSP_payload_slots^num < NSP_calc_pslots }
+		}
+	}
+}
+
+# ===========================================================================
+# 5. 规划器：载荷 / 火箭切换箭头、开始任务门槛
+# ===========================================================================
+
+# 规划器载荷 / 火箭左右箭头：该方向还有已解锁项才可点
+NSP_payload_has_prev = { any_of = { array = NSP_pl_unl value = t_u index = t_ui  check_variable = { t_ui < NSP_sel_payload } check_variable = { t_u = 1 } } }
+
+NSP_payload_has_next = { any_of = { array = NSP_pl_unl value = t_u index = t_ui  check_variable = { t_ui > NSP_sel_payload } check_variable = { t_u = 1 } } }
+
+NSP_vehicle_has_prev = { any_of = { array = NSP_ve_unl value = t_u index = t_ui  check_variable = { t_ui < NSP_sel_vehicle } check_variable = { t_u = 1 } } }
+
+NSP_vehicle_has_next = { any_of = { array = NSP_ve_unl value = t_u index = t_ui  check_variable = { t_ui > NSP_sel_vehicle } check_variable = { t_u = 1 } } }
+
+# START MISSION 门槛（tooltip 用 [!NSP_start_button_click_enabled] 展示）
+NSP_can_start_mission = {
+	# 载荷 / 火箭须已研发（老存档里可能停在未解锁项上）
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_PL_LOCKED
+		check_variable = { NSP_pl_unl^NSP_sel_payload = 1 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_VE_LOCKED
+		check_variable = { NSP_ve_unl^NSP_sel_vehicle = 1 }
+	}
+	# 土星 IB 需 LC-34/37（研发 52），土星 V 需 39 号发射复合体（研发 53）
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_PAD
+		NSP_ve_pad_ok = yes   # 火箭 pad_rd 表（本体：土星 IB → 52、土星 V → 53）
+	}
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_DEST_OK
+		set_temp_variable = { t_D = NSP_sel_dest }
+		NSP_dest_allowed = yes
+	}
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_SITE_OK
+		set_temp_variable = { t_S = NSP_sel_site }
+		NSP_site_allowed = yes
+	}
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_REQ_ALTER
+		set_temp_variable = { t_M = 3 }
+		OR = {
+			NOT = { NSP_needs_mod = yes }
+			NSP_mod_selected = yes
+		}
+	}
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_REQ_DOCK
+		set_temp_variable = { t_M = 4 }
+		OR = {
+			NOT = { NSP_needs_mod = yes }
+			NSP_mod_selected = yes
+		}
+	}
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_MARGIN
+		NOT = { check_variable = { NSP_calc_margin < 0 } }
+	}
+	custom_trigger_tooltip = {
+		tooltip = NSP_TT_BUDGET
+		NOT = { check_variable = { NSP_calc_left < 0 } }
+	}
+}
+
+# ===========================================================================
+# 6. 主页：Mission Control 卡片、计划页签、太阳系命中块
+# ===========================================================================
+
+# Mission Control 条目：图标帧、进度条帧（写临时变量，供 properties 读取）
+NSP_calc_mission_frames = {
+	set_temp_variable = { t_p = NSP_m_payload^v }
+	set_temp_variable = { t_icon = NSP_pl_icon^t_p }
+	# 本体载荷 0..11 一种一帧（帧 = id + 1）；API 登记的 12+ 仍读 NSP_pl_icon
+	if = { limit = { check_variable = { t_p < 12 } check_variable = { t_p > -1 } } set_temp_variable = { t_icon = t_p } add_to_temp_variable = { t_icon = 1 } }
+	if = { limit = { check_variable = { t_icon < 1 } } set_temp_variable = { t_icon = 11 } }
+	if = { limit = { check_variable = { t_icon > 12 } } set_temp_variable = { t_icon = 11 } }
+	set_temp_variable = { t_done = NSP_m_total^v }
+	subtract_from_temp_variable = { t_done = NSP_m_total_left^v }
+	set_temp_variable = { t_bar = t_done }
+	multiply_temp_variable = { t_bar = 20 }
+	set_temp_variable = { t_tot = NSP_m_total^v }
+	if = { limit = { check_variable = { t_tot < 1 } } set_temp_variable = { t_tot = 1 } }
+	divide_temp_variable = { t_bar = t_tot }
+	round_temp_variable = t_bar
+	add_to_temp_variable = { t_bar = 1 }
+	if = { limit = { check_variable = { t_bar < 1 } } set_temp_variable = { t_bar = 1 } }
+	if = { limit = { check_variable = { t_bar > 21 } } set_temp_variable = { t_bar = 21 } }
+}
+
+# ---- 计划页签条目（调用前 set_temp_variable = { t_v = v }）----
+# 帧 t_ptf = 图标*2+1（选中 +1）；图标 0 锁 / 1 ? / 2 ‹ / 3 › / 4+p 计划 p（未解锁的计划显示锁）
+NSP_ptab_frame = {
+	set_temp_variable = { t_pti = 0 }
+	if = { limit = { check_variable = { t_v = -1 } } set_temp_variable = { t_pti = 1 } }
+	if = { limit = { check_variable = { t_v = -3 } } set_temp_variable = { t_pti = 2 } }
+	if = { limit = { check_variable = { t_v = -4 } } set_temp_variable = { t_pti = 3 } }
+	if = {
+		limit = { check_variable = { t_v > -1 } }
+		if = { limit = { check_variable = { NSP_prog_unlocked^t_v = 1 } } set_temp_variable = { t_pti = t_v } add_to_temp_variable = { t_pti = 4 } }
+	}
+	set_temp_variable = { t_ptf = t_pti } multiply_temp_variable = { t_ptf = 2 } add_to_temp_variable = { t_ptf = 1 }
+	if = {
+		limit = { check_variable = { t_v > -1 } }
+		if = { limit = { check_variable = { NSP_program = t_v } } add_to_temp_variable = { t_ptf = 1 } }
+	}
+	always = yes
+}
+
+NSP_ptab_enabled = {
+	set_temp_variable = { t_pe = 0 }
+	if = {
+		limit = { check_variable = { t_v > -1 } }
+		if = { limit = { check_variable = { NSP_prog_unlocked^t_v = 1 } } set_temp_variable = { t_pe = 1 } }
+	}
+	if = { limit = { check_variable = { t_v = -3 } check_variable = { NSP_prog_page > 0 } } set_temp_variable = { t_pe = 1 } }
+	set_temp_variable = { t_lp = NSP_prog_pages } subtract_from_temp_variable = { t_lp = 1 }
+	if = { limit = { check_variable = { t_v = -4 } check_variable = { NSP_prog_page < t_lp } } set_temp_variable = { t_pe = 1 } }
+	check_variable = { t_pe = 1 }
+}
+
+NSP_ptab_is_done = {
+	set_temp_variable = { t_pd = 0 }
+	if = {
+		limit = { check_variable = { t_v > -1 } }
+		set_temp_variable = { t_oa = t_v } multiply_temp_variable = { t_oa = 2 }
+		set_temp_variable = { t_ob = t_oa } add_to_temp_variable = { t_ob = 1 }
+		if = {
+			limit = { NOT = { check_variable = { NSP_obj_prog^t_oa < NSP_obj_req^t_oa } } NOT = { check_variable = { NSP_obj_prog^t_ob < NSP_obj_req^t_ob } } }
+			set_temp_variable = { t_pd = 1 }
+		}
+	}
+	check_variable = { t_pd = 1 }
+}
+
+# 太阳系视图里轨道命中块的可见条件（NSP_00_home_guis.txt 末尾 814 项共用）
+NSP_ss_hit_visible = {
+	check_variable = { NSP_view = 2 }
+	NOT = { check_variable = { NSP_fmode = 1 } }
+}
+
+# ===========================================================================
+# 7. 研发
+# ===========================================================================
+
+NSP_rd_can_start = {
+	check_variable = { NSP_rd_sel_reason = 2 }
+}
+

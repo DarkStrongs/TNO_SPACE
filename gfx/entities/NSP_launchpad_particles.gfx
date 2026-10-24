@@ -1,0 +1,18 @@
+# r45 发射架粒子声明（照 MD gfx/entities/MD_particles.gfx）
+objectTypes = {
+	pdxparticle = { name = "NSP_pad_flame_particle"      type = "NSP_pad_flame_asset"      scale = 1.0 }
+	pdxparticle = { name = "NSP_pad_smoke_L_particle"    type = "NSP_pad_smoke_L_asset"    scale = 1.0 }
+	pdxparticle = { name = "NSP_pad_smoke_R_particle"    type = "NSP_pad_smoke_R_asset"    scale = 1.0 }
+	pdxparticle = { name = "NSP_pad_smoke_C_particle"    type = "NSP_pad_smoke_C_asset"    scale = 1.0 }
+	pdxparticle = { name = "NSP_pad_trail_particle"      type = "NSP_pad_trail_asset"      scale = 1.0 }
+	pdxparticle = { name = "NSP_pad_vent_particle"       type = "NSP_pad_vent_asset"       scale = 1.0 }
+	pdxparticle = { name = "NSP_pad_vent_short_particle" type = "NSP_pad_vent_short_asset" scale = 1.0 }
+	pdxparticle = { name = "NSP_pad_flame_air_particle" type = "NSP_pad_flame_air_asset" scale = 1.0 }   # r48
+	pdxparticle = { name = "NSP_pad_flame_padx_particle" type = "NSP_pad_flame_padx_asset" scale = 1.0 }   # r48
+	pdxparticle = { name = "NSP_pad_trail_air_particle" type = "NSP_pad_trail_air_asset" scale = 1.0 }   # r48
+	pdxparticle = { name = "NSP_pad_fireball_particle" type = "NSP_pad_fireball_asset" scale = 1.0 }   # r48
+	pdxparticle = { name = "NSP_pad_boomsmoke_particle" type = "NSP_pad_boomsmoke_asset" scale = 1.0 }   # r48
+	pdxparticle = { name = "NSP_pad_debris_particle" type = "NSP_pad_debris_asset" scale = 1.0 }   # r48
+	pdxparticle = { name = "NSP_pad_fire_particle" type = "NSP_pad_fire_asset" scale = 1.0 }   # r48
+	pdxparticle = { name = "NSP_pad_firesmoke_particle" type = "NSP_pad_firesmoke_asset" scale = 1.0 }   # r48
+}

@@ -1,0 +1,78 @@
+# 聚焦视图 tooltip：按 NSP_focus（1 水星 .. 8 海王星）选行星（work/tt/add_body_tt.py 生成）
+defined_text = {
+	name = GetNSPFocusTT
+	text = { trigger = { check_variable = { NSP_focus = 1 } } localization_key = NSP_TT_F_MERCURY }
+	text = { trigger = { check_variable = { NSP_focus = 2 } } localization_key = NSP_TT_F_VENUS }
+	text = { trigger = { check_variable = { NSP_focus = 3 } } localization_key = NSP_TT_F_EARTH }
+	text = { trigger = { check_variable = { NSP_focus = 4 } } localization_key = NSP_TT_F_MARS }
+	text = { trigger = { check_variable = { NSP_focus = 5 } } localization_key = NSP_TT_F_JUPITER }
+	text = { trigger = { check_variable = { NSP_focus = 6 } } localization_key = NSP_TT_F_SATURN }
+	text = { trigger = { check_variable = { NSP_focus = 7 } } localization_key = NSP_TT_F_URANUS }
+	text = { trigger = { check_variable = { NSP_focus = 8 } } localization_key = NSP_TT_F_NEPTUNE }
+	text = { localization_key = NSP_TT_F_EARTH }
+}
+
+# 延迟层（pdx_tooltip_delayed）
+defined_text = {
+	name = GetNSPFocusTTD
+	text = { trigger = { check_variable = { NSP_focus = 1 } } localization_key = NSP_TT_F_MERCURY_D }
+	text = { trigger = { check_variable = { NSP_focus = 2 } } localization_key = NSP_TT_F_VENUS_D }
+	text = { trigger = { check_variable = { NSP_focus = 3 } } localization_key = NSP_TT_F_EARTH_D }
+	text = { trigger = { check_variable = { NSP_focus = 4 } } localization_key = NSP_TT_F_MARS_D }
+	text = { trigger = { check_variable = { NSP_focus = 5 } } localization_key = NSP_TT_F_JUPITER_D }
+	text = { trigger = { check_variable = { NSP_focus = 6 } } localization_key = NSP_TT_F_SATURN_D }
+	text = { trigger = { check_variable = { NSP_focus = 7 } } localization_key = NSP_TT_F_URANUS_D }
+	text = { trigger = { check_variable = { NSP_focus = 8 } } localization_key = NSP_TT_F_NEPTUNE_D }
+	text = { localization_key = NSP_TT_F_EARTH_D }
+}
+# 卫星 tooltip：NSP_sat_s_m^i = 0 → 调试卫星；否则读 NSP_sat_s_*^i
+defined_text = { name = GetNSPSatTT0 text = { trigger = { check_variable = { NSP_sat_s_m^0 = 0 } } localization_key = NSP_SAT_TT_DBG } text = { localization_key = NSP_SAT_TT_REAL_0 } }
+defined_text = { name = GetNSPSatPL0 text = { localization_key = "NSP_PL_NAME_[?NSP_sat_s_pl^0]" } }
+defined_text = { name = GetNSPSatDE0 text = { localization_key = "NSP_DEST_[?NSP_sat_s_dest^0]" } }
+defined_text = { name = GetNSPSatVE0 text = { trigger = { check_variable = { NSP_sat_s_veh^0 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_VE_NAME_[?NSP_sat_s_veh^0]" } }
+defined_text = { name = GetNSPSatSI0 text = { trigger = { check_variable = { NSP_sat_s_site^0 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_SITE_[?NSP_sat_s_site^0]" } }
+defined_text = { name = GetNSPSatTT1 text = { trigger = { check_variable = { NSP_sat_s_m^1 = 0 } } localization_key = NSP_SAT_TT_DBG } text = { localization_key = NSP_SAT_TT_REAL_1 } }
+defined_text = { name = GetNSPSatPL1 text = { localization_key = "NSP_PL_NAME_[?NSP_sat_s_pl^1]" } }
+defined_text = { name = GetNSPSatDE1 text = { localization_key = "NSP_DEST_[?NSP_sat_s_dest^1]" } }
+defined_text = { name = GetNSPSatVE1 text = { trigger = { check_variable = { NSP_sat_s_veh^1 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_VE_NAME_[?NSP_sat_s_veh^1]" } }
+defined_text = { name = GetNSPSatSI1 text = { trigger = { check_variable = { NSP_sat_s_site^1 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_SITE_[?NSP_sat_s_site^1]" } }
+defined_text = { name = GetNSPSatTT2 text = { trigger = { check_variable = { NSP_sat_s_m^2 = 0 } } localization_key = NSP_SAT_TT_DBG } text = { localization_key = NSP_SAT_TT_REAL_2 } }
+defined_text = { name = GetNSPSatPL2 text = { localization_key = "NSP_PL_NAME_[?NSP_sat_s_pl^2]" } }
+defined_text = { name = GetNSPSatDE2 text = { localization_key = "NSP_DEST_[?NSP_sat_s_dest^2]" } }
+defined_text = { name = GetNSPSatVE2 text = { trigger = { check_variable = { NSP_sat_s_veh^2 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_VE_NAME_[?NSP_sat_s_veh^2]" } }
+defined_text = { name = GetNSPSatSI2 text = { trigger = { check_variable = { NSP_sat_s_site^2 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_SITE_[?NSP_sat_s_site^2]" } }
+defined_text = { name = GetNSPSatTT3 text = { trigger = { check_variable = { NSP_sat_s_m^3 = 0 } } localization_key = NSP_SAT_TT_DBG } text = { localization_key = NSP_SAT_TT_REAL_3 } }
+defined_text = { name = GetNSPSatPL3 text = { localization_key = "NSP_PL_NAME_[?NSP_sat_s_pl^3]" } }
+defined_text = { name = GetNSPSatDE3 text = { localization_key = "NSP_DEST_[?NSP_sat_s_dest^3]" } }
+defined_text = { name = GetNSPSatVE3 text = { trigger = { check_variable = { NSP_sat_s_veh^3 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_VE_NAME_[?NSP_sat_s_veh^3]" } }
+defined_text = { name = GetNSPSatSI3 text = { trigger = { check_variable = { NSP_sat_s_site^3 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_SITE_[?NSP_sat_s_site^3]" } }
+defined_text = { name = GetNSPSatTT4 text = { trigger = { check_variable = { NSP_sat_s_m^4 = 0 } } localization_key = NSP_SAT_TT_DBG } text = { localization_key = NSP_SAT_TT_REAL_4 } }
+defined_text = { name = GetNSPSatPL4 text = { localization_key = "NSP_PL_NAME_[?NSP_sat_s_pl^4]" } }
+defined_text = { name = GetNSPSatDE4 text = { localization_key = "NSP_DEST_[?NSP_sat_s_dest^4]" } }
+defined_text = { name = GetNSPSatVE4 text = { trigger = { check_variable = { NSP_sat_s_veh^4 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_VE_NAME_[?NSP_sat_s_veh^4]" } }
+defined_text = { name = GetNSPSatSI4 text = { trigger = { check_variable = { NSP_sat_s_site^4 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_SITE_[?NSP_sat_s_site^4]" } }
+defined_text = { name = GetNSPSatTT5 text = { trigger = { check_variable = { NSP_sat_s_m^5 = 0 } } localization_key = NSP_SAT_TT_DBG } text = { localization_key = NSP_SAT_TT_REAL_5 } }
+defined_text = { name = GetNSPSatPL5 text = { localization_key = "NSP_PL_NAME_[?NSP_sat_s_pl^5]" } }
+defined_text = { name = GetNSPSatDE5 text = { localization_key = "NSP_DEST_[?NSP_sat_s_dest^5]" } }
+defined_text = { name = GetNSPSatVE5 text = { trigger = { check_variable = { NSP_sat_s_veh^5 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_VE_NAME_[?NSP_sat_s_veh^5]" } }
+defined_text = { name = GetNSPSatSI5 text = { trigger = { check_variable = { NSP_sat_s_site^5 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_SITE_[?NSP_sat_s_site^5]" } }
+defined_text = { name = GetNSPSatTT6 text = { trigger = { check_variable = { NSP_sat_s_m^6 = 0 } } localization_key = NSP_SAT_TT_DBG } text = { localization_key = NSP_SAT_TT_REAL_6 } }
+defined_text = { name = GetNSPSatPL6 text = { localization_key = "NSP_PL_NAME_[?NSP_sat_s_pl^6]" } }
+defined_text = { name = GetNSPSatDE6 text = { localization_key = "NSP_DEST_[?NSP_sat_s_dest^6]" } }
+defined_text = { name = GetNSPSatVE6 text = { trigger = { check_variable = { NSP_sat_s_veh^6 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_VE_NAME_[?NSP_sat_s_veh^6]" } }
+defined_text = { name = GetNSPSatSI6 text = { trigger = { check_variable = { NSP_sat_s_site^6 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_SITE_[?NSP_sat_s_site^6]" } }
+defined_text = { name = GetNSPSatTT7 text = { trigger = { check_variable = { NSP_sat_s_m^7 = 0 } } localization_key = NSP_SAT_TT_DBG } text = { localization_key = NSP_SAT_TT_REAL_7 } }
+defined_text = { name = GetNSPSatPL7 text = { localization_key = "NSP_PL_NAME_[?NSP_sat_s_pl^7]" } }
+defined_text = { name = GetNSPSatDE7 text = { localization_key = "NSP_DEST_[?NSP_sat_s_dest^7]" } }
+defined_text = { name = GetNSPSatVE7 text = { trigger = { check_variable = { NSP_sat_s_veh^7 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_VE_NAME_[?NSP_sat_s_veh^7]" } }
+defined_text = { name = GetNSPSatSI7 text = { trigger = { check_variable = { NSP_sat_s_site^7 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_SITE_[?NSP_sat_s_site^7]" } }
+defined_text = { name = GetNSPSatTT8 text = { trigger = { check_variable = { NSP_sat_s_m^8 = 0 } } localization_key = NSP_SAT_TT_DBG } text = { localization_key = NSP_SAT_TT_REAL_8 } }
+defined_text = { name = GetNSPSatPL8 text = { localization_key = "NSP_PL_NAME_[?NSP_sat_s_pl^8]" } }
+defined_text = { name = GetNSPSatDE8 text = { localization_key = "NSP_DEST_[?NSP_sat_s_dest^8]" } }
+defined_text = { name = GetNSPSatVE8 text = { trigger = { check_variable = { NSP_sat_s_veh^8 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_VE_NAME_[?NSP_sat_s_veh^8]" } }
+defined_text = { name = GetNSPSatSI8 text = { trigger = { check_variable = { NSP_sat_s_site^8 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_SITE_[?NSP_sat_s_site^8]" } }
+defined_text = { name = GetNSPSatTT9 text = { trigger = { check_variable = { NSP_sat_s_m^9 = 0 } } localization_key = NSP_SAT_TT_DBG } text = { localization_key = NSP_SAT_TT_REAL_9 } }
+defined_text = { name = GetNSPSatPL9 text = { localization_key = "NSP_PL_NAME_[?NSP_sat_s_pl^9]" } }
+defined_text = { name = GetNSPSatDE9 text = { localization_key = "NSP_DEST_[?NSP_sat_s_dest^9]" } }
+defined_text = { name = GetNSPSatVE9 text = { trigger = { check_variable = { NSP_sat_s_veh^9 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_VE_NAME_[?NSP_sat_s_veh^9]" } }
+defined_text = { name = GetNSPSatSI9 text = { trigger = { check_variable = { NSP_sat_s_site^9 < 0 } } localization_key = NSP_SAT_UNKNOWN } text = { localization_key = "NSP_SITE_[?NSP_sat_s_site^9]" } }

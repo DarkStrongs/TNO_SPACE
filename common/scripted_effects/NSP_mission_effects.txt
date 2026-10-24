@@ -1,0 +1,994 @@
+#############################################################################
+#  NSP_mission_effects.txt：任务：任务从创建到结束的全流程、结果事件队列、计划与目标、历史档案、卫星、宇航员与乘组、局长特质。
+#
+#  目录
+#    1. 任务生命周期：NSP_start_mission、NSP_preroll_mission、NSP_advance_mission、NSP_resolve_mission、NSP_resolve_return、NSP_apply_objectives、NSP_hist_stamp
+#    2. 结果事件队列（一次弹一个）：NSP_evq_push、NSP_evq_show、NSP_evq_pop、NSP_evq_tick、NSP_evq_xp_preview
+#    3. 计划与目标：NSP_programs_date_check、NSP_program_unlock、NSP_programs_objectives
+#    4. 历史档案（1957–1961 史实发射）：NSP_hist_archive_init、NSP_hist_arch_one
+#    5. 卫星：NSP_sat_init、NSP_sat_sync、NSP_sat_add、NSP_sat_sub、NSP_sat_on_success、NSP_sat_select
+#    6. 宇航员与乘组：NSP_astro_init、NSP_astro_date_check、NSP_crew_pad、NSP_crew_paused_refresh、NSP_crew_request、NSP_crew_begin、NSP_crew_fire、NSP_crew_watchdog、NSP_crew_pick_cands、NSP_crew_assign、NSP_crew_assign_do、NSP_crew_next_seat、NSP_crew_gui_open、NSP_crew_gui_build、NSP_crew_gui_add_bonus、NSP_crew_gui_pick、NSP_crew_gui_confirm、NSP_crew_gui_confirm_ai、NSP_crew_release、NSP_crew_release_one
+#    7. 局长特质：NSP_dir_income、NSP_dir_cost、NSP_dir_rel
+#  模组整体结构、数据流、「新增 X 要改哪里」见 documentation/CODE_MAP.md。
+#############################################################################
+
+# ===========================================================================
+# 1. 任务生命周期
+# ===========================================================================
+
+NSP_start_mission = {
+	if = {
+		limit = { NSP_can_start_mission = yes }
+		set_temp_variable = { p = NSP_sel_payload }
+		set_temp_variable = { nsp_mid = NSP_mission_count }
+		add_to_variable = { NSP_mission_count = 1 }
+
+		add_to_array = { NSP_m_payload = p }
+		add_to_array = { NSP_m_num = NSP_pl_next^p }
+		add_to_array = { NSP_m_dest = NSP_sel_dest }
+		add_to_array = { NSP_m_phase = 0 }
+		add_to_array = { NSP_m_phase_left = NSP_calc_phase_days^0 }
+		add_to_array = { NSP_m_total = NSP_calc_total_days }
+		add_to_array = { NSP_m_total_left = NSP_calc_total_days }
+		add_to_array = { NSP_m_time_mult = NSP_calc_time_mult }
+		add_to_array = { NSP_m_rel = NSP_calc_rel_final }
+		add_to_array = { NSP_m_dock = NSP_mod_sel^4 }
+		add_to_array = { NSP_m_eva = NSP_mod_sel^5 }
+		# 任务的火箭 / 发射场（卫星 tooltip 用）（数组先补齐到 nsp_mid）
+		while_loop_effect = { limit = { check_variable = { NSP_m_veh^num < nsp_mid } } add_to_array = { NSP_m_veh = -1 } }
+		while_loop_effect = { limit = { check_variable = { NSP_m_site^num < nsp_mid } } add_to_array = { NSP_m_site = -1 } }
+		add_to_array = { NSP_m_veh = NSP_sel_vehicle }
+		add_to_array = { NSP_m_site = NSP_sel_site }
+		NSP_crew_pad = yes   # 乘组 / 返程可靠性数组
+		set_variable = { NSP_m_crewed^nsp_mid = NSP_pl_crewed^p }
+		set_temp_variable = { nsp_rr = 100 }
+		subtract_from_temp_variable = { nsp_rr = NSP_calc_rel_payload }
+		divide_temp_variable = { nsp_rr = 5 }
+		set_variable = { NSP_m_rrel^nsp_mid = 100 }
+		subtract_from_variable = { NSP_m_rrel^nsp_mid = nsp_rr }
+		add_to_array = { NSP_missions = nsp_mid }
+		NSP_newest_mid_update = yes
+		NSP_lsite_update = yes
+
+		subtract_from_variable = { NSP_space_budget = NSP_calc_cost }
+		add_to_variable = { NSP_pl_next^p = 1 }
+		# 事件接口给「下一次任务」的加成已用掉
+		set_variable = { NSP_ev_next_rel = 0 }
+		set_variable = { NSP_ev_next_cost = 0 }
+
+		NSP_reset_planner = yes
+		NSP_close_planner = yes
+	}
+}
+
+# 预掷成败。NSP_m_roll = 0..99；NSP_m_fkind：0 成功，3 台上爆炸，4 空中爆炸，5 入轨后失败（无地图动画）
+# 失败中 25% 台上爆炸、35% 空中爆炸、40% 入轨后失败
+NSP_preroll_mission = {
+	while_loop_effect = { limit = { check_variable = { NSP_m_roll^num < nsp_mid } } add_to_array = { NSP_m_roll = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_m_fkind^num < nsp_mid } } add_to_array = { NSP_m_fkind = 0 } }
+	if = { limit = { check_variable = { NSP_m_roll^num = nsp_mid } } add_to_array = { NSP_m_roll = -1 } }
+	if = { limit = { check_variable = { NSP_m_fkind^num = nsp_mid } } add_to_array = { NSP_m_fkind = 0 } }
+	set_temp_variable_to_random = { var = nsp_r min = 0 max = 100 }
+	round_temp_variable = nsp_r
+	if = { limit = { check_variable = { nsp_r > 99 } } set_temp_variable = { nsp_r = 99 } }
+	set_variable = { NSP_m_roll^nsp_mid = nsp_r }
+	set_variable = { NSP_m_fkind^nsp_mid = 0 }
+	if = {
+		limit = { NOT = { check_variable = { nsp_r < NSP_m_rel^nsp_mid } } }
+		set_temp_variable_to_random = { var = nsp_k min = 0 max = 100 }
+		if = { limit = { check_variable = { nsp_k < 25 } } set_variable = { NSP_m_fkind^nsp_mid = 3 } }
+		else_if = { limit = { check_variable = { nsp_k < 60 } } set_variable = { NSP_m_fkind^nsp_mid = 4 } }
+		else = { set_variable = { NSP_m_fkind^nsp_mid = 5 } }
+	}
+	log = "NSP preroll: mission [?nsp_mid] roll [?nsp_r] rel [?NSP_m_rel^nsp_mid] kind [?NSP_m_fkind^nsp_mid]"
+}
+
+NSP_advance_mission = {
+	set_temp_variable = { nsp_mid = NSP_arg_mid }
+	# 乘组选拔期间（任务在 NSP_crew_queue 里、停在「乘组」阶段）倒计时暂停：先加 1 天再照常扣 1 天
+	if = {
+		limit = { is_in_array = { array = NSP_crew_queue value = nsp_mid } check_variable = { NSP_m_phase^nsp_mid = 4 } }
+		add_to_variable = { NSP_m_phase_left^nsp_mid = 1 }
+		add_to_variable = { NSP_m_total_left^nsp_mid = 1 }
+	}
+	subtract_from_variable = { NSP_m_phase_left^nsp_mid = 1 }   # 每日结算（原每周 -7）
+	subtract_from_variable = { NSP_m_total_left^nsp_mid = 1 }
+	if = { limit = { check_variable = { NSP_m_total_left^nsp_mid < 0 } } set_variable = { NSP_m_total_left^nsp_mid = 0 } }
+	if = { limit = { check_variable = { NSP_m_total_left^nsp_mid > 99999 } } set_variable = { NSP_m_total_left^nsp_mid = 99999 } }
+	if = {
+		limit = { NOT = { check_variable = { NSP_m_phase_left^nsp_mid > 0 } } }
+		add_to_variable = { NSP_m_phase^nsp_mid = 1 }
+		set_temp_variable = { ph = NSP_m_phase^nsp_mid }
+		# 4 乘组 / 7 返程只给载人任务；无人任务跳过
+		set_temp_variable = { nsp_pm = NSP_m_payload^nsp_mid }
+		set_temp_variable = { nsp_crewed = 0 }
+		if = { limit = { check_variable = { NSP_pl_crewed^nsp_pm = 1 } } set_temp_variable = { nsp_crewed = 1 } }
+		if = { limit = { check_variable = { nsp_crewed = 0 } OR = { check_variable = { ph = 4 } check_variable = { ph = 7 } } } add_to_variable = { NSP_m_phase^nsp_mid = 1 } add_to_temp_variable = { ph = 1 } }
+		set_temp_variable = { nsp_end = 0 }
+		# 乘组没选完（任务仍在 NSP_crew_queue）就停在「乘组」阶段，每天重查，不发射
+		if = {
+			limit = { check_variable = { ph = 5 } check_variable = { nsp_crewed = 1 } is_in_array = { array = NSP_crew_queue value = nsp_mid } }
+			set_variable = { NSP_m_phase^nsp_mid = 4 }
+			set_variable = { NSP_m_phase_left^nsp_mid = 1 }
+			add_to_variable = { NSP_m_total_left^nsp_mid = 1 }
+			set_temp_variable = { ph = -1 }
+			set_temp_variable = { nsp_end = 1 }
+		}
+		# 「发射」结束 → 判定发射（沿用预掷）：台上 / 空中爆炸 → 发射失败 nsp.5 并结束；否则发射成功 nsp.4，进入在轨
+		if = {
+			limit = { check_variable = { ph = 6 } }
+			set_temp_variable = { nsp_fk = 0 }
+			if = { limit = { check_variable = { NSP_m_fkind^num > nsp_mid } } set_temp_variable = { nsp_fk = NSP_m_fkind^nsp_mid } }
+			if = {
+				limit = { OR = { check_variable = { nsp_fk = 3 } check_variable = { nsp_fk = 4 } } }
+				set_variable = { NSP_m_phase^nsp_mid = 8 }
+				add_to_array = { NSP_done_tmp = nsp_mid }
+				NSP_resolve_mission = yes   # 失败分支按 fkind 弹 nsp.5
+				set_temp_variable = { nsp_end = 1 }
+			}
+			else = {
+				set_temp_variable = { nsp_qk = 4 } set_temp_variable = { nsp_qm = nsp_mid } NSP_evq_push = yes   # 入队
+			}
+		}
+		# 载人任务「在轨」结束：主任务失败 → 直接结束（nsp.2），成功 → 进入返程
+		if = {
+			limit = { check_variable = { ph = 7 } }
+			set_temp_variable = { nsp_mr = 0 }
+			if = { limit = { check_variable = { NSP_m_roll^num > nsp_mid } } set_temp_variable = { nsp_mr = NSP_m_roll^nsp_mid } }
+			# 载人任务在轨失败不再直接结束——弹 nsp.6（任务失败、乘组紧急返程），照常进入返程，返程再判定乘组生死
+			if = {
+				limit = { NOT = { check_variable = { nsp_mr < NSP_m_rel^nsp_mid } } }
+				set_temp_variable = { nsp_qk = 6 } set_temp_variable = { nsp_qm = nsp_mid } NSP_evq_push = yes   # 入队
+			}
+		}
+		if = {
+			limit = { check_variable = { nsp_end = 0 } check_variable = { ph > 7 } }
+			set_temp_variable = { nsp_end = 1 }
+			add_to_array = { NSP_done_tmp = nsp_mid }
+			if = {
+				limit = { always = yes }
+				if = { limit = { check_variable = { nsp_crewed = 1 } } NSP_resolve_return = yes }
+				else = { NSP_resolve_mission = yes }
+			}
+		}
+		if = { limit = { check_variable = { nsp_end = 0 } check_variable = { ph = 4 } } NSP_crew_request = yes }   # 审查：国际任务不选美国乘组   # 选乘组（nsp.40）
+		if = { limit = { check_variable = { nsp_end = 1 } } }
+		else = {
+			set_temp_variable = { nl = NSP_phase_base^ph }
+			multiply_temp_variable = { nl = NSP_m_time_mult^nsp_mid }
+			round_temp_variable = nl
+			add_to_variable = { NSP_m_phase_left^nsp_mid = nl }   # 保留上周溢出天数
+		}
+		# 进入「发射」阶段时预先掷出成败，地图发射台据此播放发射 / 台上爆炸 / 空中爆炸
+		if = { limit = { check_variable = { ph = 5 } } NSP_preroll_mission = yes NSP_launch_camera = yes }   # 发射阶段 4 → 5；镜头拉到发射台
+	}
+}
+
+NSP_resolve_mission = {
+	# NSP_last_mission 改由事件队列 NSP_evq_show / NSP_evq_pop 设置，这里不再写
+	set_temp_variable_to_random = { var = roll min = 0 max = 100 }
+	# 发射时已预掷过的任务沿用那次结果，保证地图动画与结局一致
+	if = {
+		limit = { check_variable = { NSP_m_roll^num > nsp_mid } check_variable = { NSP_m_roll^nsp_mid > -1 } }
+		set_temp_variable = { roll = NSP_m_roll^nsp_mid }
+	}
+	add_to_array = { array = NSP_missions_hist value = nsp_mid index = 0 }   # 历史页签（最新在前）
+	NSP_hist_stamp = yes   # 结束日期
+	if = {
+		limit = { check_variable = { roll < NSP_m_rel^nsp_mid } }
+		set_temp_variable = { nsp_qk = 1 } set_temp_variable = { nsp_qm = nsp_mid } NSP_evq_push = yes   # 入队
+	}
+	else = {
+		add_to_array = { NSP_hist_fail = nsp_mid }   # 失败记录
+		# 发射阶段失败（3 台上 / 4 空中爆炸）→ nsp.5「发射失败」；入轨后失败 → nsp.2
+		set_temp_variable = { nsp_fk = 0 }
+		if = { limit = { check_variable = { NSP_m_fkind^num > nsp_mid } } set_temp_variable = { nsp_fk = NSP_m_fkind^nsp_mid } }
+		set_temp_variable = { nsp_qk = 2 }
+		if = { limit = { OR = { check_variable = { nsp_fk = 3 } check_variable = { nsp_fk = 4 } } } set_temp_variable = { nsp_qk = 5 } }
+		set_temp_variable = { nsp_qm = nsp_mid } NSP_evq_push = yes   # 入队
+	}
+	# 主任务结局时乘组中止返回（生还、不计飞行次数）；载人成功的任务不会走到这里（转入返程）
+	set_temp_variable = { nsp_alive = 1 } set_temp_variable = { nsp_flown = 0 } NSP_crew_release = yes
+}
+
+# 返程结局（载人且主任务成功的任务，在「返程」阶段结束时调用；nsp_mid 已设）
+NSP_resolve_return = {
+	# NSP_last_mission 改由事件队列设置
+	add_to_array = { array = NSP_missions_hist value = nsp_mid index = 0 }
+	NSP_hist_stamp = yes   # 结束日期
+	set_temp_variable_to_random = { var = nsp_rr min = 0 max = 100 }
+	# 主任务（在轨）是否成功沿用预掷
+	set_temp_variable = { nsp_mok = 1 }
+	if = {
+		limit = { check_variable = { NSP_m_roll^num > nsp_mid } NOT = { check_variable = { NSP_m_roll^nsp_mid < NSP_m_rel^nsp_mid } } }
+		set_temp_variable = { nsp_mok = 0 }
+		add_to_array = { NSP_hist_fail = nsp_mid }
+	}
+	if = {
+		limit = { check_variable = { nsp_rr < NSP_m_rrel^nsp_mid } }
+		set_temp_variable = { nsp_alive = 1 } set_temp_variable = { nsp_flown = 1 } NSP_crew_release = yes
+		set_temp_variable = { nsp_qk = 1 }
+		if = { limit = { check_variable = { nsp_mok = 0 } } set_temp_variable = { nsp_qk = 7 } }   # 任务失败但乘组平安返回
+		set_temp_variable = { nsp_qm = nsp_mid } NSP_evq_push = yes   # 入队
+	}
+	else = {
+		if = { limit = { check_variable = { nsp_mok = 1 } } add_to_array = { NSP_hist_fail = nsp_mid } }
+		set_temp_variable = { nsp_alive = 0 } set_temp_variable = { nsp_flown = 0 } NSP_crew_release = yes
+		set_temp_variable = { nsp_qk = 3 } set_temp_variable = { nsp_qm = nsp_mid } NSP_evq_push = yes   # 入队
+	}
+}
+
+NSP_apply_objectives = {
+	set_temp_variable = { nsp_mid = NSP_last_mission }
+	set_temp_variable = { p = NSP_m_payload^nsp_mid }
+	set_temp_variable = { d = NSP_m_dest^nsp_mid }
+	# Gemini：LEO / MOL 2
+	if = {
+		limit = { check_variable = { p = 0 } OR = { check_variable = { d = 0 } check_variable = { d = 1 } } }
+		if = { limit = { check_variable = { NSP_m_dock^nsp_mid = 1 } } add_to_variable = { NSP_obj_prog^2 = 1 } }
+		if = { limit = { check_variable = { NSP_m_eva^nsp_mid = 1 } }  add_to_variable = { NSP_obj_prog^3 = 1 } }
+	}
+	# Apollo
+	if = {
+		limit = { check_variable = { p = 1 } }
+		if = { limit = { check_variable = { d = 4 } } add_to_variable = { NSP_obj_prog^4 = 1 } }
+		if = { limit = { check_variable = { d = 0 } } add_to_variable = { NSP_obj_prog^5 = 1 } }
+	}
+	NSP_rdfx_success = yes   # 登月舱 / 月球车 成功奖励
+	NSP_sat_on_success = yes   # 聚焦视图卫星轨道
+	NSP_programs_objectives = yes   # 新计划 3..6 的目标
+	# 水星飞船：近地轨道 → 水星目标 B（载人近地轨道飞行）
+	if = {
+		limit = { check_variable = { p = 4 } check_variable = { d = 0 } }
+		add_to_variable = { NSP_obj_prog^1 = 1 }
+	}
+	for_loop_effect = {
+		start = 0 end = 14 value = k   # 6 → 14（7 个计划 × 2 目标）
+		if = { limit = { check_variable = { NSP_obj_prog^k < 0 } } set_variable = { NSP_obj_prog^k = 0 } }
+		if = { limit = { check_variable = { NSP_obj_prog^k > NSP_obj_req^k } } set_variable = { NSP_obj_prog^k = NSP_obj_req^k } }
+	}
+	NSP_hook_on_success = yes   # 扩展槽钩子（p / d / nsp_mid 可读）
+}
+
+# 历史结束日期：任务进入 NSP_missions_hist 时调用（nsp_mid 已设），记录 global.date 到 NSP_m_end
+#  按任务 id 补齐长度，0 = 没有记录（开局档案）。显示：[?NSP_m_end^v.GetDateStringNoHour]
+NSP_hist_stamp = {
+	while_loop_effect = { limit = { NOT = { check_variable = { NSP_m_end^num > nsp_mid } } } add_to_array = { NSP_m_end = 0 } }
+	set_variable = { NSP_m_end^nsp_mid = global.date }
+}
+
+# ===========================================================================
+# 2. 结果事件队列（一次弹一个）
+# ===========================================================================
+
+#############################################################################
+# 任务结果事件队列（nsp.1 .. nsp.7）
+#  · 原来每个结果都直接 country_event，事件的描述和选项效果读全局 NSP_last_mission / NSP_evt_mid。
+#    同一天或几天内有多个任务出结果时，后一个会覆盖前一个：描述显示错任务，选项奖励（经验 / 目标）记到错任务上；
+#    同一事件同时多次待处理、或在自己的选项里再触发自己，也可能被引擎丢掉。
+#  · 现在：结果入队 NSP_evq_mid / NSP_evq_kind，一次只弹一个；点完选项出队，第二天的每日结算再弹下一个。
+#  · 调用：set_temp_variable = { nsp_qk = 事件号 1..7 } set_temp_variable = { nsp_qm = 任务 id } NSP_evq_push = yes
+#  ⭐ 文件名以 NSP_aa_ 开头，排在所有调用者之前；这里不调用其他文件的效果
+#############################################################################
+NSP_evq_push = {
+	add_to_array = { NSP_evq_mid = nsp_qm }
+	add_to_array = { NSP_evq_kind = nsp_qk }
+	if = { limit = { NOT = { check_variable = { NSP_evq_open = 1 } } } NSP_evq_show = yes }
+}
+
+# 弹出队首：把任务 id 写进 NSP_last_mission / NSP_evt_mid（描述和选项都读它们），再按类型触发
+NSP_evq_show = {
+	if = {
+		limit = { check_variable = { NSP_evq_mid^num > 0 } }
+		set_variable = { NSP_evq_open = 1 }
+		set_variable = { NSP_evq_wait = 0 }
+		set_variable = { NSP_last_mission = NSP_evq_mid^0 }
+		set_variable = { NSP_evt_mid = NSP_evq_mid^0 }
+		set_temp_variable = { nsp_qk = NSP_evq_kind^0 }
+		if = { limit = { check_variable = { nsp_qk = 1 } } NSP_evq_xp_preview = yes country_event = { id = nsp.1 } }
+		else_if = { limit = { check_variable = { nsp_qk = 2 } } country_event = { id = nsp.2 } }
+		else_if = { limit = { check_variable = { nsp_qk = 3 } } country_event = { id = nsp.3 } }
+		else_if = { limit = { check_variable = { nsp_qk = 4 } } country_event = { id = nsp.4 } }
+		else_if = { limit = { check_variable = { nsp_qk = 5 } } country_event = { id = nsp.5 } }
+		else_if = { limit = { check_variable = { nsp_qk = 6 } } country_event = { id = nsp.6 } }
+		else = { country_event = { id = nsp.7 } }
+	}
+}
+
+# 选项开头调用：把全局指针拉回本事件的任务（防止期间被别的结果改掉），再出队
+NSP_evq_pop = {
+	if = {
+		limit = { check_variable = { NSP_evq_mid^num > 0 } }
+		set_variable = { NSP_last_mission = NSP_evq_mid^0 }
+		set_variable = { NSP_evt_mid = NSP_evq_mid^0 }
+		remove_from_array = { array = NSP_evq_mid index = 0 }
+		remove_from_array = { array = NSP_evq_kind index = 0 }
+	}
+	set_variable = { NSP_evq_open = 0 }
+}
+
+# 每日（NSP_daily_tick）：没有事件开着就弹下一个；开着超过 20 天（事件丢失 / 读档）就重弹队首
+NSP_evq_tick = {
+	if = {
+		limit = { check_variable = { NSP_evq_mid^num > 0 } }
+		if = {
+			limit = { NOT = { check_variable = { NSP_evq_open = 1 } } }
+			NSP_evq_show = yes
+		}
+		else = {
+			add_to_variable = { NSP_evq_wait = 1 }
+			if = { limit = { check_variable = { NSP_evq_wait > 20 } } NSP_evq_show = yes }
+		}
+	}
+	else = { set_variable = { NSP_evq_open = 0 } }
+}
+
+# nsp.1 选项提示用：预算这次成功会给多少太空科技经验（与 NSP_tier_mission_xp 同一公式，改一处要同步改另一处）
+NSP_evq_xp_preview = {
+	set_temp_variable = { nsp_lm = NSP_last_mission }
+	set_variable = { NSP_evt_xp = 5 }
+	if = {
+		limit = { check_variable = { NSP_m_dest^num > nsp_lm } }
+		set_temp_variable = { nsp_d = NSP_m_dest^nsp_lm }
+		if = { limit = { check_variable = { NSP_dest_xp^num > nsp_d } } set_variable = { NSP_evt_xp = NSP_dest_xp^nsp_d } }   # 经验改查 NSP_dest_xp
+	}
+	if = {
+		limit = { check_variable = { NSP_m_payload^num > nsp_lm } }
+		set_temp_variable = { nsp_p = NSP_m_payload^nsp_lm }
+		if = { limit = { check_variable = { NSP_pl_crewed^nsp_p = 1 } } add_to_variable = { NSP_evt_xp = 3 } }
+	}
+}
+
+# ===========================================================================
+# 3. 计划与目标
+# ===========================================================================
+
+#############################################################################
+# 新增计划 3..6（日期到了触发事件解锁）
+#  计划号 p → 目标 o = 2p / 2p+1；页签图标 4+p（nsp_program_tabs.dds 22 帧，tools/gen_prog_icons.py）
+#    3 应用卫星计划   1963.7.1   A(6)  2 次 Syncom 地球静止轨道      B(7)  2 次雨云号极地轨道
+#    4 勘测者计划     1964.6.1   A(8)  2 次勘测者号地月转移          B(9)  1 次水手号地月转移
+#    5 水手计划       1964.11.1  A(10) 1 次水手号逃逸地球            B(11) 3 次水手号任务（地月转移 / 逃逸地球）
+#    6 天空实验室计划 1966.1.1   A(12) 1 次天空实验室近地轨道        B(13) 3 次载人近地轨道任务
+#  ⭐ 文件名 NSP_programs_* 排在 NSP_space_effects 之前：NSP_init / NSP_daily_tick / NSP_apply_objectives 都能调用这里的 effect。
+#  ⭐ 新增计划：在 NSP_data_programs 里加两行目标、把计划数组长度 +1；日期检查按 flag 只发一次事件。
+#############################################################################
+
+# 日期检查（NSP_daily_tick 调用）。事件选项里才真正解锁
+NSP_programs_date_check = {
+	NSP_astro_date_check = yes   # 新一批宇航员入选
+	# 双子星 / 阿波罗也走日期事件（开局 1962.1.1 时都还没开始；阿波罗按用户要求推迟一年到 1962.5.25）
+	if = { limit = { date > 1962.1.11 NOT = { has_country_flag = NSP_prog_evt_1 } } set_country_flag = NSP_prog_evt_1 if = { limit = { check_variable = { NSP_prog_unlocked^1 = 0 } } country_event = { id = nsp.34 } } }
+	if = { limit = { date > 1962.5.24 NOT = { has_country_flag = NSP_prog_evt_2 } } set_country_flag = NSP_prog_evt_2 if = { limit = { check_variable = { NSP_prog_unlocked^2 = 0 } } country_event = { id = nsp.35 } } }
+	if = { limit = { date > 1963.6.30 NOT = { has_country_flag = NSP_prog_evt_3 } } set_country_flag = NSP_prog_evt_3 country_event = { id = nsp.30 } }
+	if = { limit = { date > 1964.5.31 NOT = { has_country_flag = NSP_prog_evt_4 } } set_country_flag = NSP_prog_evt_4 country_event = { id = nsp.31 } }
+	if = { limit = { date > 1964.10.31 NOT = { has_country_flag = NSP_prog_evt_5 } } set_country_flag = NSP_prog_evt_5 country_event = { id = nsp.32 } }
+	if = { limit = { date > 1965.12.31 NOT = { has_country_flag = NSP_prog_evt_6 } } set_country_flag = NSP_prog_evt_6 country_event = { id = nsp.33 } }
+}
+
+# 事件选项调用：调用前 set_variable = { NSP_arg_prog = p }
+NSP_program_unlock = {
+	set_temp_variable = { t_pp = NSP_arg_prog }
+	set_variable = { NSP_prog_unlocked^t_pp = 1 }
+	set_variable = { NSP_program = t_pp }
+	add_to_variable = { NSP_popularity = 2 }
+	clamp_variable = { var = NSP_popularity min = 0 max = 100 }
+	# 翻到新计划所在页：分页时每页 5 格，页码 = p / 5 取整（≤ 7 格时 NSP_prog_tabs_build 会归 0）
+	set_variable = { NSP_prog_page = 0 }
+	if = { limit = { check_variable = { t_pp > 4 } } set_variable = { NSP_prog_page = 1 } }
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+# 任务成功时推进新计划目标（NSP_apply_objectives 调用；未解锁的计划不计）
+NSP_programs_objectives = {
+	set_temp_variable = { nsp_mid = NSP_last_mission }
+	set_temp_variable = { p = NSP_m_payload^nsp_mid }
+	set_temp_variable = { d = NSP_m_dest^nsp_mid }
+	if = {
+		limit = { check_variable = { NSP_prog_unlocked^3 = 1 } }
+		if = { limit = { check_variable = { p = 5 } check_variable = { d = 2 } } add_to_variable = { NSP_obj_prog^6 = 1 } }
+		if = { limit = { check_variable = { p = 6 } check_variable = { d = 3 } } add_to_variable = { NSP_obj_prog^7 = 1 } }
+	}
+	if = {
+		limit = { check_variable = { NSP_prog_unlocked^4 = 1 } }
+		if = { limit = { check_variable = { p = 7 } check_variable = { d = 4 } } add_to_variable = { NSP_obj_prog^8 = 1 } }
+		if = { limit = { check_variable = { p = 3 } check_variable = { d = 4 } } add_to_variable = { NSP_obj_prog^9 = 1 } }
+	}
+	if = {
+		limit = { check_variable = { NSP_prog_unlocked^5 = 1 } }
+		if = { limit = { check_variable = { p = 3 } check_variable = { d = 5 } } add_to_variable = { NSP_obj_prog^10 = 1 } }
+		if = { limit = { check_variable = { p = 3 } } add_to_variable = { NSP_obj_prog^11 = 1 } }
+	}
+	if = {
+		limit = { check_variable = { NSP_prog_unlocked^6 = 1 } }
+		if = { limit = { check_variable = { p = 8 } check_variable = { d = 0 } } add_to_variable = { NSP_obj_prog^12 = 1 } }
+		if = {
+			limit = {
+				check_variable = { d = 0 }
+				OR = { check_variable = { p = 0 } check_variable = { p = 1 } check_variable = { p = 4 } check_variable = { p = 8 } }
+			}
+			add_to_variable = { NSP_obj_prog^13 = 1 }
+		}
+	}
+}
+
+# ===========================================================================
+# 4. 历史档案（1957–1961 史实发射）
+# ===========================================================================
+
+NSP_hist_archive_init = {
+	clear_array = NSP_m_arch
+	clear_array = NSP_m_crew0 clear_array = NSP_m_crew1 clear_array = NSP_m_crew2 clear_array = NSP_m_rrel clear_array = NSP_m_kia clear_array = NSP_m_crewed
+	clear_array = NSP_m_roll clear_array = NSP_m_fkind
+	set_temp_variable = { a_k = 0 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 9 } set_temp_variable = { a_v = 8 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 0 } NSP_hist_arch_one = yes   # 1957.12.06 Vanguard TV-3
+	set_temp_variable = { a_k = 1 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 9 } set_temp_variable = { a_v = 8 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 1 } NSP_hist_arch_one = yes   # 1958.01.31 Explorer 1
+	set_temp_variable = { a_k = 2 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 9 } set_temp_variable = { a_v = 8 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 1 } NSP_hist_arch_one = yes   # 1958.03.17 Vanguard 1
+	set_temp_variable = { a_k = 3 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 9 } set_temp_variable = { a_v = 8 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 4 } set_temp_variable = { a_ok = 0 } NSP_hist_arch_one = yes   # 1958.10.11 Pioneer 1
+	set_temp_variable = { a_k = 4 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 9 } set_temp_variable = { a_v = 5 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 1 } NSP_hist_arch_one = yes   # 1958.12.18 Project SCORE
+	set_temp_variable = { a_k = 5 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 9 } set_temp_variable = { a_v = 8 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 5 } set_temp_variable = { a_ok = 1 } NSP_hist_arch_one = yes   # 1959.03.03 Pioneer 4
+	set_temp_variable = { a_k = 6 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 9 } set_temp_variable = { a_v = 8 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 1 } NSP_hist_arch_one = yes   # 1959.08.07 Explorer 6
+	set_temp_variable = { a_k = 7 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 2 } set_temp_variable = { a_v = 8 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 1 } NSP_hist_arch_one = yes   # 1960.04.01 TIROS 1
+	set_temp_variable = { a_k = 8 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 9 } set_temp_variable = { a_v = 8 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 1 } NSP_hist_arch_one = yes   # 1960.08.12 Echo 1A
+	set_temp_variable = { a_k = 9 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 4 } set_temp_variable = { a_v = 4 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 0 } NSP_hist_arch_one = yes   # 1960.11.21 Mercury-Redstone 1
+	set_temp_variable = { a_k = 10 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 4 } set_temp_variable = { a_v = 4 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 1 } NSP_hist_arch_one = yes   # 1961.01.31 Mercury-Redstone 2
+	set_temp_variable = { a_k = 11 } set_temp_variable = { a_p = 4 } set_temp_variable = { a_v = 4 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 1 } set_temp_variable = { a_c = 0 } NSP_hist_arch_one = yes   # 1961.05.05 Freedom 7（谢泼德）
+	set_temp_variable = { a_k = 12 } set_temp_variable = { a_p = 4 } set_temp_variable = { a_v = 4 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 1 } set_temp_variable = { a_c = 1 } NSP_hist_arch_one = yes   # 1961.07.21 Liberty Bell 7（格里索姆）
+	set_temp_variable = { a_k = 13 } set_temp_variable = { a_c = -1 } set_temp_variable = { a_p = 4 } set_temp_variable = { a_v = 5 } set_temp_variable = { a_s = 0 } set_temp_variable = { a_d = 0 } set_temp_variable = { a_ok = 1 } NSP_hist_arch_one = yes   # 1961.11.29 Mercury-Atlas 5
+}
+
+#############################################################################
+# 开局历史档案：1957.12–1961.11 美国的 14 次发射，写进「历史」页签（最新在前）
+#  ⭐ 由 NSP_init 在清空任务数组后调用；只占任务 id 0..13，不进 NSP_missions，不影响发射场 / 卫星 / 目标 / 经验
+#  ⭐ NSP_m_arch^v = 档案号 k（-1 或越界 = 普通任务）→ 名称 / 日期目的地 / tooltip 走 NSP_ARCH_*_k
+#############################################################################
+# 调用前 set_temp_variable：a_c 乘组 0 号席宇航员（-1 无），a_k 档案号 a_p 载荷 a_v 火箭 a_s 发射场 a_d 目的地 a_ok 1 成功 / 0 失败
+NSP_hist_arch_one = {
+	set_temp_variable = { nsp_mid = NSP_mission_count }
+	add_to_variable = { NSP_mission_count = 1 }
+	add_to_array = { NSP_m_payload = a_p } add_to_array = { NSP_m_num = 0 } add_to_array = { NSP_m_dest = a_d } add_to_array = { NSP_m_phase = 8 }
+	add_to_array = { NSP_m_phase_left = 0 } add_to_array = { NSP_m_total = 1 } add_to_array = { NSP_m_total_left = 0 } add_to_array = { NSP_m_time_mult = 1 }
+	add_to_array = { NSP_m_rel = 100 } add_to_array = { NSP_m_dock = 0 } add_to_array = { NSP_m_eva = 0 }
+	add_to_array = { NSP_m_veh = a_v } add_to_array = { NSP_m_site = a_s }
+	NSP_crew_pad = yes
+	set_variable = { NSP_m_crew0^nsp_mid = a_c }   # 档案里的载人飞行写上宇航员（-1 = 无）
+	add_to_array = { NSP_m_roll = -1 } add_to_array = { NSP_m_fkind = 0 }
+	while_loop_effect = { limit = { check_variable = { NSP_m_arch^num < nsp_mid } } add_to_array = { NSP_m_arch = -1 } }
+	add_to_array = { NSP_m_arch = a_k }
+	add_to_array = { array = NSP_missions_hist value = nsp_mid index = 0 }
+	if = { limit = { check_variable = { a_ok = 0 } } add_to_array = { NSP_hist_fail = nsp_mid } }
+}
+
+# ===========================================================================
+# 5. 卫星
+# ===========================================================================
+
+#############################################################################
+#  行星聚焦视图的卫星轨道
+#  NSP_sat_cnt^p（p = 1..8：水 金 地 火 木 土 天 海；9 = 月球；0 号不用）= 已成功送达的卫星数，上限 10。
+#  显示改为每条轨道一个单帧按钮 NSP_sat_<p>_<i>，click_enabled = 卫星数 >= i（旧的多帧 + properties frame 实机不显示）。
+#  图：gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_<i>.dds / nsp3d_sats_<i>.dds（work/r58/sat_art.py），shader nsp_sat_bt.shader。
+#############################################################################
+
+# 建卫星数组（长度够了什么也不做）
+NSP_sat_init = {
+	while_loop_effect = { limit = { check_variable = { NSP_sat_cnt^num < 10 } } add_to_array = { NSP_sat_cnt = 0 } }
+	# NSP_sat_mid^(天体*10 + 槽位) = 任务 id + 1；0 = 调试添加
+	while_loop_effect = { limit = { check_variable = { NSP_sat_mid^num < 100 } } add_to_array = { NSP_sat_mid = 0 } }
+}
+
+# 刷新显示用变量 + dirty
+NSP_sat_sync = {
+	NSP_sat_init = yes
+	# 当前聚焦行星的计数（给文本框 [?NSP_sat_cur] 用）
+	set_variable = { NSP_sat_cur = 0 }
+	if = {
+		limit = { check_variable = { NSP_focus > 0 } check_variable = { NSP_focus < 9 } }
+		set_variable = { NSP_sat_cur = NSP_sat_cnt^NSP_focus }
+	}
+	set_variable = { NSP_sat_moon = NSP_sat_cnt^9 }
+	# 当前显示天体（月球视图 = 9，否则聚焦行星）的 10 颗卫星详情 → NSP_sat_s_*^i，给 tooltip 用
+	set_temp_variable = { t_B = 0 }
+	if = { limit = { check_variable = { NSP_view = 1 } } set_temp_variable = { t_B = 9 } }
+	else_if = { limit = { check_variable = { NSP_focus > 0 } check_variable = { NSP_focus < 9 } } set_temp_variable = { t_B = NSP_focus } }
+	clear_array = NSP_sat_s_m clear_array = NSP_sat_s_pl clear_array = NSP_sat_s_num clear_array = NSP_sat_s_dest
+	clear_array = NSP_sat_s_veh clear_array = NSP_sat_s_site clear_array = NSP_sat_s_rel
+	for_loop_effect = {
+		start = 0 end = 10 value = t_i
+		set_temp_variable = { t_ix = t_B }
+		multiply_temp_variable = { t_ix = 10 }
+		add_to_temp_variable = { t_ix = t_i }
+		set_temp_variable = { t_v = 0 }
+		if = { limit = { check_variable = { t_B > 0 } } set_temp_variable = { t_v = NSP_sat_mid^t_ix } }
+		set_temp_variable = { t_pl = 0 } set_temp_variable = { t_num = 0 } set_temp_variable = { t_de = 0 }
+		set_temp_variable = { t_ve = -1 } set_temp_variable = { t_si = -1 } set_temp_variable = { t_re = 0 }
+		if = {
+			limit = { check_variable = { t_v > 0 } }
+			set_temp_variable = { t_m = t_v }
+			subtract_from_temp_variable = { t_m = 1 }
+			set_temp_variable = { t_pl = NSP_m_payload^t_m }
+			set_temp_variable = { t_num = NSP_m_num^t_m }
+			set_temp_variable = { t_de = NSP_m_dest^t_m }
+			set_temp_variable = { t_re = NSP_m_rel^t_m }
+			if = { limit = { check_variable = { NSP_m_veh^num > t_m } } set_temp_variable = { t_ve = NSP_m_veh^t_m } }
+			if = { limit = { check_variable = { NSP_m_site^num > t_m } } set_temp_variable = { t_si = NSP_m_site^t_m } }
+		}
+		add_to_array = { NSP_sat_s_m = t_v } add_to_array = { NSP_sat_s_pl = t_pl } add_to_array = { NSP_sat_s_num = t_num }
+		add_to_array = { NSP_sat_s_dest = t_de } add_to_array = { NSP_sat_s_veh = t_ve } add_to_array = { NSP_sat_s_site = t_si }
+		add_to_array = { NSP_sat_s_rel = t_re }
+	}
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+# 调用前 set_temp_variable = { t_P = 行星 1..8 }
+NSP_sat_add = {
+	NSP_sat_init = yes
+	if = {
+		limit = { check_variable = { NSP_sat_cnt^t_P < 10 } }
+		# 记录这颗卫星来自哪次任务（t_SM = 任务 id + 1；调试按钮不设 → 0）
+		set_temp_variable = { t_ix = t_P }
+		multiply_temp_variable = { t_ix = 10 }
+		add_to_temp_variable = { t_ix = NSP_sat_cnt^t_P }
+		set_variable = { NSP_sat_mid^t_ix = t_SM }
+		add_to_variable = { NSP_sat_cnt^t_P = 1 }
+	}
+	NSP_sat_sync = yes
+}
+
+NSP_sat_sub = {
+	NSP_sat_init = yes
+	if = {
+		limit = { check_variable = { NSP_sat_cnt^t_P > 0 } }
+		subtract_from_variable = { NSP_sat_cnt^t_P = 1 }
+		# 被删掉的正好是选中的那颗 → 取消选中
+		set_temp_variable = { t_c = NSP_sat_cnt^t_P }
+		if = { limit = { check_variable = { NSP_sat_sel_b = t_P } NOT = { check_variable = { NSP_sat_sel < t_c } } } set_variable = { NSP_sat_sel = -1 } }
+	}
+	NSP_sat_sync = yes
+}
+
+# 任务成功（NSP_apply_objectives 里调用；p / d / nsp_mid 已设好）
+#   目的地 0..3（近地 / 交会 / 静止 / 极地）→ 地球
+#   目的地 4 地月转移 → 月球
+#   目的地 5 逃逸地球：水手号按序号奇数 → 金星、偶数 → 火星；其他载荷 → 火星
+#   木星以外目前没有对应目的地，只能用调试按钮加。
+#   上面的对应关系改成查 NSP_dest_body（-1 = 逃逸规则，-2 = 不显示），本体值见 NSP_api_base_tables。
+NSP_sat_on_success = {
+	set_temp_variable = { t_P = 0 }
+	set_temp_variable = { t_Pb = 3 }
+	if = { limit = { check_variable = { NSP_dest_body^num > d } } set_temp_variable = { t_Pb = NSP_dest_body^d } }   # 天体改查 NSP_dest_body
+	if = { limit = { NOT = { check_variable = { t_Pb < 0 } } } set_temp_variable = { t_P = t_Pb } }
+	else_if = {
+		limit = { check_variable = { t_Pb = -1 } }   # -1 = 逃逸地球（原目的地 5 的规则）
+		set_temp_variable = { t_P = 4 }
+		if = {
+			limit = { check_variable = { p = 3 } }
+			set_temp_variable = { t_odd = NSP_m_num^nsp_mid }
+			modulo_temp_variable = { t_odd = 2 }
+			if = { limit = { check_variable = { t_odd = 1 } } set_temp_variable = { t_P = 2 } }
+		}
+	}
+	set_temp_variable = { t_SM = nsp_mid }
+	add_to_temp_variable = { t_SM = 1 }
+	if = { limit = { check_variable = { t_P > 0 } } NSP_sat_add = yes }
+}
+
+# 点右侧卫星图标 → 显示 / 隐藏这颗卫星的轨道线（t_P = 天体，t_i = 槽位；再点一次取消）
+NSP_sat_select = {
+	if = {
+		limit = { check_variable = { NSP_sat_sel_b = t_P } check_variable = { NSP_sat_sel = t_i } }
+		set_variable = { NSP_sat_sel = -1 }
+	}
+	else = {
+		set_variable = { NSP_sat_sel = t_i }
+		set_variable = { NSP_sat_sel_b = t_P }
+	}
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+# ===========================================================================
+# 6. 宇航员与乘组
+# ===========================================================================
+
+#############################################################################
+# 乘组系统：载人任务（载荷 0 双子星 / 1 阿波罗 / 4 水星 / 8 天空实验室）多两个阶段
+#    阶段：0 规划 1 建造 2 验证 3 总装 4 乘组（仅载人）5 发射 6 在轨 7 返程（仅载人）8 已结束
+#  · 进入「乘组」阶段 → NSP_crew_request → 事件 nsp.40 逐席选人（每次 4 名随机候选，可换一批）
+#  · 「在轨」结束：先判主任务成败（沿用发射时预掷的 roll）；失败 → 照常 nsp.2，乘组安全返回
+#    成功的载人任务进入「返程」，结束时再掷返程可靠性 NSP_m_rrel：成功 nsp.1，失败 nsp.3（乘组遇难）
+#  · 返程可靠性 = 100 − (100 − 载荷可靠性) ÷ 5；每名宇航员每次飞行经验 +0.5（最多 +2），主任务和返程都加
+#  · 宇航员：NSP_astro_grp（批次）/ NSP_astro_st（0 待命 1 执行任务 2 遇难）/ NSP_astro_fl（飞行次数）
+#    批次 0 水星七人（开局可用）、1 新九人（1962.9.17）、2 第三批十四人（1963.10.18）
+#############################################################################
+NSP_astro_init = {
+	clear_array = NSP_astro_grp clear_array = NSP_astro_st clear_array = NSP_astro_fl
+	add_to_array = { NSP_astro_grp = 0 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 1 }   # 0 艾伦·谢泼德
+	add_to_array = { NSP_astro_grp = 0 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 1 }   # 1 格斯·格里索姆
+	add_to_array = { NSP_astro_grp = 0 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 2 约翰·格伦
+	add_to_array = { NSP_astro_grp = 0 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 3 斯科特·卡彭特
+	add_to_array = { NSP_astro_grp = 0 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 4 沃尔特·施艾拉
+	add_to_array = { NSP_astro_grp = 0 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 5 戈登·库珀
+	add_to_array = { NSP_astro_grp = 0 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 6 迪克·斯雷顿
+	add_to_array = { NSP_astro_grp = 1 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 7 尼尔·阿姆斯特朗
+	add_to_array = { NSP_astro_grp = 1 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 8 弗兰克·博尔曼
+	add_to_array = { NSP_astro_grp = 1 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 9 皮特·康拉德
+	add_to_array = { NSP_astro_grp = 1 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 10 吉姆·洛弗尔
+	add_to_array = { NSP_astro_grp = 1 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 11 吉姆·麦克迪维特
+	add_to_array = { NSP_astro_grp = 1 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 12 艾略特·西
+	add_to_array = { NSP_astro_grp = 1 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 13 汤姆·斯塔福德
+	add_to_array = { NSP_astro_grp = 1 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 14 埃德·怀特
+	add_to_array = { NSP_astro_grp = 1 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 15 约翰·杨
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 16 巴兹·奥尔德林
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 17 比尔·安德斯
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 18 查尔斯·巴塞特
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 19 艾伦·比恩
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 20 尤金·塞尔南
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 21 罗杰·查菲
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 22 迈克尔·柯林斯
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 23 沃尔特·坎宁安
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 24 唐·艾西尔
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 25 西奥多·弗里曼
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 26 迪克·戈登
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 27 拉塞尔·施韦卡特
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 28 戴维·斯科特
+	add_to_array = { NSP_astro_grp = 2 } add_to_array = { NSP_astro_st = 0 } add_to_array = { NSP_astro_fl = 0 }   # 29 克利夫顿·威廉姆斯
+	set_variable = { NSP_astro_open = 0 }
+	if = { limit = { date > 1962.9.16 } set_variable = { NSP_astro_open = 1 } }
+	if = { limit = { date > 1963.10.17 } set_variable = { NSP_astro_open = 2 } }
+	clear_array = NSP_crew_queue
+}
+
+# 每日：新一批宇航员入选（NSP_programs_date_check 调用）
+NSP_astro_date_check = {
+	if = { limit = { NOT = { has_variable = NSP_astro_open } } NSP_astro_init = yes }
+	if = { limit = { date > 1962.9.16 check_variable = { NSP_astro_open < 1 } } set_variable = { NSP_astro_open = 1 } }
+	if = { limit = { date > 1963.10.17 check_variable = { NSP_astro_open < 2 } } set_variable = { NSP_astro_open = 2 } }
+	NSP_crew_watchdog = yes
+}
+
+# 任务 nsp_mid 的乘组数组补齐（开任务 / 档案任务调用）
+NSP_crew_pad = {
+	while_loop_effect = { limit = { check_variable = { NSP_m_crew0^num < nsp_mid } } add_to_array = { NSP_m_crew0 = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_m_crew1^num < nsp_mid } } add_to_array = { NSP_m_crew1 = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_m_crew2^num < nsp_mid } } add_to_array = { NSP_m_crew2 = -1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_m_rrel^num < nsp_mid } } add_to_array = { NSP_m_rrel = 100 } }
+	if = { limit = { check_variable = { NSP_m_crew0^num = nsp_mid } } add_to_array = { NSP_m_crew0 = -1 } }
+	if = { limit = { check_variable = { NSP_m_crew1^num = nsp_mid } } add_to_array = { NSP_m_crew1 = -1 } }
+	if = { limit = { check_variable = { NSP_m_crew2^num = nsp_mid } } add_to_array = { NSP_m_crew2 = -1 } }
+	if = { limit = { check_variable = { NSP_m_rrel^num = nsp_mid } } add_to_array = { NSP_m_rrel = 100 } }
+	# 乘组遇难标记（1 = 本任务乘组遇难），历史 tooltip 用来把名字标红
+	while_loop_effect = { limit = { check_variable = { NSP_m_kia^num < nsp_mid } } add_to_array = { NSP_m_kia = 0 } }
+	if = { limit = { check_variable = { NSP_m_kia^num = nsp_mid } } add_to_array = { NSP_m_kia = 0 } }
+	# 是否载人（1 = 载人），事件接口提示用
+	while_loop_effect = { limit = { check_variable = { NSP_m_crewed^num < nsp_mid } } add_to_array = { NSP_m_crewed = 0 } }
+	if = { limit = { check_variable = { NSP_m_crewed^num = nsp_mid } } add_to_array = { NSP_m_crewed = 0 } }
+}
+
+# ===========================================================================
+# 乘组选拔独立窗口（interface/NSP_crew.gui · common/scripted_guis/NSP_09_crew_guis.txt）
+#   取代事件 nsp.40 / nsp.41：NSP_crew_fire 不再弹事件，改为打开窗口 NSP_crew_win
+#   ⭐ 选拔期间（任务在 NSP_crew_queue 里）该任务倒计时暂停：NSP_advance_mission 每天把扣掉的 1 天加回来，
+#     卡片读 NSP_m_paused 显示 §R暂停§!
+# ===========================================================================
+
+# 任务卡「暂停」标记：NSP_m_paused^任务 id = 1（在乘组队列里）/ 0
+NSP_crew_paused_refresh = {
+	set_temp_variable = { nsp_pn = NSP_m_payload^num }
+	while_loop_effect = { limit = { check_variable = { NSP_m_paused^num < nsp_pn } } add_to_array = { NSP_m_paused = 0 } }
+	for_each_loop = { array = NSP_m_paused index = nsp_pi value = nsp_pv  set_variable = { NSP_m_paused^nsp_pi = 0 } }
+	for_each_loop = {
+		array = NSP_crew_queue value = nsp_pq
+		if = { limit = { check_variable = { NSP_m_paused^num > nsp_pq } } set_variable = { NSP_m_paused^nsp_pq = 1 } }
+	}
+	if = { limit = { OR = { has_country_flag = NSP_home_open has_country_flag = NSP_crew_win } } add_to_variable = { NSP_dirty = 1 } }   # 只显示在任务卡上，窗口关着不刷
+}
+
+# 进入「乘组」阶段：排队，队首没在选就开始
+NSP_crew_request = {
+	if = { limit = { NOT = { has_variable = NSP_astro_open } } NSP_astro_init = yes }
+	add_to_array = { NSP_crew_queue = nsp_mid }
+	if = { limit = { check_variable = { NSP_crew_queue^num = 1 } } NSP_crew_begin = yes }
+	NSP_crew_paused_refresh = yes
+}
+
+NSP_crew_begin = {
+	set_variable = { NSP_crew_mid = NSP_crew_queue^0 }
+	set_temp_variable = { nsp_cm = NSP_crew_mid }
+	set_variable = { NSP_crew_pl = NSP_m_payload^nsp_cm }
+	set_variable = { NSP_crew_num = NSP_m_num^nsp_cm }
+	set_variable = { NSP_crew_seat = 0 }
+	clear_array = NSP_crew_cand
+	set_variable = { NSP_crew_seats = 1 }
+	if = { limit = { check_variable = { NSP_crew_pl = 0 } } set_variable = { NSP_crew_seats = 2 } }
+	if = { limit = { OR = { check_variable = { NSP_crew_pl = 1 } check_variable = { NSP_crew_pl = 8 } } } set_variable = { NSP_crew_seats = 3 } }
+	clr_country_flag = NSP_crew_win   # 换任务时强制按新任务重开窗口
+	NSP_crew_fire = yes
+}
+
+# 触发选人事件，nsp.40 / nsp.41 交替（同一事件在自己的选项里再触发自己会被引擎吞掉）
+# 不再弹事件 nsp.40 / nsp.41，改为打开独立窗口（已开着就不重置，避免看门狗清掉玩家已选的人）
+NSP_crew_fire = {
+	set_variable = { NSP_crew_idle = 0 }
+	if = { limit = { NOT = { has_country_flag = NSP_crew_win } } NSP_crew_gui_open = yes }
+	# AI：窗口那边已经选好，直接确认
+	if = { limit = { has_country_flag = NSP_crew_ai_pick } clr_country_flag = NSP_crew_ai_pick NSP_crew_gui_confirm_ai = yes }
+}
+
+# 看门狗（每日，NSP_astro_date_check 调用）：
+#   队首任务已不在进行中列表（被取消 / 已结算）→ 移出队列，接着处理下一个；
+#   队列非空但 15 天没弹出选人事件（事件被吞、读档丢失）→ 重弹当前这一席
+NSP_crew_watchdog = {
+	if = {
+		limit = { check_variable = { NSP_crew_queue^num > 0 } }
+		set_temp_variable = { nsp_qh = NSP_crew_queue^0 }
+		if = {
+			limit = { NOT = { is_in_array = { array = NSP_missions value = nsp_qh } } }
+			remove_from_array = { array = NSP_crew_queue index = 0 }
+			clr_country_flag = NSP_crew_win   # 队首任务没了，关窗
+			if = { limit = { check_variable = { NSP_crew_queue^num > 0 } } NSP_crew_begin = yes }
+			NSP_crew_paused_refresh = yes
+			add_to_variable = { NSP_dirty = 1 }   # 关窗要刷新（NSP_crew_paused_refresh 在窗口都关着时不刷）
+		}
+		else = {
+			# 队列里有任务但窗口没开（旧存档 / 读档）→ 直接打开，不用等 15 天
+			if = { limit = { is_ai = no NOT = { has_country_flag = NSP_crew_win } check_variable = { NSP_crew_mid = nsp_qh } } NSP_crew_fire = yes }
+			add_to_variable = { NSP_crew_idle = 1 }
+			# 重弹当前这一席（不从头开始，已选的人不重复上座、不重复加可靠性）
+			if = { limit = { check_variable = { NSP_crew_idle > 15 } NOT = { check_variable = { NSP_crew_mid = nsp_qh } } } NSP_crew_begin = yes }
+			else_if = { limit = { check_variable = { NSP_crew_idle > 15 } } NSP_crew_fire = yes }
+		}
+	}
+	else = { set_variable = { NSP_crew_idle = 0 } }
+}
+
+# nsp.40 immediate：从待命宇航员里随机抽最多 4 名候选
+NSP_crew_pick_cands = {
+	# 审查：「看看其他人选」先排除上一批候选；排除后没人再放回
+	clear_array = NSP_crew_pool
+	for_loop_effect = {
+		start = 0 end = 30 value = k
+		if = {
+			limit = { check_variable = { NSP_astro_st^k = 0 } NOT = { check_variable = { NSP_astro_grp^k > NSP_astro_open } } NOT = { is_in_array = { array = NSP_crew_cand value = k } } }
+			add_to_array = { NSP_crew_pool = k }
+		}
+	}
+	if = {
+		limit = { check_variable = { NSP_crew_pool^num < 1 } }
+		clear_array = NSP_crew_cand
+		for_loop_effect = {
+			start = 0 end = 30 value = k
+			if = {
+				limit = { check_variable = { NSP_astro_st^k = 0 } NOT = { check_variable = { NSP_astro_grp^k > NSP_astro_open } } }
+				add_to_array = { NSP_crew_pool = k }
+			}
+		}
+	}
+	set_variable = { NSP_crew_pool_n = NSP_crew_pool^num }
+	add_to_variable = { NSP_crew_pool_n = NSP_crew_cand^num }   # 总待命人数（含上一批）
+	clear_array = NSP_crew_cand clear_array = NSP_crew_cand_fl clear_array = NSP_crew_cand_bn
+	for_loop_effect = {
+		start = 0 end = 4 value = k
+		if = {
+			limit = { check_variable = { NSP_crew_pool^num > 0 } }
+			set_temp_variable_to_random = { var = nsp_r min = 0 max = 1 }
+			multiply_temp_variable = { nsp_r = NSP_crew_pool^num }
+			subtract_from_temp_variable = { nsp_r = 0.5 }
+			round_temp_variable = nsp_r
+			if = { limit = { check_variable = { nsp_r < 0 } } set_temp_variable = { nsp_r = 0 } }
+			set_temp_variable = { nsp_rmax = NSP_crew_pool^num }
+			subtract_from_temp_variable = { nsp_rmax = 1 }
+			if = { limit = { check_variable = { nsp_r > nsp_rmax } } set_temp_variable = { nsp_r = nsp_rmax } }
+			set_temp_variable = { nsp_a = NSP_crew_pool^nsp_r }
+			add_to_array = { NSP_crew_cand = nsp_a }
+			add_to_array = { NSP_crew_cand_fl = NSP_astro_fl^nsp_a }
+			# 选项提示用的经验加成 = min(飞行次数, 4) × 0.5
+			set_temp_variable = { nsp_bn = NSP_astro_fl^nsp_a }
+			if = { limit = { check_variable = { nsp_bn > 4 } } set_temp_variable = { nsp_bn = 4 } }
+			multiply_temp_variable = { nsp_bn = 0.5 }
+			add_to_array = { NSP_crew_cand_bn = nsp_bn }
+			remove_from_array = { array = NSP_crew_pool index = nsp_r }
+		}
+	}
+	set_variable = { NSP_crew_seat_disp = NSP_crew_seat }
+	add_to_variable = { NSP_crew_seat_disp = 1 }
+}
+
+# 选定宇航员（调用前 set_temp_variable = { nsp_a = 宇航员 id }）
+NSP_crew_assign = {
+	set_temp_variable = { nsp_mid = NSP_crew_mid }
+	NSP_crew_pad = yes
+	# 审查：任务已过乘组阶段（发射已预掷 / 已结算）就不再上人，防止可靠性和预掷不一致、宇航员永远卡在「执行任务」
+	if = {
+		limit = { check_variable = { NSP_m_phase^nsp_mid < 5 } }
+		NSP_crew_assign_do = yes
+	}
+	NSP_crew_next_seat = yes
+}
+
+NSP_crew_assign_do = {
+	set_variable = { NSP_astro_st^nsp_a = 1 }
+	if = { limit = { check_variable = { NSP_crew_seat = 0 } } set_variable = { NSP_m_crew0^nsp_mid = nsp_a } }
+	if = { limit = { check_variable = { NSP_crew_seat = 1 } } set_variable = { NSP_m_crew1^nsp_mid = nsp_a } }
+	if = { limit = { check_variable = { NSP_crew_seat = 2 } } set_variable = { NSP_m_crew2^nsp_mid = nsp_a } }
+	set_temp_variable = { nsp_xb = NSP_astro_fl^nsp_a }
+	if = { limit = { check_variable = { nsp_xb > 4 } } set_temp_variable = { nsp_xb = 4 } }
+	multiply_temp_variable = { nsp_xb = 0.5 }
+	add_to_variable = { NSP_m_rel^nsp_mid = nsp_xb }
+	add_to_variable = { NSP_m_rrel^nsp_mid = nsp_xb }
+	if = { limit = { check_variable = { NSP_m_rel^nsp_mid > 100 } } set_variable = { NSP_m_rel^nsp_mid = 100 } }
+	if = { limit = { check_variable = { NSP_m_rrel^nsp_mid > 100 } } set_variable = { NSP_m_rrel^nsp_mid = 100 } }
+}
+
+NSP_crew_next_seat = {
+	add_to_variable = { NSP_crew_seat = 1 }
+	clear_array = NSP_crew_cand
+	if = { limit = { check_variable = { NSP_crew_seat < NSP_crew_seats } } NSP_crew_fire = yes }
+	else = {
+		if = { limit = { check_variable = { NSP_crew_queue^num > 0 } } remove_from_array = { array = NSP_crew_queue index = 0 } }
+		if = { limit = { check_variable = { NSP_crew_queue^num > 0 } } NSP_crew_begin = yes }
+	}
+}
+
+# 打开窗口（座位清空）。AI 不用窗口：直接按顺序填满
+NSP_crew_gui_open = {
+	set_variable = { NSP_crew_sel0 = -1 }
+	set_variable = { NSP_crew_sel1 = -1 }
+	set_variable = { NSP_crew_sel2 = -1 }
+	NSP_crew_gui_build = yes
+	if = {
+		limit = { is_ai = yes }
+		if = { limit = { check_variable = { NSP_crew_list^num > 0 } } set_temp_variable = { nsp_a = NSP_crew_list^0 } NSP_crew_gui_pick = yes }
+		if = { limit = { check_variable = { NSP_crew_list^num > 0 } } set_temp_variable = { nsp_a = NSP_crew_list^0 } NSP_crew_gui_pick = yes }
+		if = { limit = { check_variable = { NSP_crew_list^num > 0 } } set_temp_variable = { nsp_a = NSP_crew_list^0 } NSP_crew_gui_pick = yes }
+		set_country_flag = NSP_crew_ai_pick
+	}
+	else = { set_country_flag = NSP_crew_win }
+	NSP_crew_paused_refresh = yes
+}
+
+# 重算窗口数据：待命列表、已上座人数、需要人数、经验加成、确定键帧
+NSP_crew_gui_build = {
+	if = { limit = { NOT = { has_variable = NSP_crew_sel0 } } set_variable = { NSP_crew_sel0 = -1 } }
+	if = { limit = { NOT = { has_variable = NSP_crew_sel1 } } set_variable = { NSP_crew_sel1 = -1 } }
+	if = { limit = { NOT = { has_variable = NSP_crew_sel2 } } set_variable = { NSP_crew_sel2 = -1 } }
+	# 座位数变少时清掉多余座位
+	if = { limit = { check_variable = { NSP_crew_seats < 2 } } set_variable = { NSP_crew_sel1 = -1 } }
+	if = { limit = { check_variable = { NSP_crew_seats < 3 } } set_variable = { NSP_crew_sel2 = -1 } }
+	clear_array = NSP_crew_list
+	for_loop_effect = {
+		start = 0 end = 30 value = k
+		if = {
+			limit = {
+				check_variable = { NSP_astro_st^k = 0 }
+				NOT = { check_variable = { NSP_astro_grp^k > NSP_astro_open } }
+				NOT = { check_variable = { NSP_crew_sel0 = k } }
+				NOT = { check_variable = { NSP_crew_sel1 = k } }
+				NOT = { check_variable = { NSP_crew_sel2 = k } }
+			}
+			add_to_array = { NSP_crew_list = k }
+		}
+	}
+	set_variable = { NSP_crew_filled = 0 }
+	set_variable = { NSP_crew_bonus = 0 }
+	if = { limit = { check_variable = { NSP_crew_sel0 > -1 } } add_to_variable = { NSP_crew_filled = 1 } set_temp_variable = { nsp_a = NSP_crew_sel0 } NSP_crew_gui_add_bonus = yes }
+	if = { limit = { check_variable = { NSP_crew_sel1 > -1 } } add_to_variable = { NSP_crew_filled = 1 } set_temp_variable = { nsp_a = NSP_crew_sel1 } NSP_crew_gui_add_bonus = yes }
+	if = { limit = { check_variable = { NSP_crew_sel2 > -1 } } add_to_variable = { NSP_crew_filled = 1 } set_temp_variable = { nsp_a = NSP_crew_sel2 } NSP_crew_gui_add_bonus = yes }
+	# 需要人数 = min(座位数, 已上座 + 待命)
+	set_variable = { NSP_crew_need = NSP_crew_list^num }
+	add_to_variable = { NSP_crew_need = NSP_crew_filled }
+	if = { limit = { check_variable = { NSP_crew_need > NSP_crew_seats } } set_variable = { NSP_crew_need = NSP_crew_seats } }
+	set_variable = { NSP_crew_avail = NSP_crew_list^num }
+	# 头像帧：1 空座 2 不适用 3.. = 宇航员 id + 3
+	set_variable = { NSP_crew_pf0 = 1 } set_variable = { NSP_crew_pf1 = 1 } set_variable = { NSP_crew_pf2 = 1 }
+	if = { limit = { check_variable = { NSP_crew_sel0 > -1 } } set_variable = { NSP_crew_pf0 = NSP_crew_sel0 } add_to_variable = { NSP_crew_pf0 = 3 } }
+	if = { limit = { check_variable = { NSP_crew_sel1 > -1 } } set_variable = { NSP_crew_pf1 = NSP_crew_sel1 } add_to_variable = { NSP_crew_pf1 = 3 } }
+	if = { limit = { check_variable = { NSP_crew_sel2 > -1 } } set_variable = { NSP_crew_pf2 = NSP_crew_sel2 } add_to_variable = { NSP_crew_pf2 = 3 } }
+	if = { limit = { check_variable = { NSP_crew_seats < 2 } } set_variable = { NSP_crew_pf1 = 2 } }
+	if = { limit = { check_variable = { NSP_crew_seats < 3 } } set_variable = { NSP_crew_pf2 = 2 } }
+	# 卡框帧（1 红 = 空/不适用，2 青 = 已选）+ 每座飞行次数
+	set_variable = { NSP_crew_cf0 = 1 } set_variable = { NSP_crew_fl0 = 0 }
+	if = { limit = { check_variable = { NSP_crew_sel0 > -1 } } set_variable = { NSP_crew_cf0 = 2 } set_temp_variable = { nsp_ci = NSP_crew_sel0 } set_variable = { NSP_crew_fl0 = NSP_astro_fl^nsp_ci } }
+	set_variable = { NSP_crew_cf1 = 1 } set_variable = { NSP_crew_fl1 = 0 }
+	if = { limit = { check_variable = { NSP_crew_sel1 > -1 } } set_variable = { NSP_crew_cf1 = 2 } set_temp_variable = { nsp_ci = NSP_crew_sel1 } set_variable = { NSP_crew_fl1 = NSP_astro_fl^nsp_ci } }
+	set_variable = { NSP_crew_cf2 = 1 } set_variable = { NSP_crew_fl2 = 0 }
+	if = { limit = { check_variable = { NSP_crew_sel2 > -1 } } set_variable = { NSP_crew_cf2 = 2 } set_temp_variable = { nsp_ci = NSP_crew_sel2 } set_variable = { NSP_crew_fl2 = NSP_astro_fl^nsp_ci } }
+	# 座位分段条帧：座位 1 → 1+已选，2 → 3+已选，3 → 6+已选
+	set_variable = { NSP_crew_bar_frame = NSP_crew_filled }
+	if = { limit = { check_variable = { NSP_crew_seats = 1 } } add_to_variable = { NSP_crew_bar_frame = 1 } }
+	if = { limit = { check_variable = { NSP_crew_seats = 2 } } add_to_variable = { NSP_crew_bar_frame = 3 } }
+	if = { limit = { check_variable = { NSP_crew_seats = 3 } } add_to_variable = { NSP_crew_bar_frame = 6 } }
+	set_variable = { NSP_crew_ok_frame = 2 }
+	if = { limit = { NOT = { check_variable = { NSP_crew_filled < NSP_crew_need } } } set_variable = { NSP_crew_ok_frame = 1 } }
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+# 单人经验加成 = min(飞行次数, 4) × 0.5（调用前 nsp_a = 宇航员 id）
+NSP_crew_gui_add_bonus = {
+	set_temp_variable = { nsp_xb = NSP_astro_fl^nsp_a }
+	if = { limit = { check_variable = { nsp_xb > 4 } } set_temp_variable = { nsp_xb = 4 } }
+	multiply_temp_variable = { nsp_xb = 0.5 }
+	add_to_variable = { NSP_crew_bonus = nsp_xb }
+}
+
+# 点待命宇航员：填进第一个空座位（座位满了不动）。调用前 nsp_a = 宇航员 id
+NSP_crew_gui_pick = {
+	if = { limit = { check_variable = { NSP_crew_sel0 < 0 } } set_variable = { NSP_crew_sel0 = nsp_a } }
+	else_if = { limit = { check_variable = { NSP_crew_seats > 1 } check_variable = { NSP_crew_sel1 < 0 } } set_variable = { NSP_crew_sel1 = nsp_a } }
+	else_if = { limit = { check_variable = { NSP_crew_seats > 2 } check_variable = { NSP_crew_sel2 < 0 } } set_variable = { NSP_crew_sel2 = nsp_a } }
+	NSP_crew_gui_build = yes
+}
+
+# 窗口「确定」——座位上的人一次性上任务，然后处理队列里的下一个任务
+NSP_crew_gui_confirm = {
+	NSP_crew_gui_build = yes
+	if = {
+		limit = { NOT = { check_variable = { NSP_crew_filled < NSP_crew_need } } }
+		clr_country_flag = NSP_crew_win
+		NSP_crew_gui_confirm_ai = yes
+	}
+}
+
+# 不检查人数、直接上座（AI 和确定键共用）
+NSP_crew_gui_confirm_ai = {
+	set_temp_variable = { nsp_mid = NSP_crew_mid }
+	NSP_crew_pad = yes
+	if = {
+		limit = { check_variable = { NSP_m_phase^nsp_mid < 5 } }   # 同 NSP_crew_assign 的审查：过了乘组阶段不再上人
+		if = { limit = { check_variable = { NSP_crew_sel0 > -1 } } set_variable = { NSP_crew_seat = 0 } set_temp_variable = { nsp_a = NSP_crew_sel0 } NSP_crew_assign_do = yes }
+		if = { limit = { check_variable = { NSP_crew_sel1 > -1 } } set_variable = { NSP_crew_seat = 1 } set_temp_variable = { nsp_a = NSP_crew_sel1 } NSP_crew_assign_do = yes }
+		if = { limit = { check_variable = { NSP_crew_sel2 > -1 } } set_variable = { NSP_crew_seat = 2 } set_temp_variable = { nsp_a = NSP_crew_sel2 } NSP_crew_assign_do = yes }
+	}
+	set_variable = { NSP_crew_sel0 = -1 }
+	set_variable = { NSP_crew_sel1 = -1 }
+	set_variable = { NSP_crew_sel2 = -1 }
+	if = { limit = { check_variable = { NSP_crew_queue^num > 0 } } remove_from_array = { array = NSP_crew_queue index = 0 } }
+	if = { limit = { check_variable = { NSP_crew_queue^num > 0 } } NSP_crew_begin = yes }
+	NSP_crew_paused_refresh = yes
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+# 任务结束时释放乘组。调用前 set_temp_variable：nsp_mid、nsp_alive（1 生还 / 0 遇难）、nsp_flown（1 计飞行次数）
+NSP_crew_release = {
+	if = {
+		limit = { check_variable = { NSP_m_crew0^num > nsp_mid } }
+		set_temp_variable = { nsp_c = NSP_m_crew0^nsp_mid } NSP_crew_release_one = yes
+		set_temp_variable = { nsp_c = NSP_m_crew1^nsp_mid } NSP_crew_release_one = yes
+		set_temp_variable = { nsp_c = NSP_m_crew2^nsp_mid } NSP_crew_release_one = yes
+	}
+	if = {
+		limit = { check_variable = { nsp_alive = 0 } check_variable = { NSP_m_kia^num > nsp_mid } }
+		set_variable = { NSP_m_kia^nsp_mid = 1 }
+	}
+}
+
+NSP_crew_release_one = {
+	if = {
+		limit = { check_variable = { nsp_c > -1 } }
+		if = { limit = { check_variable = { nsp_alive = 1 } } set_variable = { NSP_astro_st^nsp_c = 0 } add_to_variable = { NSP_astro_fl^nsp_c = nsp_flown } }
+		else = { set_variable = { NSP_astro_st^nsp_c = 2 } }
+	}
+}
+
+# ===========================================================================
+# 7. 局长特质
+# ===========================================================================
+
+#############################################################################
+# 局长特质（照 TNO 领导人特质：名称 + 效果，写在局长肖像 / 名字的 tooltip 里）
+#  NSP_dir_id：现任局长（未设 = 0 = 詹姆斯·E·韦伯）。以后换局长：set_variable NSP_dir_id，再在下面各效果里按 id 加分支，本地化 NSP_DIRECTOR_TT 同步改。
+#  韦伯：特质「精明官僚」，效果：
+#    华盛顿老手  半年拨款 +10%     → NSP_dir_income（NSP_budget_disp / NSP_budget_weekly 里算完 NSP_income 后调用）
+#    精于管理    任务成本 -5%      → NSP_dir_cost（NSP_rdfx_cost 末尾调用）
+#    外行局长    火箭可靠性 -2     → NSP_dir_rel（NSP_rdfx_rel 末尾调用）
+#############################################################################
+NSP_dir_income = {
+	if = { limit = { check_variable = { NSP_dir_id = 0 } } multiply_variable = { NSP_income = 1.1 } round_variable = NSP_income }
+}
+
+NSP_dir_cost = {
+	if = { limit = { check_variable = { NSP_dir_id = 0 } } multiply_temp_variable = { cost = 0.95 } }
+}
+
+NSP_dir_rel = {
+	if = { limit = { check_variable = { NSP_dir_id = 0 } } add_to_variable = { NSP_calc_rel_vehicle = -2 } }
+}
+

@@ -1,0 +1,77 @@
+#############################################################################
+# 乘组选拔独立窗口 NSP_crew_window（取代事件 nsp.40 / nsp.41）
+#  ⭐ 版式照 TNO 自己的 New Mission Concept 面板：顶部大标题栏、编号分区头（数字格 + 标题）、细框表格行、START MISSION 式大按钮
+#  ⭐ 顶层窗口，不挂 NSP_home_window；没有关闭键（用户要求），只有「确定」
+#  ⭐ 座位卡：卡框 GFX_NSP_crew_card2 帧绑 NSP_crew_cf0..2；头像 GFX_NSP_crew_face（单张，image = [GetNSPCrewFace0..2] 换图）
+#  布局 1060×610（框线烘在 nsp_crew_bg.dds 里，改坐标要同步改 tools/gen_crew_gui.py）：
+#    标题栏 8..66
+#    左栏 16..588：任务框 76..150 / 「1 飞行乘组」158..206 / 卡牌区 214..488（卡 133×244，x=59/235/411 y=229，头像 scale 0.75）/ 确定 16,498（572×80）
+#    右栏 606..1044：「2 待命宇航员」76..124 / 药丸分隔 128..152 / 列表框 160..598，网格 612,168 起 2 列 × 15 行（槽 214×28）
+#############################################################################
+guiTypes = {
+	containerWindowType = {
+		name = "NSP_crew_window"
+		position = { x = -530 y = -305 }
+		size = { width = 1060 height = 610 }
+		orientation = center
+		moveable = yes
+		show_sound = decisions_ui_button
+		background = { name = "Background" spriteType = "GFX_NSP_crew_bg" }
+		clipping = no   # ⭐ 两侧装饰柱伸出窗口外
+
+		# 标题栏
+		instantTextBoxType = { name = "NSP_crew_head" position = { x = 8 y = 20 } font = "aldrich_32_outline" text = "NSP_CREW_HEAD" maxWidth = 1044 maxHeight = 36 format = center fixedsize = yes }
+		# 左：任务框（只放任务名；用户要求删掉「任务倒计时：暂停」文字，Mission Control 卡片上的红色暂停保留）
+		instantTextBoxType = { name = "NSP_crew_title" position = { x = 16 y = 95 } font = "aldrich_32_outline" text = "NSP_CREW_TITLE" maxWidth = 572 maxHeight = 36 format = center fixedsize = yes truncate = yes }
+		# 「1 飞行乘组」
+		instantTextBoxType = { name = "NSP_crew_sec1_n" position = { x = 16 y = 164 } font = "aldrich_32_outline" text = "1" maxWidth = 46 maxHeight = 36 format = center fixedsize = yes }
+		instantTextBoxType = { name = "NSP_crew_crew_h" position = { x = 62 y = 168 } font = "aldrich_24_outline" text = "NSP_CREW_CREW_H" maxWidth = 526 maxHeight = 28 format = center fixedsize = yes }
+		# 卡牌（点头像撤下）
+		buttonType = { name = "NSP_crew_seat_0" position = { x = 59 y = 229 } spriteType = "GFX_NSP_crew_card" frame = 1 clicksound = click_default pdx_tooltip = "NSP_CREW_SEAT_TT" }   # ⭐ 整张卡是按钮（点击撤下）
+		iconType = { name = "NSP_crew_face_0" position = { x = 67 y = 259 } spriteType = "GFX_NSP_crew_face" frame = 1 scale = 0.75 alwaystransparent = yes }   # ⭐ 贴图 156×210 原版尺寸，只用 scale 缩显示
+		instantTextBoxType = { name = "NSP_crew_seat_0_fl" position = { x = 69 y = 237 } font = "aldrich_16_outline" text = "NSP_CREW_FL_0" maxWidth = 60 maxHeight = 18 format = left fixedsize = yes alwaystransparent = yes }
+		instantTextBoxType = { name = "NSP_crew_seat_0_t" position = { x = 65 y = 424 } font = "aldrich_14_outline" text = "NSP_CREW_SEAT_0" maxWidth = 121 maxHeight = 18 format = center fixedsize = yes truncate = yes alwaystransparent = yes }
+		instantTextBoxType = { name = "NSP_crew_seat_0_r" position = { x = 68 y = 450 } font = "aldrich_14_outline" text = "NSP_CREW_ROLE_0" maxWidth = 94 maxHeight = 16 format = left fixedsize = yes truncate = yes alwaystransparent = yes }
+		instantTextBoxType = { name = "NSP_crew_seat_0_n" position = { x = 163 y = 449 } font = "aldrich_16_outline" text = "1" maxWidth = 20 maxHeight = 18 format = right fixedsize = yes alwaystransparent = yes }
+		buttonType = { name = "NSP_crew_seat_1" position = { x = 235 y = 229 } spriteType = "GFX_NSP_crew_card" frame = 1 clicksound = click_default pdx_tooltip = "NSP_CREW_SEAT_TT" }   # ⭐ 整张卡是按钮（点击撤下）
+		iconType = { name = "NSP_crew_face_1" position = { x = 243 y = 259 } spriteType = "GFX_NSP_crew_face" frame = 1 scale = 0.75 alwaystransparent = yes }   # ⭐ 贴图 156×210 原版尺寸，只用 scale 缩显示
+		instantTextBoxType = { name = "NSP_crew_seat_1_fl" position = { x = 245 y = 237 } font = "aldrich_16_outline" text = "NSP_CREW_FL_1" maxWidth = 60 maxHeight = 18 format = left fixedsize = yes alwaystransparent = yes }
+		instantTextBoxType = { name = "NSP_crew_seat_1_t" position = { x = 241 y = 424 } font = "aldrich_14_outline" text = "NSP_CREW_SEAT_1" maxWidth = 121 maxHeight = 18 format = center fixedsize = yes truncate = yes alwaystransparent = yes }
+		instantTextBoxType = { name = "NSP_crew_seat_1_r" position = { x = 244 y = 450 } font = "aldrich_14_outline" text = "NSP_CREW_ROLE_1" maxWidth = 94 maxHeight = 16 format = left fixedsize = yes truncate = yes alwaystransparent = yes }
+		instantTextBoxType = { name = "NSP_crew_seat_1_n" position = { x = 339 y = 449 } font = "aldrich_16_outline" text = "2" maxWidth = 20 maxHeight = 18 format = right fixedsize = yes alwaystransparent = yes }
+		buttonType = { name = "NSP_crew_seat_2" position = { x = 411 y = 229 } spriteType = "GFX_NSP_crew_card" frame = 1 clicksound = click_default pdx_tooltip = "NSP_CREW_SEAT_TT" }   # ⭐ 整张卡是按钮（点击撤下）
+		iconType = { name = "NSP_crew_face_2" position = { x = 419 y = 259 } spriteType = "GFX_NSP_crew_face" frame = 1 scale = 0.75 alwaystransparent = yes }   # ⭐ 贴图 156×210 原版尺寸，只用 scale 缩显示
+		instantTextBoxType = { name = "NSP_crew_seat_2_fl" position = { x = 421 y = 237 } font = "aldrich_16_outline" text = "NSP_CREW_FL_2" maxWidth = 60 maxHeight = 18 format = left fixedsize = yes alwaystransparent = yes }
+		instantTextBoxType = { name = "NSP_crew_seat_2_t" position = { x = 417 y = 424 } font = "aldrich_14_outline" text = "NSP_CREW_SEAT_2" maxWidth = 121 maxHeight = 18 format = center fixedsize = yes truncate = yes alwaystransparent = yes }
+		instantTextBoxType = { name = "NSP_crew_seat_2_r" position = { x = 420 y = 450 } font = "aldrich_14_outline" text = "NSP_CREW_ROLE_2" maxWidth = 94 maxHeight = 16 format = left fixedsize = yes truncate = yes alwaystransparent = yes }
+		instantTextBoxType = { name = "NSP_crew_seat_2_n" position = { x = 515 y = 449 } font = "aldrich_16_outline" text = "3" maxWidth = 20 maxHeight = 18 format = right fixedsize = yes alwaystransparent = yes }
+		# 确定（START MISSION 式）
+		buttonType = { name = "NSP_crew_ok" position = { x = 16 y = 498 } spriteType = "GFX_NSP_crew_ok" frame = 1 clicksound = click_ok pdx_tooltip = "NSP_CREW_OK_TT" }
+		instantTextBoxType = { name = "NSP_crew_ok_label" position = { x = 80 y = 520 } font = "aldrich_32_outline" text = "NSP_CREW_OK" maxWidth = 412 maxHeight = 36 format = center fixedsize = yes alwaystransparent = yes }
+
+		# 右：「2 待命宇航员」+ 药丸分隔里的待命人数
+		instantTextBoxType = { name = "NSP_crew_sec2_n" position = { x = 606 y = 82 } font = "aldrich_32_outline" text = "2" maxWidth = 46 maxHeight = 36 format = center fixedsize = yes }
+		instantTextBoxType = { name = "NSP_crew_list_h" position = { x = 652 y = 86 } font = "aldrich_24_outline" text = "NSP_CREW_LIST_H" maxWidth = 392 maxHeight = 28 format = center fixedsize = yes }
+		instantTextBoxType = { name = "NSP_crew_office" position = { x = 680 y = 131 } font = "aldrich_16_outline" text = "NSP_CREW_OFFICE" maxWidth = 290 maxHeight = 20 format = center fixedsize = yes }
+		gridBoxType = {
+			name = "NSP_crew_grid"
+			position = { x = 612 y = 168 }
+			size = { width = 428 height = 420 }
+			slotsize = { width = 214 height = 28 }
+			max_slots_horizontal = 2
+			format = "UPPER_LEFT"
+		}
+		# ⭐ 两侧装饰柱（取自 TNO 墨西哥面板原图 map_bg.dds，飘带改星条旗色；100×590，贴在窗口左右外侧），纯装饰，alwaystransparent 不挡拖动；放最后 = 画在最上层
+		iconType = { name = "NSP_crew_pillar_l" spriteType = "GFX_NSP_crew_pillar"   position = { x = -100 y = 10 } alwaystransparent = yes }
+		iconType = { name = "NSP_crew_pillar_r" spriteType = "GFX_NSP_crew_pillar_r" position = { x = 1060 y = 10 } alwaystransparent = yes }
+	}
+
+	# 宇航员行（动态列表条目，v = 宇航员 id）：左方格 = 飞行次数，右侧姓名（照发射场列表行）
+	containerWindowType = {
+		name = "NSP_crew_entry"
+		size = { width = 210 height = 26 }
+		buttonType = { name = "NSP_crew_row" position = { x = 0 y = 0 } quadTextureSprite = "GFX_NSP_crew_row" clicksound = click_default pdx_tooltip = "NSP_CREW_ROW_TT" }
+		instantTextBoxType = { name = "NSP_crew_row_fl"   position = { x = 0 y = 4 } font = "aldrich_16_outline" text = "NSP_CREW_ROW_FL"   maxWidth = 26 maxHeight = 18 format = center fixedsize = yes alwaystransparent = yes }
+		instantTextBoxType = { name = "NSP_crew_row_name" position = { x = 34 y = 4 } font = "aldrich_16_outline" text = "NSP_CREW_ROW_NAME" maxWidth = 170 maxHeight = 18 format = left fixedsize = yes truncate = yes alwaystransparent = yes }
+	}
+}

@@ -1,0 +1,51 @@
+#############################################################################
+#  乘组选拔窗口 NSP_crew_window（顶层窗口，不挂外壳：主窗关着也会弹出）
+#  没有关闭键；NSP_crew_ok 只有选满才可点（NSP_crew_filled = NSP_crew_need）
+#  数据：NSP_crew_list（待命、未上座的宇航员 id）/ NSP_crew_sel0..2（座位上的人，-1 = 空），由 NSP_crew_gui_build 计算
+#
+#  ⛔ 文件名前的数字 = 注册顺序（引擎按文件名排序创建 scripted gui）：
+#     外壳 NSP_home_window 必须最先创建，parent_window_name 才挂得上；帮助层、乘组窗口最后创建，叠在最上面。
+#############################################################################
+
+scripted_gui = {
+	NSP_crew = {
+		context_type = player_context
+		window_name = "NSP_crew_window"
+		dirty = NSP_dirty
+		visible = { has_country_flag = NSP_crew_win }
+
+		dynamic_lists = {
+			NSP_crew_grid = {
+				array = NSP_crew_list
+				value = v
+				index = i
+				change_scope = no
+				entry_container = "NSP_crew_entry"
+			}
+		}
+
+		effects = {
+			NSP_crew_row_click = { set_temp_variable = { nsp_a = v } NSP_crew_gui_pick = yes }
+			NSP_crew_seat_0_click = { set_variable = { NSP_crew_sel0 = -1 } NSP_crew_gui_build = yes }
+			NSP_crew_seat_1_click = { set_variable = { NSP_crew_sel1 = -1 } NSP_crew_gui_build = yes }
+			NSP_crew_seat_2_click = { set_variable = { NSP_crew_sel2 = -1 } NSP_crew_gui_build = yes }
+			NSP_crew_ok_click = { NSP_crew_gui_confirm = yes }
+		}
+
+		triggers = {
+			NSP_crew_ok_click_enabled = { NOT = { check_variable = { NSP_crew_filled < NSP_crew_need } } }
+		}
+
+		properties = {
+			NSP_crew_ok = { frame = NSP_crew_ok_frame }
+			NSP_crew_face_0 = { image = "[GetNSPCrewFace0]" }   # 头像
+			NSP_crew_face_1 = { image = "[GetNSPCrewFace1]" }
+			NSP_crew_face_2 = { image = "[GetNSPCrewFace2]" }
+			NSP_crew_seat_0 = { frame = NSP_crew_cf0 }   # 卡框按钮   # 卡框颜色
+			NSP_crew_seat_1 = { frame = NSP_crew_cf1 }   # 卡框按钮
+			NSP_crew_seat_2 = { frame = NSP_crew_cf2 }   # 卡框按钮
+		}
+
+		ai_enabled = { always = no }
+	}
+}

@@ -1,0 +1,251 @@
+add_namespace = nsp
+
+# 任务成功
+country_event = {
+	id = nsp.1
+	title = nsp.1.t
+	desc = nsp.1.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+
+	option = {
+		name = nsp.1.a
+		custom_effect_tooltip = NSP_EVT_TT_1   # 效果写在选项提示里，实际改动放 hidden_effect
+		hidden_effect = {
+			NSP_evq_pop = yes   # 出队，并把 NSP_last_mission 拉回本事件的任务
+			add_to_variable = { NSP_science = 200 }
+			add_to_variable = { NSP_reputation = 50 }
+			add_to_variable = { NSP_popularity = 3 }
+			clamp_variable = { var = NSP_popularity min = 0 max = 100 }
+			NSP_tier_mission_xp = yes   # 飞行经验按目的地 / 载人计（原 +4），立即判定升级
+			NSP_apply_objectives = yes
+			NSP_recalc_home = yes
+		}
+	}
+}
+
+# 任务失败
+country_event = {
+	id = nsp.2
+	title = nsp.2.t
+	desc = nsp.2.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+
+	option = {
+		name = nsp.2.a
+		custom_effect_tooltip = NSP_EVT_TT_2
+		hidden_effect = {
+			NSP_evq_pop = yes
+			add_to_variable = { NSP_reputation = -25 }
+			add_to_variable = { NSP_popularity = -5 }
+			clamp_variable = { var = NSP_popularity min = 0 max = 100 }
+			NSP_recalc_home = yes
+		}
+	}
+}
+
+# 研发完成通知（同一周完成多项时显示最后一项 + 总数）
+country_event = {
+	id = nsp.10
+	title = nsp.10.t
+	desc = nsp.10.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	option = { name = nsp.10.a custom_effect_tooltip = NSP_EVT_TT_10 }   # 效果在触发时已生效，这里只显示
+}
+
+# 太空科技等级提升
+country_event = {
+	id = nsp.11
+	title = nsp.11.t
+	desc = nsp.11.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	option = { name = nsp.11.a custom_effect_tooltip = NSP_EVT_TT_11 }   # 效果在触发时已生效，这里只显示
+}
+
+# 半年度拨款到账
+country_event = {
+	id = nsp.12
+	title = nsp.12.t
+	desc = nsp.12.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	option = { name = nsp.12.a custom_effect_tooltip = NSP_EVT_TT_12 }   # 效果在触发时已生效，这里只显示
+}
+
+# ⭐ 新计划公布（NSP_programs_date_check 按日期触发，每个只发一次）
+country_event = {
+	id = nsp.30
+	title = nsp.30.t
+	desc = nsp.30.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	option = { name = nsp.30.a custom_effect_tooltip = NSP_EVT_TT_PROG_3 hidden_effect = { set_variable = { NSP_arg_prog = 3 } NSP_program_unlock = yes NSP_recalc_home = yes } }
+}
+country_event = {
+	id = nsp.31
+	title = nsp.31.t
+	desc = nsp.31.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	option = { name = nsp.31.a custom_effect_tooltip = NSP_EVT_TT_PROG_4 hidden_effect = { set_variable = { NSP_arg_prog = 4 } NSP_program_unlock = yes NSP_recalc_home = yes } }
+}
+country_event = {
+	id = nsp.32
+	title = nsp.32.t
+	desc = nsp.32.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	option = { name = nsp.32.a custom_effect_tooltip = NSP_EVT_TT_PROG_5 hidden_effect = { set_variable = { NSP_arg_prog = 5 } NSP_program_unlock = yes NSP_recalc_home = yes } }
+}
+country_event = {
+	id = nsp.33
+	title = nsp.33.t
+	desc = nsp.33.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	option = { name = nsp.33.a custom_effect_tooltip = NSP_EVT_TT_PROG_6 hidden_effect = { set_variable = { NSP_arg_prog = 6 } NSP_program_unlock = yes NSP_recalc_home = yes } }
+}
+
+# ⭐ 双子星 / 阿波罗改为日期事件（1962.1.12 / 1962.5.25）
+country_event = {
+	id = nsp.34
+	title = nsp.34.t
+	desc = nsp.34.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	option = { name = nsp.34.a custom_effect_tooltip = NSP_EVT_TT_PROG_1 hidden_effect = { set_variable = { NSP_arg_prog = 1 } NSP_program_unlock = yes NSP_recalc_home = yes } }
+}
+country_event = {
+	id = nsp.35
+	title = nsp.35.t
+	desc = nsp.35.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	option = { name = nsp.35.a custom_effect_tooltip = NSP_EVT_TT_PROG_2 hidden_effect = { set_variable = { NSP_arg_prog = 2 } NSP_program_unlock = yes NSP_recalc_home = yes } }
+}
+
+# ⭐ 乘组选拔
+# 同一个事件不能在自己的选项里再触发自己（第二席 / 下一个任务 / 换一批都会被吞掉，任务卡在「乘组」）
+# ⛔ 起不再触发（改为独立窗口 NSP_crew_window，见 interface/NSP_crew.gui）；保留定义以防旧存档里排队的事件报错
+#       → nsp.40 / nsp.41 两个完全相同的镜像事件交替触发，一律走 NSP_crew_fire，不要直接写 country_event = nsp.40
+country_event = {
+	id = nsp.40
+	title = nsp.40.t
+	desc = nsp.40.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	immediate = { hidden_effect = { set_variable = { NSP_crew_evt = 40 } set_variable = { NSP_crew_idle = 0 } NSP_crew_pick_cands = yes } }
+	option = { name = nsp.40.o0 trigger = { check_variable = { NSP_crew_cand^num > 0 } } ai_chance = { base = 10 } custom_effect_tooltip = NSP_EVT_TT_CREW_0 hidden_effect = { set_temp_variable = { nsp_a = NSP_crew_cand^0 } NSP_crew_assign = yes } }
+	option = { name = nsp.40.o1 trigger = { check_variable = { NSP_crew_cand^num > 1 } } ai_chance = { base = 1 } custom_effect_tooltip = NSP_EVT_TT_CREW_1 hidden_effect = { set_temp_variable = { nsp_a = NSP_crew_cand^1 } NSP_crew_assign = yes } }
+	option = { name = nsp.40.o2 trigger = { check_variable = { NSP_crew_cand^num > 2 } } ai_chance = { base = 1 } custom_effect_tooltip = NSP_EVT_TT_CREW_2 hidden_effect = { set_temp_variable = { nsp_a = NSP_crew_cand^2 } NSP_crew_assign = yes } }
+	option = { name = nsp.40.o3 trigger = { check_variable = { NSP_crew_cand^num > 3 } } ai_chance = { base = 1 } custom_effect_tooltip = NSP_EVT_TT_CREW_3 hidden_effect = { set_temp_variable = { nsp_a = NSP_crew_cand^3 } NSP_crew_assign = yes } }
+	option = { name = nsp.40.more trigger = { check_variable = { NSP_crew_pool_n > 4 } } ai_chance = { base = 0 } custom_effect_tooltip = NSP_EVT_TT_CREW_MORE hidden_effect = { NSP_crew_fire = yes } }
+	option = { name = nsp.40.none trigger = { check_variable = { NSP_crew_cand^num < 1 } } ai_chance = { base = 10 } custom_effect_tooltip = NSP_EVT_TT_CREW_NONE hidden_effect = { NSP_crew_next_seat = yes } }
+}
+
+# 镜像：内容与 nsp.40 相同，共用 nsp.40.* 本地化
+country_event = {
+	id = nsp.41
+	title = nsp.40.t
+	desc = nsp.40.d
+	picture = GFX_report_event_generic_read_write
+	is_triggered_only = yes
+	immediate = { hidden_effect = { set_variable = { NSP_crew_evt = 41 } set_variable = { NSP_crew_idle = 0 } NSP_crew_pick_cands = yes } }
+	option = { name = nsp.40.o0 trigger = { check_variable = { NSP_crew_cand^num > 0 } } ai_chance = { base = 10 } custom_effect_tooltip = NSP_EVT_TT_CREW_0 hidden_effect = { set_temp_variable = { nsp_a = NSP_crew_cand^0 } NSP_crew_assign = yes } }
+	option = { name = nsp.40.o1 trigger = { check_variable = { NSP_crew_cand^num > 1 } } ai_chance = { base = 1 } custom_effect_tooltip = NSP_EVT_TT_CREW_1 hidden_effect = { set_temp_variable = { nsp_a = NSP_crew_cand^1 } NSP_crew_assign = yes } }
+	option = { name = nsp.40.o2 trigger = { check_variable = { NSP_crew_cand^num > 2 } } ai_chance = { base = 1 } custom_effect_tooltip = NSP_EVT_TT_CREW_2 hidden_effect = { set_temp_variable = { nsp_a = NSP_crew_cand^2 } NSP_crew_assign = yes } }
+	option = { name = nsp.40.o3 trigger = { check_variable = { NSP_crew_cand^num > 3 } } ai_chance = { base = 1 } custom_effect_tooltip = NSP_EVT_TT_CREW_3 hidden_effect = { set_temp_variable = { nsp_a = NSP_crew_cand^3 } NSP_crew_assign = yes } }
+	option = { name = nsp.40.more trigger = { check_variable = { NSP_crew_pool_n > 4 } } ai_chance = { base = 0 } custom_effect_tooltip = NSP_EVT_TT_CREW_MORE hidden_effect = { NSP_crew_fire = yes } }
+	option = { name = nsp.40.none trigger = { check_variable = { NSP_crew_cand^num < 1 } } ai_chance = { base = 10 } custom_effect_tooltip = NSP_EVT_TT_CREW_NONE hidden_effect = { NSP_crew_next_seat = yes } }
+}
+
+# ⭐ 返程失败：乘组遇难
+country_event = {
+	id = nsp.3
+	title = nsp.3.t
+	desc = nsp.3.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+	option = {
+		name = nsp.3.a
+		custom_effect_tooltip = NSP_EVT_TT_3
+		hidden_effect = {
+			NSP_evq_pop = yes
+			add_to_variable = { NSP_reputation = -50 }
+			add_to_variable = { NSP_popularity = -12 }
+			clamp_variable = { var = NSP_popularity min = 0 max = 100 }
+			NSP_recalc_home = yes
+		}
+	}
+}
+
+# ⭐ 发射成功（发射阶段结束、进入在轨时；NSP_evt_mid）
+country_event = {
+	id = nsp.4
+	title = nsp.4.t
+	desc = nsp.4.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	option = {
+		name = nsp.4.a
+		custom_effect_tooltip = NSP_EVT_TT_4
+		hidden_effect = { NSP_evq_pop = yes add_to_variable = { NSP_popularity = 1 } clamp_variable = { var = NSP_popularity min = 0 max = 100 } NSP_recalc_home = yes }
+	}
+}
+
+# ⭐ 发射失败（台上 / 空中爆炸，NSP_last_mission）
+country_event = {
+	id = nsp.5
+	title = nsp.5.t
+	desc = nsp.5.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+	option = {
+		name = nsp.5.a
+		custom_effect_tooltip = NSP_EVT_TT_5
+		hidden_effect = {
+			NSP_evq_pop = yes
+			add_to_variable = { NSP_reputation = -25 }
+			add_to_variable = { NSP_popularity = -5 }
+			clamp_variable = { var = NSP_popularity min = 0 max = 100 }
+			NSP_recalc_home = yes
+		}
+	}
+}
+
+# ⭐ 载人任务在轨失败（乘组紧急返程，NSP_evt_mid）
+country_event = {
+	id = nsp.6
+	title = nsp.6.t
+	desc = nsp.6.d
+	picture = GFX_report_event_generic_factory
+	is_triggered_only = yes
+	option = {
+		name = nsp.6.a
+		custom_effect_tooltip = NSP_EVT_TT_6
+		hidden_effect = {
+			NSP_evq_pop = yes
+			add_to_variable = { NSP_reputation = -25 }
+			add_to_variable = { NSP_popularity = -5 }
+			clamp_variable = { var = NSP_popularity min = 0 max = 100 }
+			NSP_recalc_home = yes
+		}
+	}
+}
+
+# ⭐ 在轨失败后乘组平安返回（NSP_last_mission）
+country_event = {
+	id = nsp.7
+	title = nsp.7.t
+	desc = nsp.7.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	option = {
+		name = nsp.7.a
+		custom_effect_tooltip = NSP_EVT_TT_7
+		hidden_effect = { NSP_evq_pop = yes add_to_variable = { NSP_popularity = 2 } clamp_variable = { var = NSP_popularity min = 0 max = 100 } NSP_recalc_home = yes }
+	}
+}

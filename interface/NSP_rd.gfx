@@ -1,0 +1,213 @@
+# 研究与发展页贴图（work/rd/gen_rd.py 生成，勿手改）
+# 全部是 TNO 像素风：硬边、少色、1px 墨线。半分辨率图（art / links / era）在 GUI 里 scale = 2（整数倍）。
+spriteTypes = {
+	spriteType = {
+		name = "GFX_NSP_rd_card"
+		texturefile = "gfx/interface/NSP/rd/cards/nsp_rd_card.dds"
+		noOfFrames = 4
+		legacy_lazy_load = no
+	}
+	spriteType = {
+		name = "GFX_NSP_rd_state"
+		texturefile = "gfx/interface/NSP/rd/cards/nsp_rd_state.dds"
+		noOfFrames = 4
+		legacy_lazy_load = no
+	}
+	spriteType = {
+		name = "GFX_NSP_rd_grid"
+		texturefile = "gfx/interface/NSP/rd/tree/nsp_rd_grid.dds"
+	}
+	spriteType = {
+		name = "GFX_NSP_rd_pad"
+		texturefile = "gfx/interface/NSP/rd/tree/nsp_rd_pad.dds"
+	}
+	spriteType = { name = "GFX_NSP_rdl_h"  texturefile = "gfx/interface/NSP/rd/links/nsp_rdl_h.dds"  noOfFrames = 17 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdl_vu" texturefile = "gfx/interface/NSP/rd/links/nsp_rdl_vu.dds" noOfFrames = 17 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdl_vd" texturefile = "gfx/interface/NSP/rd/links/nsp_rdl_vd.dds" noOfFrames = 13 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdl_lu" texturefile = "gfx/interface/NSP/rd/links/nsp_rdl_lu.dds" noOfFrames = 13 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdl_ld" texturefile = "gfx/interface/NSP/rd/links/nsp_rdl_ld.dds" noOfFrames = 13 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdl_tail" texturefile = "gfx/interface/NSP/rd/links/nsp_rdl_tail.dds" noOfFrames = 5 legacy_lazy_load = no }
+	# ⭐ r79 小科技方卡（只给加成、不解锁东西；照 TNO 小科技）：底框 / 线稿（tools/gen_rd_small.py）/ 选中框 / 进度条
+	# ⭐ r80 TNO 科技边框（来源：TNO Antarctica_Decision_GUI_AAA_Technology_*，已改名）。帧 1 不可研发 / 2 可研发 / 3 研发中（静帧）/ 4 已研发
+	spriteType = { name = "GFX_NSP_rd_frame_l" texturefile = "gfx/interface/NSP/rd/cards/nsp_rd_frame_l.dds" noOfFrames = 4 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rd_frame_s" texturefile = "gfx/interface/NSP/rd/cards/nsp_rd_frame_s.dds" noOfFrames = 4 legacy_lazy_load = no }
+	# 研发中：循环动画（looping = yes 的 frameAnimated 一直播，不涉及 r31 那个"只播一次"的坑）
+	frameAnimatedSpriteType = { name = "GFX_NSP_rd_frame_l_anim" texturefile = "gfx/interface/NSP/rd/cards/nsp_rd_frame_l_anim.dds" noOfFrames = 8 animation_rate_fps = 8 looping = yes play_on_show = yes alwaystransparent = yes legacy_lazy_load = no }
+	frameAnimatedSpriteType = { name = "GFX_NSP_rd_frame_s_anim" texturefile = "gfx/interface/NSP/rd/cards/nsp_rd_frame_s_anim.dds" noOfFrames = 6 animation_rate_fps = 6 looping = yes play_on_show = yes alwaystransparent = yes legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rd_scard" texturefile = "gfx/interface/NSP/rd/cards/nsp_rd_scard.dds" noOfFrames = 4 legacy_lazy_load = no }
+	# r95t 科技卡面不用帧图（用户）：一项研发一张图，换图走 properties image = "[GetNSPRDArt]" / "[GetNSPRDSArt]" / "[GetNSPRDSelArt]"
+	#   大卡 239×117：rd/tech/nsp_rdart_<id>.dds → GFX_NSP_rdart_<id>（loc NSP_RDART_<id>）
+	#   方卡 72×72：rd/small/nsp_rdsart_<id>.dds → GFX_NSP_rdsart_<id>（loc NSP_RDSART_<id>）
+	spriteType = { name = "GFX_NSP_rdart_0" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_00.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_1" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_01.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_2" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_02.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_3" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_03.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_4" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_04.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_5" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_05.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_6" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_06.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_7" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_07.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_8" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_08.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_9" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_09.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_10" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_10.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_11" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_11.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_12" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_12.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_13" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_13.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_14" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_14.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_15" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_15.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_16" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_16.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_17" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_17.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_18" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_18.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_19" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_19.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_20" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_20.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_21" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_21.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_22" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_22.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_23" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_23.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_24" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_24.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_25" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_25.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_26" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_26.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_27" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_27.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_28" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_28.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_29" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_29.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_30" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_30.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_31" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_31.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_32" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_32.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_33" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_33.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_34" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_34.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_35" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_35.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_36" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_36.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_37" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_37.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_38" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_38.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_39" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_39.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_40" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_40.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_41" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_41.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_42" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_42.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_43" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_43.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_44" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_44.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_45" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_45.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_46" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_46.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_47" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_47.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_48" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_48.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_49" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_49.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_50" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_50.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_51" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_51.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_52" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_52.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_53" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_53.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_54" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_54.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_55" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_55.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_56" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_56.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_57" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_57.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_58" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_58.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_59" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_59.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_60" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_60.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_61" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_61.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_62" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_62.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_63" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_63.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_64" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_64.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_65" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_65.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_66" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_66.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_67" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_67.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_68" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_68.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_69" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_69.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_70" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_70.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_71" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_71.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_72" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_72.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_73" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_73.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_74" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_74.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_75" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_75.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_76" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_76.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_77" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_77.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_78" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_78.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_79" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_79.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_80" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_80.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_81" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_81.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_82" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_82.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_83" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_83.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_84" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_84.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_85" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_85.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_86" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_86.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_88" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_88.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_89" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_89.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_90" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_90.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_91" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_91.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_92" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_92.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_93" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_93.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdart_94" texturefile = "gfx/interface/NSP/rd/tech/nsp_rdart_94.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_8" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_08.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_18" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_18.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_21" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_21.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_22" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_22.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_24" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_24.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_25" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_25.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_27" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_27.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_28" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_28.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_33" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_33.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_34" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_34.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_35" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_35.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_39" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_39.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_44" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_44.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_50" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_50.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_51" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_51.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_54" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_54.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_56" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_56.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_57" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_57.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_58" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_58.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_59" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_59.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_62" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_62.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_69" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_69.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_70" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_70.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_74" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_74.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_75" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_75.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_76" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_76.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_77" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_77.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_78" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_78.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_79" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_79.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_80" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_80.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_81" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_81.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_82" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_82.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_84" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_84.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rdsart_85" texturefile = "gfx/interface/NSP/rd/small/nsp_rdsart_85.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rd_ssel" texturefile = "gfx/interface/NSP/rd/cards/nsp_rd_ssel.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rd_sprog" texturefile = "gfx/interface/NSP/rd/cards/nsp_rd_sprog.dds" noOfFrames = 11 legacy_lazy_load = no }
+	spriteType = {
+		name = "GFX_NSP_rd_prog"
+		texturefile = "gfx/interface/NSP/rd/cards/nsp_rd_prog.dds"
+		noOfFrames = 11
+		legacy_lazy_load = no
+	}
+	spriteType = {
+		name = "GFX_NSP_rd_sel"
+		texturefile = "gfx/interface/NSP/rd/cards/nsp_rd_sel.dds"
+	}
+	spriteType = {
+		name = "GFX_NSP_rd_tab"
+		texturefile = "gfx/interface/NSP/rd/tree/nsp_rd_tab.dds"
+		noOfFrames = 2
+		legacy_lazy_load = no
+	}
+	spriteType = {
+		name = "GFX_NSP_rd_start_btn"
+		texturefile = "gfx/interface/NSP/rd/drawer/nsp_rd_start_btn.dds"
+		noOfFrames = 4
+		legacy_lazy_load = no
+	}
+	spriteType = {
+		name = "GFX_NSP_rd_artbox"
+		texturefile = "gfx/interface/NSP/rd/drawer/nsp_rd_artbox.dds"
+	}
+	spriteType = {
+		name = "GFX_NSP_rd_qbar_s"
+		texturefile = "gfx/interface/NSP/rd/drawer/nsp_rd_qbar_s.dds"
+		noOfFrames = 11
+		legacy_lazy_load = no
+	}
+	spriteType = {
+		name = "GFX_NSP_rd_qslot"
+		texturefile = "gfx/interface/NSP/rd/drawer/nsp_rd_qslot.dds"
+		noOfFrames = 3
+		legacy_lazy_load = no
+	}
+	spriteType = {
+		name = "GFX_NSP_rd_qdiv"
+		texturefile = "gfx/interface/NSP/rd/drawer/nsp_rd_qdiv.dds"
+	}
+}

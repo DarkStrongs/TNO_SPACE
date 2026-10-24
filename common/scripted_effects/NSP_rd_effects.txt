@@ -1,0 +1,1581 @@
+#############################################################################
+#  NSP_rd_effects.txt：研发：研发树数据、每日推进与完成、解锁重算、科技效果、太空科技等级。
+#  研发项目 id：本体 0..94（87 是空格占位 NSP_rd_blank），子模组从 200 起。
+#  格位查表 NSP_rd_index^(分类 × 40 + 行 × 8 + 列)，空格 = NSP_rd_blank。
+#
+#  目录
+#    1. 建表（开新局一次）：NSP_rd_init、NSP_rd_init_unlocks、NSP_rd_start_1962、NSP_rd_small_init、NSP_rd_links_calc
+#    2. 研发页操作 / 每日推进 / 完成：NSP_open_rd、NSP_close_rd、NSP_rd_set_track、NSP_rd_pick_sel、NSP_rd_start、NSP_rd_recalc、NSP_rd_daily、NSP_rd_on_complete、NSP_rd_once_one、NSP_rd_debug_all
+#    3. 解锁重算（按「已完成」状态从头算，可反复调用）：NSP_rd_apply_unlocks、NSP_rd_apply_one、NSP_unlock_payloads_vehicles、NSP_unlock_sites、NSP_unlock_modifiers、NSP_unlock_defaults、NSP_unlock_science_orbits
+#    4. 科技效果（规划器重算时按完成状态现算）：NSP_rdfx_dv、NSP_rdfx_req_dv、NSP_rdfx_rel、NSP_rdfx_cost、NSP_rdfx_success、NSP_rdfx_suit_rel、NSP_rdfx_suit_cost、NSP_rdfx_suit_success
+#    5. 太空科技等级：NSP_tech_tier_check、NSP_tier_set_max、NSP_tier_refresh、NSP_tier_levelup、NSP_tier_mission_xp
+#  模组整体结构、数据流、「新增 X 要改哪里」见 documentation/CODE_MAP.md。
+#############################################################################
+
+# ===========================================================================
+# 1. 建表（开新局一次）
+# ===========================================================================
+
+#############################################################################
+#  研发树数据表：直接手改即可（work/rd/gen_rd.py 已过时，不要再跑）。
+#  每行一项：分类 trk / 列 col / 行 row / 前置 req1 req2（-1 = 无）/ 成本 cost / 工期 days / 太空科技 tech / 卡面 art / 状态 state / 进度 prog / 有效工期 deff / 加成 bonus
+#  数据：并行数组，下标 = 项目 id；id = 87 是空格位占位（所有数组都有这一格，防越界）。
+#  状态 NSP_rd_state：0 需前置/时代未到 · 1 可研发 · 2 研发中 · 3 已完成
+#############################################################################
+NSP_rd_init = {
+	set_variable = { NSP_rd_count = 95 }   # 本体研发 0..94；子模组从 200 起，NSP_reg_rd 会把它调大
+	set_variable = { NSP_rd_blank = 87 }
+	set_variable = { NSP_rd_slots = 3 }
+	set_variable = { NSP_rd_track = 0 }
+	clear_array = NSP_rd_trk
+	clear_array = NSP_rd_col
+	clear_array = NSP_rd_row
+	clear_array = NSP_rd_req1
+	clear_array = NSP_rd_req2
+	clear_array = NSP_rd_cost
+	clear_array = NSP_rd_days
+	clear_array = NSP_rd_tech
+	clear_array = NSP_rd_art
+	clear_array = NSP_rd_state
+	clear_array = NSP_rd_prog
+	clear_array = NSP_rd_deff
+	clear_array = NSP_rd_bonus
+	clear_array = NSP_rd_queue
+	clear_array = NSP_rd_index
+	# 0 红石 MRLV
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 15 } add_to_array = { NSP_rd_days = 120 } add_to_array = { NSP_rd_tech = 2 } add_to_array = { NSP_rd_art = 0 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 120 } add_to_array = { NSP_rd_bonus = 0 }
+	# 1 宇宙神 LV-3B
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 0 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 1 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 2 泰坦 II GLV
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 270 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 2 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 270 } add_to_array = { NSP_rd_bonus = 0 }
+	# 3 泰坦 IIIC
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 2 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 360 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 3 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 360 } add_to_array = { NSP_rd_bonus = 0 }
+	# 4 阿金纳上面级
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 0 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 4 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 5 半人马上面级
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 4 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 300 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 5 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 300 } add_to_array = { NSP_rd_bonus = 0 }
+	# 6 S-IVB 上面级
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 5 } add_to_array = { NSP_rd_req2 = 8 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 360 } add_to_array = { NSP_rd_tech = 6 } add_to_array = { NSP_rd_art = 6 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 360 } add_to_array = { NSP_rd_bonus = 0 }
+	# 7 H-1 改进型
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 0 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 7 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 8 J-2 发动机
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 7 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 300 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 8 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 300 } add_to_array = { NSP_rd_bonus = 0 }
+	# 9 F-1 发动机
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = 7 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 330 } add_to_array = { NSP_rd_tech = 6 } add_to_array = { NSP_rd_art = 9 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 330 } add_to_array = { NSP_rd_bonus = 0 }
+	# 10 土星 IB
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 8 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 360 } add_to_array = { NSP_rd_tech = 6 } add_to_array = { NSP_rd_art = 10 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 360 } add_to_array = { NSP_rd_bonus = 0 }
+	# 11 土星 V
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 4 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 6 } add_to_array = { NSP_rd_req2 = 9 } add_to_array = { NSP_rd_cost = 180 } add_to_array = { NSP_rd_days = 450 } add_to_array = { NSP_rd_tech = 10 } add_to_array = { NSP_rd_art = 11 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 450 } add_to_array = { NSP_rd_bonus = 0 }
+	# 12 水星飞船
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 15 } add_to_array = { NSP_rd_days = 150 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 0 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 150 } add_to_array = { NSP_rd_bonus = 0 }
+	# 13 双子星飞船
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 12 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 240 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 1 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 240 } add_to_array = { NSP_rd_bonus = 0 }
+	# 14 先进双子星改装
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 13 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 270 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 2 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 270 } add_to_array = { NSP_rd_bonus = 0 }
+	# 15 载人轨道实验室
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 14 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 360 } add_to_array = { NSP_rd_tech = 6 } add_to_array = { NSP_rd_art = 3 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 360 } add_to_array = { NSP_rd_bonus = 0 }
+	# 16 天空实验室
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 4 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 15 } add_to_array = { NSP_rd_req2 = 18 } add_to_array = { NSP_rd_cost = 180 } add_to_array = { NSP_rd_days = 450 } add_to_array = { NSP_rd_tech = 8 } add_to_array = { NSP_rd_art = 4 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 450 } add_to_array = { NSP_rd_bonus = 0 }
+	# 17 阿波罗 CSM Block I
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 13 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 300 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 5 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 300 } add_to_array = { NSP_rd_bonus = 0 }
+	# 18 阿波罗 CSM Block II
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 17 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 390 } add_to_array = { NSP_rd_tech = 7 } add_to_array = { NSP_rd_art = 6 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 390 } add_to_array = { NSP_rd_bonus = 0 }
+	# 19 登月舱 LM
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 17 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 420 } add_to_array = { NSP_rd_tech = 8 } add_to_array = { NSP_rd_art = 7 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 420 } add_to_array = { NSP_rd_bonus = 0 }
+	# 20 月球车 LRV
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 4 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 19 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 180 } add_to_array = { NSP_rd_days = 480 } add_to_array = { NSP_rd_tech = 9 } add_to_array = { NSP_rd_art = 8 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 360 } add_to_array = { NSP_rd_bonus = 0 }
+	# 21 水星加压服
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 15 } add_to_array = { NSP_rd_days = 120 } add_to_array = { NSP_rd_tech = 2 } add_to_array = { NSP_rd_art = 0 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 120 } add_to_array = { NSP_rd_bonus = 0 }
+	# 22 G4C 航天服
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 21 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 1 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 23 基础舱外活动系统
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 22 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 240 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 2 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 240 } add_to_array = { NSP_rd_bonus = 0 }
+	# 24 机动装置 AMU
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 23 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 330 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 3 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 330 } add_to_array = { NSP_rd_bonus = 0 }
+	# 25 A7L 月面服
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 4 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 24 } add_to_array = { NSP_rd_req2 = 27 } add_to_array = { NSP_rd_cost = 180 } add_to_array = { NSP_rd_days = 390 } add_to_array = { NSP_rd_tech = 7 } add_to_array = { NSP_rd_art = 4 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 390 } add_to_array = { NSP_rd_bonus = 0 }
+	# 26 燃料电池
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 21 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 5 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 27 14 天长期驻留
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 26 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 300 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 6 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 300 } add_to_array = { NSP_rd_bonus = 0 }
+	# 28 海上回收
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 15 } add_to_array = { NSP_rd_days = 120 } add_to_array = { NSP_rd_tech = 2 } add_to_array = { NSP_rd_art = 7 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 120 } add_to_array = { NSP_rd_bonus = 0 }
+	# 29 烧蚀防热罩
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 28 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 210 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 8 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 210 } add_to_array = { NSP_rd_bonus = 0 }
+	# 30 月球返回再入
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 29 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 330 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 9 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 330 } add_to_array = { NSP_rd_bonus = 0 }
+	# 31 交会雷达
+	add_to_array = { NSP_rd_trk = 3 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 0 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 32 基础对接系统
+	add_to_array = { NSP_rd_trk = 3 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 31 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 240 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 1 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 240 } add_to_array = { NSP_rd_bonus = 0 }
+	# 33 月球轨道交会
+	add_to_array = { NSP_rd_trk = 3 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 32 } add_to_array = { NSP_rd_req2 = 35 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 360 } add_to_array = { NSP_rd_tech = 6 } add_to_array = { NSP_rd_art = 2 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 360 } add_to_array = { NSP_rd_bonus = 0 }
+	# 34 双子星计算机
+	add_to_array = { NSP_rd_trk = 3 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 3 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 35 阿波罗制导计算机
+	add_to_array = { NSP_rd_trk = 3 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 34 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 330 } add_to_array = { NSP_rd_tech = 6 } add_to_array = { NSP_rd_art = 4 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 330 } add_to_array = { NSP_rd_bonus = 0 }
+	# 36 惯性测量单元
+	add_to_array = { NSP_rd_trk = 3 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 35 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 360 } add_to_array = { NSP_rd_tech = 7 } add_to_array = { NSP_rd_art = 5 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 300 } add_to_array = { NSP_rd_bonus = 0 }
+	# 37 遥测网
+	add_to_array = { NSP_rd_trk = 3 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 15 } add_to_array = { NSP_rd_days = 150 } add_to_array = { NSP_rd_tech = 2 } add_to_array = { NSP_rd_art = 6 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 150 } add_to_array = { NSP_rd_bonus = 0 }
+	# 38 S 波段统一系统
+	add_to_array = { NSP_rd_trk = 3 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 37 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 270 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 7 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 270 } add_to_array = { NSP_rd_bonus = 0 }
+	# 39 深空网络
+	add_to_array = { NSP_rd_trk = 3 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 38 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 390 } add_to_array = { NSP_rd_tech = 6 } add_to_array = { NSP_rd_art = 8 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 390 } add_to_array = { NSP_rd_bonus = 0 }
+	# 40 先锋号
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 15 } add_to_array = { NSP_rd_days = 150 } add_to_array = { NSP_rd_tech = 2 } add_to_array = { NSP_rd_art = 0 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 150 } add_to_array = { NSP_rd_bonus = 0 }
+	# 41 TIROS 气象卫星
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 40 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 1 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 42 Syncom 通信卫星
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 41 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 270 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 2 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 270 } add_to_array = { NSP_rd_bonus = 0 }
+	# 43 雨云号
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 42 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 330 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 3 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 330 } add_to_array = { NSP_rd_bonus = 0 }
+	# 44 徘徊者号
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 40 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 210 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 4 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 210 } add_to_array = { NSP_rd_bonus = 0 }
+	# 45 勘测者号
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 44 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 330 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 5 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 330 } add_to_array = { NSP_rd_bonus = 0 }
+	# 46 月球轨道器
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 45 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 330 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 6 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 330 } add_to_array = { NSP_rd_bonus = 0 }
+	# 47 水手号
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 40 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 240 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 7 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 240 } add_to_array = { NSP_rd_bonus = 0 }
+	# 48 水手 4 号
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 47 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 330 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 8 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 330 } add_to_array = { NSP_rd_bonus = 0 }
+	# 49 海盗号
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 4 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 48 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 180 } add_to_array = { NSP_rd_days = 540 } add_to_array = { NSP_rd_tech = 9 } add_to_array = { NSP_rd_art = 9 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 540 } add_to_array = { NSP_rd_bonus = 0 }
+	# 50 LC-14 发射台
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 15 } add_to_array = { NSP_rd_days = 150 } add_to_array = { NSP_rd_tech = 2 } add_to_array = { NSP_rd_art = 0 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 150 } add_to_array = { NSP_rd_bonus = 0 }
+	# 51 LC-19 发射台
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 50 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 1 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 52 LC-34 / 37
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 51 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 300 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 2 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 300 } add_to_array = { NSP_rd_bonus = 0 }
+	# 53 39 号发射复合体
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 52 } add_to_array = { NSP_rd_req2 = 58 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 420 } add_to_array = { NSP_rd_tech = 6 } add_to_array = { NSP_rd_art = 3 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 420 } add_to_array = { NSP_rd_bonus = 0 }
+	# 54 水星控制中心
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 15 } add_to_array = { NSP_rd_days = 150 } add_to_array = { NSP_rd_tech = 2 } add_to_array = { NSP_rd_art = 4 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 150 } add_to_array = { NSP_rd_bonus = 0 }
+	# 55 载人航天中心
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 54 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 360 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 5 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 360 } add_to_array = { NSP_rd_bonus = 1 }
+	# 56 马歇尔试车台
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 6 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 57 米丘德装配厂
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 56 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 270 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 7 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 270 } add_to_array = { NSP_rd_bonus = 0 }
+	# 58 垂直总装大楼
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 57 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 390 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 8 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 390 } add_to_array = { NSP_rd_bonus = 0 }
+	# 59 土星 INT-21
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 11 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 480 } add_to_array = { NSP_rd_tech = 10 } add_to_array = { NSP_rd_art = 12 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 480 } add_to_array = { NSP_rd_bonus = 0 }
+	# 60 航天飞机 STS
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 6 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 3 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 360 } add_to_array = { NSP_rd_days = 600 } add_to_array = { NSP_rd_tech = 12 } add_to_array = { NSP_rd_art = 13 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 600 } add_to_array = { NSP_rd_bonus = 0 }
+	# 61 NERVA 核热发动机
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 4 } add_to_array = { NSP_rd_req1 = 9 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 540 } add_to_array = { NSP_rd_tech = 11 } add_to_array = { NSP_rd_art = 14 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 540 } add_to_array = { NSP_rd_bonus = 0 }
+	# 62 核动力上面级
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 6 } add_to_array = { NSP_rd_row = 4 } add_to_array = { NSP_rd_req1 = 61 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 360 } add_to_array = { NSP_rd_days = 600 } add_to_array = { NSP_rd_tech = 12 } add_to_array = { NSP_rd_art = 15 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 600 } add_to_array = { NSP_rd_bonus = 0 }
+	# 63 火星运载器
+	add_to_array = { NSP_rd_trk = 0 } add_to_array = { NSP_rd_col = 7 } add_to_array = { NSP_rd_row = 4 } add_to_array = { NSP_rd_req1 = 62 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 480 } add_to_array = { NSP_rd_days = 720 } add_to_array = { NSP_rd_tech = 14 } add_to_array = { NSP_rd_art = 16 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 720 } add_to_array = { NSP_rd_bonus = 0 }
+	# 64 天空实验室 B
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 16 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 450 } add_to_array = { NSP_rd_tech = 9 } add_to_array = { NSP_rd_art = 9 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 450 } add_to_array = { NSP_rd_bonus = 0 }
+	# 65 模块化空间站
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 7 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 64 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 480 } add_to_array = { NSP_rd_days = 720 } add_to_array = { NSP_rd_tech = 14 } add_to_array = { NSP_rd_art = 10 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 720 } add_to_array = { NSP_rd_bonus = 0 }
+	# 66 火星远征舱
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 6 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 18 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 360 } add_to_array = { NSP_rd_days = 660 } add_to_array = { NSP_rd_tech = 13 } add_to_array = { NSP_rd_art = 11 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 660 } add_to_array = { NSP_rd_bonus = 0 }
+	# 67 月面基地 LESA
+	add_to_array = { NSP_rd_trk = 1 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 20 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 600 } add_to_array = { NSP_rd_tech = 12 } add_to_array = { NSP_rd_art = 12 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 600 } add_to_array = { NSP_rd_bonus = 0 }
+	# 68 闭环生保
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 1 } add_to_array = { NSP_rd_req1 = 27 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 480 } add_to_array = { NSP_rd_tech = 10 } add_to_array = { NSP_rd_art = 10 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 480 } add_to_array = { NSP_rd_bonus = 0 }
+	# 69 自动交会对接
+	add_to_array = { NSP_rd_trk = 3 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 33 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 420 } add_to_array = { NSP_rd_tech = 9 } add_to_array = { NSP_rd_art = 9 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 420 } add_to_array = { NSP_rd_bonus = 0 }
+	# 70 70 米深空天线
+	add_to_array = { NSP_rd_trk = 3 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 2 } add_to_array = { NSP_rd_req1 = 39 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 420 } add_to_array = { NSP_rd_tech = 8 } add_to_array = { NSP_rd_art = 10 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 420 } add_to_array = { NSP_rd_bonus = 0 }
+	# 71 地球资源卫星
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 43 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 420 } add_to_array = { NSP_rd_tech = 8 } add_to_array = { NSP_rd_art = 10 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 420 } add_to_array = { NSP_rd_bonus = 0 }
+	# 72 先驱者 10 号
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = 48 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 390 } add_to_array = { NSP_rd_tech = 6 } add_to_array = { NSP_rd_art = 11 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 390 } add_to_array = { NSP_rd_bonus = 0 }
+	# 73 旅行者号
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = 72 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 600 } add_to_array = { NSP_rd_tech = 11 } add_to_array = { NSP_rd_art = 12 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 600 } add_to_array = { NSP_rd_bonus = 0 }
+	# 74 航天飞机发射台
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 53 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 480 } add_to_array = { NSP_rd_tech = 8 } add_to_array = { NSP_rd_art = 9 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 480 } add_to_array = { NSP_rd_bonus = 0 }
+	# 75 SLC-6 范登堡
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 6 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 74 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 360 } add_to_array = { NSP_rd_days = 540 } add_to_array = { NSP_rd_tech = 9 } add_to_array = { NSP_rd_art = 10 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 540 } add_to_array = { NSP_rd_bonus = 0 }
+	# 76 A7LB 加长型月面服
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = 25 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 450 } add_to_array = { NSP_rd_tech = 9 } add_to_array = { NSP_rd_art = 11 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 450 } add_to_array = { NSP_rd_bonus = 0 }
+	# 77 镀铝尼龙加压层
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 15 } add_to_array = { NSP_rd_days = 120 } add_to_array = { NSP_rd_tech = 2 } add_to_array = { NSP_rd_art = 12 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 120 } add_to_array = { NSP_rd_bonus = 0 }
+	# 78 防眩光头盔面窗
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = 77 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 13 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 79 液冷内衣 LCG
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = 78 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 270 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 14 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 270 } add_to_array = { NSP_rd_bonus = 0 }
+	# 80 便携式生保系统 PLSS
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = 79 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 360 } add_to_array = { NSP_rd_tech = 6 } add_to_array = { NSP_rd_art = 15 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 360 } add_to_array = { NSP_rd_bonus = 0 }
+	# 81 β 布阻燃外层
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 4 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = 80 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 180 } add_to_array = { NSP_rd_days = 390 } add_to_array = { NSP_rd_tech = 6 } add_to_array = { NSP_rd_art = 16 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 390 } add_to_array = { NSP_rd_bonus = 0 }
+	# 82 航天飞机舱外服 EMU
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 6 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = 81 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 360 } add_to_array = { NSP_rd_days = 600 } add_to_array = { NSP_rd_tech = 12 } add_to_array = { NSP_rd_art = 17 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 600 } add_to_array = { NSP_rd_bonus = 0 }
+	# 83 生存装备包
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 4 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 150 } add_to_array = { NSP_rd_tech = 2 } add_to_array = { NSP_rd_art = 18 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 150 } add_to_array = { NSP_rd_bonus = 0 }
+	# 84 舱外工具组
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 4 } add_to_array = { NSP_rd_req1 = 83 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 240 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 19 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 240 } add_to_array = { NSP_rd_bonus = 0 }
+	# 85 月面地质工具
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 4 } add_to_array = { NSP_rd_req1 = 84 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 330 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 20 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 330 } add_to_array = { NSP_rd_bonus = 0 }
+	# 86 载人机动装置 MMU
+	add_to_array = { NSP_rd_trk = 2 } add_to_array = { NSP_rd_col = 5 } add_to_array = { NSP_rd_row = 4 } add_to_array = { NSP_rd_req1 = 85 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 260 } add_to_array = { NSP_rd_days = 540 } add_to_array = { NSP_rd_tech = 10 } add_to_array = { NSP_rd_art = 21 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 540 } add_to_array = { NSP_rd_bonus = 0 }
+	# 87 占位
+	add_to_array = { NSP_rd_trk = -1 } add_to_array = { NSP_rd_col = 9 } add_to_array = { NSP_rd_row = 0 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 0 } add_to_array = { NSP_rd_days = 1 } add_to_array = { NSP_rd_tech = 0 } add_to_array = { NSP_rd_art = 0 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 1 } add_to_array = { NSP_rd_bonus = 0 }
+	# 格位索引：分类 0（行优先）
+	add_to_array = { NSP_rd_index = 0 } add_to_array = { NSP_rd_index = 1 } add_to_array = { NSP_rd_index = 2 } add_to_array = { NSP_rd_index = 3 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 60 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 4 } add_to_array = { NSP_rd_index = 5 } add_to_array = { NSP_rd_index = 6 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 7 } add_to_array = { NSP_rd_index = 8 } add_to_array = { NSP_rd_index = 10 } add_to_array = { NSP_rd_index = 11 } add_to_array = { NSP_rd_index = 59 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 9 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 61 } add_to_array = { NSP_rd_index = 62 } add_to_array = { NSP_rd_index = 63 }
+	# 格位索引：分类 1（行优先）
+	add_to_array = { NSP_rd_index = 12 } add_to_array = { NSP_rd_index = 13 } add_to_array = { NSP_rd_index = 14 } add_to_array = { NSP_rd_index = 15 } add_to_array = { NSP_rd_index = 16 } add_to_array = { NSP_rd_index = 64 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 65 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 17 } add_to_array = { NSP_rd_index = 18 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 66 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 19 } add_to_array = { NSP_rd_index = 20 } add_to_array = { NSP_rd_index = 67 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 }
+	# 格位索引：分类 2（行优先）
+	add_to_array = { NSP_rd_index = 21 } add_to_array = { NSP_rd_index = 22 } add_to_array = { NSP_rd_index = 23 } add_to_array = { NSP_rd_index = 24 } add_to_array = { NSP_rd_index = 25 } add_to_array = { NSP_rd_index = 76 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 26 } add_to_array = { NSP_rd_index = 27 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 68 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 28 } add_to_array = { NSP_rd_index = 29 } add_to_array = { NSP_rd_index = 30 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 77 } add_to_array = { NSP_rd_index = 78 } add_to_array = { NSP_rd_index = 79 } add_to_array = { NSP_rd_index = 80 } add_to_array = { NSP_rd_index = 81 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 82 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 83 } add_to_array = { NSP_rd_index = 84 } add_to_array = { NSP_rd_index = 85 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 86 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 }
+	# 格位索引：分类 3（行优先）
+	add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 31 } add_to_array = { NSP_rd_index = 32 } add_to_array = { NSP_rd_index = 33 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 69 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 34 } add_to_array = { NSP_rd_index = 35 } add_to_array = { NSP_rd_index = 36 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 37 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 38 } add_to_array = { NSP_rd_index = 39 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 70 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 }
+	# 格位索引：分类 4（行优先）
+	add_to_array = { NSP_rd_index = 40 } add_to_array = { NSP_rd_index = 41 } add_to_array = { NSP_rd_index = 42 } add_to_array = { NSP_rd_index = 43 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 71 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 44 } add_to_array = { NSP_rd_index = 45 } add_to_array = { NSP_rd_index = 46 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 47 } add_to_array = { NSP_rd_index = 48 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 49 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 72 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 73 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 }
+	# 格位索引：分类 5（行优先）
+	add_to_array = { NSP_rd_index = 50 } add_to_array = { NSP_rd_index = 51 } add_to_array = { NSP_rd_index = 52 } add_to_array = { NSP_rd_index = 53 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 74 } add_to_array = { NSP_rd_index = 75 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 54 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 55 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 56 } add_to_array = { NSP_rd_index = 57 } add_to_array = { NSP_rd_index = 58 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 } add_to_array = { NSP_rd_index = 87 }
+	# 88..93 地面设施（发射场）· 94 无人探测「科研卫星」
+	# 88 沃洛普斯岛
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 15 } add_to_array = { NSP_rd_days = 120 } add_to_array = { NSP_rd_tech = 2 } add_to_array = { NSP_rd_art = 11 } add_to_array = { NSP_rd_state = 3 } add_to_array = { NSP_rd_prog = 100 } add_to_array = { NSP_rd_deff = 120 } add_to_array = { NSP_rd_bonus = 0 }
+	# 89 范登堡空军基地
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = 88 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 180 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 12 } add_to_array = { NSP_rd_state = 3 } add_to_array = { NSP_rd_prog = 100 } add_to_array = { NSP_rd_deff = 180 } add_to_array = { NSP_rd_bonus = 0 }
+	# 90 太平洋导弹靶场
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = 89 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 270 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 13 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 270 } add_to_array = { NSP_rd_bonus = 0 }
+	# 91 白沙导弹靶场
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 0 } add_to_array = { NSP_rd_row = 4 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 15 } add_to_array = { NSP_rd_days = 120 } add_to_array = { NSP_rd_tech = 2 } add_to_array = { NSP_rd_art = 14 } add_to_array = { NSP_rd_state = 3 } add_to_array = { NSP_rd_prog = 100 } add_to_array = { NSP_rd_deff = 120 } add_to_array = { NSP_rd_bonus = 0 }
+	# 92 约翰斯顿环礁
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 3 } add_to_array = { NSP_rd_row = 3 } add_to_array = { NSP_rd_req1 = 90 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 110 } add_to_array = { NSP_rd_days = 360 } add_to_array = { NSP_rd_tech = 5 } add_to_array = { NSP_rd_art = 15 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 360 } add_to_array = { NSP_rd_bonus = 0 }
+	# 93 波克平原
+	add_to_array = { NSP_rd_trk = 5 } add_to_array = { NSP_rd_col = 2 } add_to_array = { NSP_rd_row = 4 } add_to_array = { NSP_rd_req1 = 91 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 60 } add_to_array = { NSP_rd_days = 240 } add_to_array = { NSP_rd_tech = 4 } add_to_array = { NSP_rd_art = 16 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 240 } add_to_array = { NSP_rd_bonus = 0 }
+	# 94 科研卫星
+	add_to_array = { NSP_rd_trk = 4 } add_to_array = { NSP_rd_col = 1 } add_to_array = { NSP_rd_row = 4 } add_to_array = { NSP_rd_req1 = -1 } add_to_array = { NSP_rd_req2 = -1 } add_to_array = { NSP_rd_cost = 30 } add_to_array = { NSP_rd_days = 240 } add_to_array = { NSP_rd_tech = 3 } add_to_array = { NSP_rd_art = 13 } add_to_array = { NSP_rd_state = 0 } add_to_array = { NSP_rd_prog = 0 } add_to_array = { NSP_rd_deff = 240 } add_to_array = { NSP_rd_bonus = 0 }
+	# 上面 88..94 的格位（分类 × 40 + 行 × 8 + 列）
+	set_variable = { NSP_rd_index^224 = 88 }
+	set_variable = { NSP_rd_index^225 = 89 }
+	set_variable = { NSP_rd_index^226 = 90 }
+	set_variable = { NSP_rd_index^227 = 92 }
+	set_variable = { NSP_rd_index^232 = 91 }
+	set_variable = { NSP_rd_index^234 = 93 }
+	set_variable = { NSP_rd_index^193 = 94 }
+	# 开局零科技 —— 没有任何预完成 / 研发中项目，根节点由 NSP_rd_recalc 置为可研发
+	NSP_rd_recalc = yes
+	NSP_rd_pick_sel = yes
+	NSP_rd_recalc = yes
+}
+
+#############################################################################
+# 研发解锁 / 被动加成
+#  ⭐ 解锁全部「从完成状态重算」（NSP_rd_apply_unlocks），可以反复调用；
+#     只有一次性效果（拨款 / 支持度 / 通知）在完成当天触发（NSP_rd_on_complete）。
+#  kind: 1 载荷 2 火箭 3 目的地 4 修正 5 火箭可靠性 6 载人可靠性 7 无人可靠性 8 成本-% 9 工期-% 10 拨款 11 支持度 12 发射台
+#############################################################################
+NSP_rd_init_unlocks = {
+	clear_array = NSP_rd_uk1
+	clear_array = NSP_rd_uv1
+	clear_array = NSP_rd_uk2
+	clear_array = NSP_rd_uv2
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 0
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 3 } add_to_array = { NSP_rd_uv2 = 0 }   # 1
+	add_to_array = { NSP_rd_uk1 = 2 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 2
+	add_to_array = { NSP_rd_uk1 = 2 } add_to_array = { NSP_rd_uv1 = 0 } add_to_array = { NSP_rd_uk2 = 4 } add_to_array = { NSP_rd_uv2 = 0 }   # 3
+	add_to_array = { NSP_rd_uk1 = 3 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 4
+	add_to_array = { NSP_rd_uk1 = 4 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 5
+	add_to_array = { NSP_rd_uk1 = 5 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 6
+	add_to_array = { NSP_rd_uk1 = 4 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 7
+	add_to_array = { NSP_rd_uk1 = 5 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 8
+	add_to_array = { NSP_rd_uk1 = 5 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 9
+	add_to_array = { NSP_rd_uk1 = 2 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 10
+	add_to_array = { NSP_rd_uk1 = 2 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 11
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 12
+	add_to_array = { NSP_rd_uk1 = 1 } add_to_array = { NSP_rd_uv1 = 0 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 13
+	add_to_array = { NSP_rd_uk1 = 4 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 14
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 11 } add_to_array = { NSP_rd_uv2 = 3 }   # 15
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 10 } add_to_array = { NSP_rd_uv2 = 600 }   # 16
+	add_to_array = { NSP_rd_uk1 = 1 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 17
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 18
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 11 } add_to_array = { NSP_rd_uv2 = 3 }   # 19
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 4 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 20
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 21
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 22
+	add_to_array = { NSP_rd_uk1 = 4 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 23
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 24
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 25
+	add_to_array = { NSP_rd_uk1 = 4 } add_to_array = { NSP_rd_uv1 = 7 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 26
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 9 } add_to_array = { NSP_rd_uv2 = 5 }   # 27
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 28
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 29
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 3 } add_to_array = { NSP_rd_uv2 = 4 }   # 30
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 31
+	add_to_array = { NSP_rd_uk1 = 4 } add_to_array = { NSP_rd_uv1 = 4 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 32
+	add_to_array = { NSP_rd_uk1 = 9 } add_to_array = { NSP_rd_uv1 = 10 } add_to_array = { NSP_rd_uk2 = 8 } add_to_array = { NSP_rd_uv2 = 5 }   # 33
+	add_to_array = { NSP_rd_uk1 = 5 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 34
+	add_to_array = { NSP_rd_uk1 = 5 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 6 } add_to_array = { NSP_rd_uv2 = 2 }   # 35
+	add_to_array = { NSP_rd_uk1 = 5 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 36
+	add_to_array = { NSP_rd_uk1 = 9 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 37
+	add_to_array = { NSP_rd_uk1 = 7 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 6 } add_to_array = { NSP_rd_uv2 = 2 }   # 38
+	add_to_array = { NSP_rd_uk1 = 7 } add_to_array = { NSP_rd_uv1 = 8 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 39
+	add_to_array = { NSP_rd_uk1 = 4 } add_to_array = { NSP_rd_uv1 = 6 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 40
+	add_to_array = { NSP_rd_uk1 = 1 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 41
+	add_to_array = { NSP_rd_uk1 = 3 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 42
+	add_to_array = { NSP_rd_uk1 = 3 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 43
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 44
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 45
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 11 } add_to_array = { NSP_rd_uv2 = 2 }   # 46
+	add_to_array = { NSP_rd_uk1 = 1 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 3 } add_to_array = { NSP_rd_uv2 = 4 }   # 47
+	add_to_array = { NSP_rd_uk1 = 3 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 48
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 6 } add_to_array = { NSP_rd_uk2 = 7 } add_to_array = { NSP_rd_uv2 = 5 }   # 49
+	add_to_array = { NSP_rd_uk1 = 0 } add_to_array = { NSP_rd_uv1 = 0 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 50
+	add_to_array = { NSP_rd_uk1 = 5 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 51
+	add_to_array = { NSP_rd_uk1 = 12 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 52
+	add_to_array = { NSP_rd_uk1 = 12 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 53
+	add_to_array = { NSP_rd_uk1 = 9 } add_to_array = { NSP_rd_uv1 = 3 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 54
+	add_to_array = { NSP_rd_uk1 = 9 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 55
+	add_to_array = { NSP_rd_uk1 = 5 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 56
+	add_to_array = { NSP_rd_uk1 = 8 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 57
+	add_to_array = { NSP_rd_uk1 = 9 } add_to_array = { NSP_rd_uv1 = 10 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 58
+	add_to_array = { NSP_rd_uk1 = 8 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 59
+	add_to_array = { NSP_rd_uk1 = 8 } add_to_array = { NSP_rd_uv1 = 15 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 60
+	add_to_array = { NSP_rd_uk1 = 5 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 61
+	add_to_array = { NSP_rd_uk1 = 5 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 62
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 8 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 63
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 4 } add_to_array = { NSP_rd_uk2 = 10 } add_to_array = { NSP_rd_uv2 = 800 }   # 64
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 6 } add_to_array = { NSP_rd_uk2 = 10 } add_to_array = { NSP_rd_uv2 = 1200 }   # 65
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 6 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 66
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 6 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 67
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 4 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 68
+	add_to_array = { NSP_rd_uk1 = 8 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 69
+	add_to_array = { NSP_rd_uk1 = 7 } add_to_array = { NSP_rd_uv1 = 8 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 70
+	add_to_array = { NSP_rd_uk1 = 10 } add_to_array = { NSP_rd_uv1 = 500 } add_to_array = { NSP_rd_uk2 = 11 } add_to_array = { NSP_rd_uv2 = 3 }   # 71
+	add_to_array = { NSP_rd_uk1 = 7 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 11 } add_to_array = { NSP_rd_uv2 = 4 }   # 72
+	add_to_array = { NSP_rd_uk1 = 7 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 11 } add_to_array = { NSP_rd_uv2 = 6 }   # 73
+	add_to_array = { NSP_rd_uk1 = 8 } add_to_array = { NSP_rd_uv1 = 5 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 74
+	add_to_array = { NSP_rd_uk1 = 0 } add_to_array = { NSP_rd_uv1 = 0 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 75
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 76
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 77
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 78
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 79
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 80
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 81
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 82
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 83
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 84
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 85
+	add_to_array = { NSP_rd_uk1 = 6 } add_to_array = { NSP_rd_uv1 = 1 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 86
+	add_to_array = { NSP_rd_uk1 = 0 } add_to_array = { NSP_rd_uv1 = 0 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 87
+	# 88..93 发射场：解锁由 NSP_unlock_sites 处理；94 科研卫星：完成时支持度 +2
+	add_to_array = { NSP_rd_uk1 = 0 } add_to_array = { NSP_rd_uv1 = 0 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 88
+	add_to_array = { NSP_rd_uk1 = 0 } add_to_array = { NSP_rd_uv1 = 0 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 89
+	add_to_array = { NSP_rd_uk1 = 0 } add_to_array = { NSP_rd_uv1 = 0 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 90
+	add_to_array = { NSP_rd_uk1 = 0 } add_to_array = { NSP_rd_uv1 = 0 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 91
+	add_to_array = { NSP_rd_uk1 = 0 } add_to_array = { NSP_rd_uv1 = 0 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 92
+	add_to_array = { NSP_rd_uk1 = 0 } add_to_array = { NSP_rd_uv1 = 0 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 93
+	add_to_array = { NSP_rd_uk1 = 11 } add_to_array = { NSP_rd_uv1 = 2 } add_to_array = { NSP_rd_uk2 = 0 } add_to_array = { NSP_rd_uv2 = 0 }   # 94
+	# 规划器解锁表（0/1），下标同 NSP_pl_* / NSP_ve_* / NSP_dest_dv / NSP_mod_*
+	clear_array = NSP_pl_unl   for_loop_effect = { start = 0 end = 12 value = k add_to_array = { NSP_pl_unl = 0 } }
+	clear_array = NSP_ve_unl   for_loop_effect = { start = 0 end = 9 value = k add_to_array = { NSP_ve_unl = 0 } }
+	clear_array = NSP_dest_unl for_loop_effect = { start = 0 end = 8 value = k add_to_array = { NSP_dest_unl = 0 } }
+	clear_array = NSP_mod_unl  for_loop_effect = { start = 0 end = 20 value = k add_to_array = { NSP_mod_unl = 0 } }
+}
+
+#############################################################################
+#  1962 年开局科技
+#  依据：1962.1.1 前美国已投入使用或已成功飞行的项目。NSP_init 调用一次。
+#  只改状态 / 进度，不加太空科技、不发一次性拨款 / 支持度（避免开局连升级、弹事件）。
+#  在研的移出队列，不返还经费。
+#
+#    id  名称              史实依据
+#     0  红石 MRLV         1961 水星-红石载人亚轨道飞行（MR-3 / MR-4）
+#     1  宇宙神 LV-3B      1961.11 MA-5 入轨（解锁近地轨道）
+#     7  H-1 改进型        1961.10 土星 I SA-1 首飞
+#    12  水星飞船          1961 载人飞行
+#    21  水星加压服        同上
+#    77  镀铝尼龙加压层    水星服外层
+#    28  海上回收          水星溅落回收
+#    29  烧蚀防热罩        水星防热罩
+#    37  遥测网            1961 水星跟踪网建成
+#    40  先锋号            1958–59
+#    41  TIROS 气象卫星    1960.4 TIROS-1
+#    50  LC-14 发射台      宇宙神发射台，1957 起使用
+#    54  水星控制中心      1961 启用
+#    56  马歇尔试车台      1960 马歇尔中心成立
+#    88 / 89 / 91 沃洛普斯 / 范登堡 / 白沙  1962 年前已建成的发射场
+#  ⚠ 不给：阿金纳（会直接解锁交会目的地）、双子星、LC-19 双子星改造、徘徊者（1964 前未成功）。
+#############################################################################
+NSP_rd_start_1962 = {
+	clear_array = NSP_rd_start_ids
+	add_to_array = { NSP_rd_start_ids = 0 }  add_to_array = { NSP_rd_start_ids = 1 }  add_to_array = { NSP_rd_start_ids = 7 }
+	add_to_array = { NSP_rd_start_ids = 12 } add_to_array = { NSP_rd_start_ids = 21 } add_to_array = { NSP_rd_start_ids = 77 }
+	add_to_array = { NSP_rd_start_ids = 28 } add_to_array = { NSP_rd_start_ids = 29 } add_to_array = { NSP_rd_start_ids = 37 }
+	add_to_array = { NSP_rd_start_ids = 40 } add_to_array = { NSP_rd_start_ids = 41 } add_to_array = { NSP_rd_start_ids = 50 }
+	add_to_array = { NSP_rd_start_ids = 54 } add_to_array = { NSP_rd_start_ids = 56 }
+	add_to_array = { NSP_rd_start_ids = 88 } add_to_array = { NSP_rd_start_ids = 89 } add_to_array = { NSP_rd_start_ids = 91 }   # 沃洛普斯 / 范登堡 / 白沙
+	for_each_loop = {
+		array = NSP_rd_start_ids value = p
+		if = { limit = { is_in_array = { array = NSP_rd_queue value = p } } remove_from_array = { array = NSP_rd_queue value = p } }
+		set_variable = { NSP_rd_state^p = 3 }
+		set_variable = { NSP_rd_prog^p = 100 }
+	}
+	clear_array = NSP_rd_start_ids
+}
+
+# ⭐ 小科技（只给加成、不解锁东西，照 TNO 小科技画成 74×74 方卡）
+#   NSP_rd_small^id = 1 → 方卡；NSP_rd_sart^id = 方卡图帧（tools/gen_rd_small.py 的 SMALL 列表顺序 + 1）
+#   每次 recalc 都按字面表重写。改名单要两边一起改（本表 + gen_rd_small.py）。
+NSP_rd_small_init = {
+	set_temp_variable = { nsp_ln = NSP_rd_count }
+	add_to_temp_variable = { nsp_ln = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_small^num < nsp_ln } } add_to_array = { NSP_rd_small = 0 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_sart^num < nsp_ln } } add_to_array = { NSP_rd_sart = 1 } }
+	set_variable = { NSP_rd_small^8 = 1 } set_variable = { NSP_rd_sart^8 = 1 }
+	set_variable = { NSP_rd_small^18 = 1 } set_variable = { NSP_rd_sart^18 = 2 }
+	set_variable = { NSP_rd_small^21 = 1 } set_variable = { NSP_rd_sart^21 = 3 }
+	set_variable = { NSP_rd_small^22 = 1 } set_variable = { NSP_rd_sart^22 = 4 }
+	set_variable = { NSP_rd_small^24 = 1 } set_variable = { NSP_rd_sart^24 = 5 }
+	set_variable = { NSP_rd_small^25 = 1 } set_variable = { NSP_rd_sart^25 = 6 }
+	set_variable = { NSP_rd_small^27 = 1 } set_variable = { NSP_rd_sart^27 = 7 }
+	set_variable = { NSP_rd_small^28 = 1 } set_variable = { NSP_rd_sart^28 = 8 }
+	set_variable = { NSP_rd_small^33 = 1 } set_variable = { NSP_rd_sart^33 = 9 }
+	set_variable = { NSP_rd_small^34 = 1 } set_variable = { NSP_rd_sart^34 = 10 }
+	set_variable = { NSP_rd_small^35 = 1 } set_variable = { NSP_rd_sart^35 = 11 }
+	set_variable = { NSP_rd_small^39 = 1 } set_variable = { NSP_rd_sart^39 = 12 }
+	set_variable = { NSP_rd_small^44 = 1 } set_variable = { NSP_rd_sart^44 = 13 }
+	set_variable = { NSP_rd_small^46 = 0 }   # 月球轨道器改为解锁载荷 / 目的地的大卡（方卡图帧 14 留空不用）
+	set_variable = { NSP_rd_small^50 = 1 } set_variable = { NSP_rd_sart^50 = 15 }
+	set_variable = { NSP_rd_small^51 = 1 } set_variable = { NSP_rd_sart^51 = 16 }
+	set_variable = { NSP_rd_small^54 = 1 } set_variable = { NSP_rd_sart^54 = 17 }
+	set_variable = { NSP_rd_small^56 = 1 } set_variable = { NSP_rd_sart^56 = 18 }
+	set_variable = { NSP_rd_small^57 = 1 } set_variable = { NSP_rd_sart^57 = 19 }
+	set_variable = { NSP_rd_small^58 = 1 } set_variable = { NSP_rd_sart^58 = 20 }
+	set_variable = { NSP_rd_small^59 = 1 } set_variable = { NSP_rd_sart^59 = 21 }
+	set_variable = { NSP_rd_small^62 = 1 } set_variable = { NSP_rd_sart^62 = 22 }
+	set_variable = { NSP_rd_small^69 = 1 } set_variable = { NSP_rd_sart^69 = 23 }
+	set_variable = { NSP_rd_small^70 = 1 } set_variable = { NSP_rd_sart^70 = 24 }
+	set_variable = { NSP_rd_small^74 = 1 } set_variable = { NSP_rd_sart^74 = 25 }
+	set_variable = { NSP_rd_small^75 = 1 } set_variable = { NSP_rd_sart^75 = 26 }
+	set_variable = { NSP_rd_small^76 = 1 } set_variable = { NSP_rd_sart^76 = 27 }
+	set_variable = { NSP_rd_small^77 = 1 } set_variable = { NSP_rd_sart^77 = 28 }
+	set_variable = { NSP_rd_small^78 = 1 } set_variable = { NSP_rd_sart^78 = 29 }
+	set_variable = { NSP_rd_small^79 = 1 } set_variable = { NSP_rd_sart^79 = 30 }
+	set_variable = { NSP_rd_small^80 = 1 } set_variable = { NSP_rd_sart^80 = 31 }
+	set_variable = { NSP_rd_small^81 = 1 } set_variable = { NSP_rd_sart^81 = 32 }
+	set_variable = { NSP_rd_small^82 = 1 } set_variable = { NSP_rd_sart^82 = 33 }
+	set_variable = { NSP_rd_small^84 = 1 } set_variable = { NSP_rd_sart^84 = 34 }
+	set_variable = { NSP_rd_small^85 = 1 } set_variable = { NSP_rd_sart^85 = 35 }
+}
+
+NSP_rd_links_calc = {
+	NSP_rd_small_init = yes
+	# 数组撑开到 NSP_rd_count + 1（含占位 87），并全部清成空帧
+	set_temp_variable = { nsp_ln = NSP_rd_count }
+	add_to_temp_variable = { nsp_ln = 1 }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l1h0^num < nsp_ln } } add_to_array = { NSP_rd_l1h0 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l1h1^num < nsp_ln } } add_to_array = { NSP_rd_l1h1 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l1h2^num < nsp_ln } } add_to_array = { NSP_rd_l1h2 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l1h3^num < nsp_ln } } add_to_array = { NSP_rd_l1h3 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l1h4^num < nsp_ln } } add_to_array = { NSP_rd_l1h4 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l1h5^num < nsp_ln } } add_to_array = { NSP_rd_l1h5 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l1h6^num < nsp_ln } } add_to_array = { NSP_rd_l1h6 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l2h0^num < nsp_ln } } add_to_array = { NSP_rd_l2h0 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l2h1^num < nsp_ln } } add_to_array = { NSP_rd_l2h1 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l2h2^num < nsp_ln } } add_to_array = { NSP_rd_l2h2 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l2h3^num < nsp_ln } } add_to_array = { NSP_rd_l2h3 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l2h4^num < nsp_ln } } add_to_array = { NSP_rd_l2h4 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l2h5^num < nsp_ln } } add_to_array = { NSP_rd_l2h5 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l2h6^num < nsp_ln } } add_to_array = { NSP_rd_l2h6 = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l1vu^num < nsp_ln } } add_to_array = { NSP_rd_l1vu = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l1vd^num < nsp_ln } } add_to_array = { NSP_rd_l1vd = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l1lu^num < nsp_ln } } add_to_array = { NSP_rd_l1lu = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l1ld^num < nsp_ln } } add_to_array = { NSP_rd_l1ld = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l2vu^num < nsp_ln } } add_to_array = { NSP_rd_l2vu = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l2vd^num < nsp_ln } } add_to_array = { NSP_rd_l2vd = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l2lu^num < nsp_ln } } add_to_array = { NSP_rd_l2lu = 1 } }
+	while_loop_effect = { limit = { check_variable = { NSP_rd_l2ld^num < nsp_ln } } add_to_array = { NSP_rd_l2ld = 1 } }
+	# 小科技出线：先整体清空（父项目 id 可能比子项目大，不能在主循环里按 p 清）
+	while_loop_effect = { limit = { check_variable = { NSP_rd_ltail^num < nsp_ln } } add_to_array = { NSP_rd_ltail = 1 } }
+	for_loop_effect = { start = 0 end = nsp_ln value = p  set_variable = { NSP_rd_ltail^p = 1 } }
+	for_loop_effect = {
+		start = 0 end = nsp_ln value = p
+		set_variable = { NSP_rd_l1h0^p = 1 }
+		set_variable = { NSP_rd_l1h1^p = 1 }
+		set_variable = { NSP_rd_l1h2^p = 1 }
+		set_variable = { NSP_rd_l1h3^p = 1 }
+		set_variable = { NSP_rd_l1h4^p = 1 }
+		set_variable = { NSP_rd_l1h5^p = 1 }
+		set_variable = { NSP_rd_l1h6^p = 1 }
+		set_variable = { NSP_rd_l2h0^p = 1 }
+		set_variable = { NSP_rd_l2h1^p = 1 }
+		set_variable = { NSP_rd_l2h2^p = 1 }
+		set_variable = { NSP_rd_l2h3^p = 1 }
+		set_variable = { NSP_rd_l2h4^p = 1 }
+		set_variable = { NSP_rd_l2h5^p = 1 }
+		set_variable = { NSP_rd_l2h6^p = 1 }
+		set_variable = { NSP_rd_l1vu^p = 1 }
+		set_variable = { NSP_rd_l1vd^p = 1 }
+		set_variable = { NSP_rd_l1lu^p = 1 }
+		set_variable = { NSP_rd_l1ld^p = 1 }
+		set_variable = { NSP_rd_l2vu^p = 1 }
+		set_variable = { NSP_rd_l2vd^p = 1 }
+		set_variable = { NSP_rd_l2lu^p = 1 }
+		set_variable = { NSP_rd_l2ld^p = 1 }
+		set_temp_variable = { nsp_lc = 0 }
+		if = { limit = { check_variable = { NSP_rd_state^p > 0 } check_variable = { NSP_rd_state^p < 4 } } set_temp_variable = { nsp_lc = NSP_rd_state^p } }
+		# ---- req1 ----
+		set_temp_variable = { nsp_lq = NSP_rd_req1^p }
+		if = {
+			limit = { check_variable = { nsp_lq > -1 } NOT = { check_variable = { nsp_lq = NSP_rd_blank } } }
+			set_temp_variable = { nsp_ldx = NSP_rd_col^p }
+			subtract_from_temp_variable = { nsp_ldx = NSP_rd_col^nsp_lq }
+			set_temp_variable = { nsp_ldy = NSP_rd_row^p }
+			subtract_from_temp_variable = { nsp_ldy = NSP_rd_row^nsp_lq }
+			if = {
+				limit = { check_variable = { nsp_ldx > 0 } check_variable = { nsp_ldx < 5 } check_variable = { nsp_ldy > -4 } check_variable = { nsp_ldy < 4 } }
+				# L 形可用？dx = 1、dy ≠ 0，且父列从父行朝子行走（不含父行，含子行）每格都空
+				set_temp_variable = { nsp_lL = 0 }
+				if = {
+					limit = { check_variable = { nsp_ldx = 1 } NOT = { check_variable = { nsp_ldy = 0 } } check_variable = { NSP_rd_small^nsp_lq = 0 } }   # 小科技父卡没有底边可落，走 Z 形
+					set_temp_variable = { nsp_lL = 1 }
+					set_temp_variable = { nsp_lst = 1 }
+					if = { limit = { check_variable = { nsp_ldy < 0 } } set_temp_variable = { nsp_lst = -1 } }
+					set_temp_variable = { nsp_lrow = NSP_rd_row^nsp_lq }
+					set_temp_variable = { nsp_lrow_end = NSP_rd_row^p }
+					set_temp_variable = { nsp_lbase = NSP_rd_trk^p }
+					multiply_temp_variable = { nsp_lbase = 40 }
+					add_to_temp_variable = { nsp_lbase = NSP_rd_col^nsp_lq }
+					while_loop_effect = {
+						limit = { NOT = { check_variable = { nsp_lrow = nsp_lrow_end } } }
+						add_to_temp_variable = { nsp_lrow = nsp_lst }
+						set_temp_variable = { nsp_lix = nsp_lrow }
+						multiply_temp_variable = { nsp_lix = 8 }
+						add_to_temp_variable = { nsp_lix = nsp_lbase }
+						set_temp_variable = { nsp_lcell = NSP_rd_index^nsp_lix }
+						if = { limit = { NOT = { check_variable = { nsp_lcell = NSP_rd_blank } } } set_temp_variable = { nsp_lL = 0 } }
+					}
+				}
+				set_temp_variable = { nsp_lady = nsp_ldy }
+				if = { limit = { check_variable = { nsp_lady < 0 } } multiply_temp_variable = { nsp_lady = -1 } }
+				set_temp_variable = { nsp_lv = nsp_lc }
+				multiply_temp_variable = { nsp_lv = 3 }
+				add_to_temp_variable = { nsp_lv = nsp_lady }
+				add_to_temp_variable = { nsp_lv = 1 }
+				if = {
+					limit = { check_variable = { nsp_lL = 1 } }
+					if = { limit = { check_variable = { nsp_ldy > 0 } } set_variable = { NSP_rd_l1lu^p = nsp_lv } }
+					else = { set_variable = { NSP_rd_l1ld^p = nsp_lv } }
+				}
+				else = {
+					set_temp_variable = { nsp_lh = nsp_lc }
+					multiply_temp_variable = { nsp_lh = 4 }
+					add_to_temp_variable = { nsp_lh = nsp_ldx }
+					add_to_temp_variable = { nsp_lh = 1 }
+					# 父项目是小科技：它的出线颜色取所有子项目里状态最高的那条
+					if = {
+						limit = { check_variable = { NSP_rd_small^nsp_lq = 1 } }
+						set_temp_variable = { nsp_lt = nsp_lc }
+						add_to_temp_variable = { nsp_lt = 2 }
+						set_temp_variable = { nsp_lt0 = NSP_rd_ltail^nsp_lq }
+						if = { limit = { check_variable = { nsp_lt > nsp_lt0 } } set_variable = { NSP_rd_ltail^nsp_lq = nsp_lt } }
+					}
+					if = { limit = { check_variable = { nsp_ldy = -3 } } set_variable = { NSP_rd_l1h0^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = -2 } } set_variable = { NSP_rd_l1h1^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = -1 } } set_variable = { NSP_rd_l1h2^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = 0 } } set_variable = { NSP_rd_l1h3^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = 1 } } set_variable = { NSP_rd_l1h4^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = 2 } } set_variable = { NSP_rd_l1h5^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = 3 } } set_variable = { NSP_rd_l1h6^p = nsp_lh } }
+					if = {
+						limit = { check_variable = { nsp_ldy > -1 } }
+						set_temp_variable = { nsp_lu = nsp_lc }
+						multiply_temp_variable = { nsp_lu = 4 }
+						add_to_temp_variable = { nsp_lu = nsp_ldy }
+						add_to_temp_variable = { nsp_lu = 2 }
+						set_variable = { NSP_rd_l1vu^p = nsp_lu }
+					}
+					else = { set_variable = { NSP_rd_l1vd^p = nsp_lv } }
+				}
+			}
+		}
+		# ---- req2 ----
+		set_temp_variable = { nsp_lq = NSP_rd_req2^p }
+		if = {
+			limit = { check_variable = { nsp_lq > -1 } NOT = { check_variable = { nsp_lq = NSP_rd_blank } } }
+			set_temp_variable = { nsp_ldx = NSP_rd_col^p }
+			subtract_from_temp_variable = { nsp_ldx = NSP_rd_col^nsp_lq }
+			set_temp_variable = { nsp_ldy = NSP_rd_row^p }
+			subtract_from_temp_variable = { nsp_ldy = NSP_rd_row^nsp_lq }
+			if = {
+				limit = { check_variable = { nsp_ldx > 0 } check_variable = { nsp_ldx < 5 } check_variable = { nsp_ldy > -4 } check_variable = { nsp_ldy < 4 } }
+				# L 形可用？dx = 1、dy ≠ 0，且父列从父行朝子行走（不含父行，含子行）每格都空
+				set_temp_variable = { nsp_lL = 0 }
+				if = {
+					limit = { check_variable = { nsp_ldx = 1 } NOT = { check_variable = { nsp_ldy = 0 } } check_variable = { NSP_rd_small^nsp_lq = 0 } }   # 小科技父卡没有底边可落，走 Z 形
+					set_temp_variable = { nsp_lL = 1 }
+					set_temp_variable = { nsp_lst = 1 }
+					if = { limit = { check_variable = { nsp_ldy < 0 } } set_temp_variable = { nsp_lst = -1 } }
+					set_temp_variable = { nsp_lrow = NSP_rd_row^nsp_lq }
+					set_temp_variable = { nsp_lrow_end = NSP_rd_row^p }
+					set_temp_variable = { nsp_lbase = NSP_rd_trk^p }
+					multiply_temp_variable = { nsp_lbase = 40 }
+					add_to_temp_variable = { nsp_lbase = NSP_rd_col^nsp_lq }
+					while_loop_effect = {
+						limit = { NOT = { check_variable = { nsp_lrow = nsp_lrow_end } } }
+						add_to_temp_variable = { nsp_lrow = nsp_lst }
+						set_temp_variable = { nsp_lix = nsp_lrow }
+						multiply_temp_variable = { nsp_lix = 8 }
+						add_to_temp_variable = { nsp_lix = nsp_lbase }
+						set_temp_variable = { nsp_lcell = NSP_rd_index^nsp_lix }
+						if = { limit = { NOT = { check_variable = { nsp_lcell = NSP_rd_blank } } } set_temp_variable = { nsp_lL = 0 } }
+					}
+				}
+				set_temp_variable = { nsp_lady = nsp_ldy }
+				if = { limit = { check_variable = { nsp_lady < 0 } } multiply_temp_variable = { nsp_lady = -1 } }
+				set_temp_variable = { nsp_lv = nsp_lc }
+				multiply_temp_variable = { nsp_lv = 3 }
+				add_to_temp_variable = { nsp_lv = nsp_lady }
+				add_to_temp_variable = { nsp_lv = 1 }
+				if = {
+					limit = { check_variable = { nsp_lL = 1 } }
+					if = { limit = { check_variable = { nsp_ldy > 0 } } set_variable = { NSP_rd_l2lu^p = nsp_lv } }
+					else = { set_variable = { NSP_rd_l2ld^p = nsp_lv } }
+				}
+				else = {
+					set_temp_variable = { nsp_lh = nsp_lc }
+					multiply_temp_variable = { nsp_lh = 4 }
+					add_to_temp_variable = { nsp_lh = nsp_ldx }
+					add_to_temp_variable = { nsp_lh = 1 }
+					# 父项目是小科技：它的出线颜色取所有子项目里状态最高的那条
+					if = {
+						limit = { check_variable = { NSP_rd_small^nsp_lq = 1 } }
+						set_temp_variable = { nsp_lt = nsp_lc }
+						add_to_temp_variable = { nsp_lt = 2 }
+						set_temp_variable = { nsp_lt0 = NSP_rd_ltail^nsp_lq }
+						if = { limit = { check_variable = { nsp_lt > nsp_lt0 } } set_variable = { NSP_rd_ltail^nsp_lq = nsp_lt } }
+					}
+					if = { limit = { check_variable = { nsp_ldy = -3 } } set_variable = { NSP_rd_l2h0^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = -2 } } set_variable = { NSP_rd_l2h1^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = -1 } } set_variable = { NSP_rd_l2h2^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = 0 } } set_variable = { NSP_rd_l2h3^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = 1 } } set_variable = { NSP_rd_l2h4^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = 2 } } set_variable = { NSP_rd_l2h5^p = nsp_lh } }
+					if = { limit = { check_variable = { nsp_ldy = 3 } } set_variable = { NSP_rd_l2h6^p = nsp_lh } }
+					if = {
+						limit = { check_variable = { nsp_ldy > -1 } }
+						set_temp_variable = { nsp_lu = nsp_lc }
+						multiply_temp_variable = { nsp_lu = 4 }
+						add_to_temp_variable = { nsp_lu = nsp_ldy }
+						add_to_temp_variable = { nsp_lu = 2 }
+						set_variable = { NSP_rd_l2vu^p = nsp_lu }
+					}
+					else = { set_variable = { NSP_rd_l2vd^p = nsp_lv } }
+				}
+			}
+		}
+	}
+}
+
+# ===========================================================================
+# 2. 研发页操作 / 每日推进 / 完成
+# ===========================================================================
+
+# 切页：同 NSP_open_planner 的写法（flag 改完再刷一次）
+NSP_open_rd = {
+	NSP_rd_recalc = yes
+	clr_country_flag = NSP_rd_pop_open   # 每次进研发页弹窗先收起
+	set_country_flag = NSP_rd_open
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+NSP_close_rd = {
+	clr_country_flag = NSP_rd_open
+	clr_country_flag = NSP_rd_pop_open
+	NSP_recalc_home = yes
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+NSP_rd_set_track = {
+	# 调用前 set_variable = { NSP_rd_track = X }
+	NSP_rd_recalc = yes
+	NSP_rd_pick_sel = yes
+	NSP_rd_recalc = yes
+	clr_country_flag = NSP_rd_pop_open   # 切分类收起弹窗（选中项会被 pick_sel 换掉）
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+# 切分类后挑一个默认选中：优先研发中，其次可研发，否则该分类第一个项目
+NSP_rd_pick_sel = {
+	set_temp_variable = { nsp_best = -1 }
+	set_temp_variable = { nsp_best_score = -1 }
+	for_loop_effect = {
+		start = 0 end = NSP_rd_count value = p
+		if = {
+			limit = { check_variable = { NSP_rd_trk^p = NSP_rd_track } }
+			set_temp_variable = { nsp_score = 0 }
+			if = { limit = { check_variable = { NSP_rd_state^p = 1 } } set_temp_variable = { nsp_score = 2 } }
+			if = { limit = { check_variable = { NSP_rd_state^p = 2 } } set_temp_variable = { nsp_score = 3 } }
+			if = {
+				limit = { check_variable = { nsp_score > nsp_best_score } }
+				set_temp_variable = { nsp_best = p }
+				set_temp_variable = { nsp_best_score = nsp_score }
+			}
+		}
+	}
+	set_variable = { NSP_rd_sel = nsp_best }
+}
+
+NSP_rd_start = {
+	if = {
+		limit = { NSP_rd_can_start = yes }
+		set_temp_variable = { p = NSP_rd_sel }
+		subtract_from_variable = { NSP_space_budget = NSP_rd_sel_cost }
+		set_variable = { NSP_rd_state^p = 2 }
+		set_variable = { NSP_rd_prog^p = 0 }
+		set_variable = { NSP_rd_deff^p = NSP_rd_sel_days }
+		add_to_array = { NSP_rd_queue = p }
+		NSP_rd_recalc = yes
+		add_to_variable = { NSP_dirty = 1 }
+	}
+}
+
+NSP_rd_recalc = {
+	# ---- 当前时代（TNO 1962 开局 → 1961 时代；可以研发下一个时代的项目，但工期 ×1.5）----
+	set_variable = { NSP_rd_era_now = 0 }
+	if = { limit = { date > 1961.1.1 } set_variable = { NSP_rd_era_now = 1 } }
+	if = { limit = { date > 1964.1.1 } set_variable = { NSP_rd_era_now = 2 } }
+	if = { limit = { date > 1967.1.1 } set_variable = { NSP_rd_era_now = 3 } }
+	if = { limit = { date > 1970.1.1 } set_variable = { NSP_rd_era_now = 4 } }
+	if = { limit = { date > 1973.1.1 } set_variable = { NSP_rd_era_now = 5 } }
+	if = { limit = { date > 1976.1.1 } set_variable = { NSP_rd_era_now = 6 } }
+	if = { limit = { date > 1979.1.1 } set_variable = { NSP_rd_era_now = 7 } }
+	set_temp_variable = { nsp_lim = NSP_rd_era_now }
+	add_to_temp_variable = { nsp_lim = 1 }
+
+	# ---- 状态 0/1 由前置 + 时代决定 ----
+	for_loop_effect = {
+		start = 0 end = NSP_rd_count value = p
+		if = {
+			limit = { check_variable = { NSP_rd_state^p < 2 } }
+			set_temp_variable = { nsp_ok = 1 }
+			set_temp_variable = { nsp_r = NSP_rd_req1^p }
+			if = { limit = { check_variable = { nsp_r > -1 } } if = { limit = { NOT = { check_variable = { NSP_rd_state^nsp_r = 3 } } } set_temp_variable = { nsp_ok = 0 } } }
+			set_temp_variable = { nsp_r = NSP_rd_req2^p }
+			if = { limit = { check_variable = { nsp_r > -1 } } if = { limit = { NOT = { check_variable = { NSP_rd_state^nsp_r = 3 } } } set_temp_variable = { nsp_ok = 0 } } }
+			if = { limit = { check_variable = { NSP_rd_col^p > nsp_lim } } set_temp_variable = { nsp_ok = 0 } }
+			set_variable = { NSP_rd_state^p = nsp_ok }
+		}
+	}
+
+	# ---- 当前分类的格位视图（COLS×ROWS）----
+	clear_array = NSP_rd_view
+	set_temp_variable = { nsp_base = NSP_rd_track }
+	multiply_temp_variable = { nsp_base = 40 }
+	for_loop_effect = {
+		start = 0 end = 40 value = k
+		set_temp_variable = { nsp_ix = nsp_base }
+		add_to_temp_variable = { nsp_ix = k }
+		add_to_array = { NSP_rd_view = NSP_rd_index^nsp_ix }
+	}
+
+	# ---- 页签 / 连线帧 ----
+	set_variable = { NSP_rd_f_tab0 = 1 } if = { limit = { check_variable = { NSP_rd_track = 0 } } set_variable = { NSP_rd_f_tab0 = 2 } }
+	set_variable = { NSP_rd_f_tab1 = 1 } if = { limit = { check_variable = { NSP_rd_track = 1 } } set_variable = { NSP_rd_f_tab1 = 2 } }
+	set_variable = { NSP_rd_f_tab2 = 1 } if = { limit = { check_variable = { NSP_rd_track = 2 } } set_variable = { NSP_rd_f_tab2 = 2 } }
+	set_variable = { NSP_rd_f_tab3 = 1 } if = { limit = { check_variable = { NSP_rd_track = 3 } } set_variable = { NSP_rd_f_tab3 = 2 } }
+	set_variable = { NSP_rd_f_tab4 = 1 } if = { limit = { check_variable = { NSP_rd_track = 4 } } set_variable = { NSP_rd_f_tab4 = 2 } }
+	set_variable = { NSP_rd_f_tab5 = 1 } if = { limit = { check_variable = { NSP_rd_track = 5 } } set_variable = { NSP_rd_f_tab5 = 2 } }
+	set_variable = { NSP_rd_f_links = NSP_rd_track }
+	add_to_variable = { NSP_rd_f_links = 1 }
+
+	# ---- 研发槽条（7 格）：研发中 / 空闲 / 未解锁 ----
+	set_variable = { NSP_rd_q_n = 0 }
+	for_each_loop = { array = NSP_rd_queue value = q  add_to_variable = { NSP_rd_q_n = 1 } }
+	# 还没拿到的研发槽来源，按顺序填给未解锁的格子：1004 / 1007 / 1010 = 科技第 4 / 7 / 10 级里程碑，其余 = 带研发槽奖励的研发 id
+	clear_array = NSP_rd_q_lksrc
+	if = { limit = { NOT = { has_country_flag = NSP_tier_slot4 } } add_to_array = { NSP_rd_q_lksrc = 1004 } }
+	if = { limit = { NOT = { has_country_flag = NSP_tier_slot7 } } add_to_array = { NSP_rd_q_lksrc = 1007 } }
+	if = { limit = { NOT = { has_country_flag = NSP_tier_slot10 } } add_to_array = { NSP_rd_q_lksrc = 1010 } }
+	for_each_loop = {
+		array = NSP_rd_bonus value = t_b index = t_i
+		if = { limit = { check_variable = { t_b = 1 } NOT = { check_variable = { NSP_rd_state^t_i = 3 } } } add_to_array = { NSP_rd_q_lksrc = t_i } }
+	}
+	# 显示格数 = 研发槽上限 + 还能拿到的，最多 7
+	set_variable = { NSP_rd_q_shown = NSP_rd_slots }
+	add_to_variable = { NSP_rd_q_shown = NSP_rd_q_lksrc^num }
+	clamp_variable = { var = NSP_rd_q_shown min = 0 max = 7 }
+	# 第 1 格
+	set_variable = { NSP_rd_q_id0 = NSP_rd_blank }
+	set_variable = { NSP_rd_q_prog0 = 0 }
+	set_variable = { NSP_rd_q_cf0 = 3 }
+	set_variable = { NSP_rd_q_lk0 = 0 }
+	if = { limit = { check_variable = { NSP_rd_slots > 0 } } set_variable = { NSP_rd_q_cf0 = 1 } }
+	else = {
+		set_temp_variable = { t_j = 0 }
+		subtract_from_temp_variable = { t_j = NSP_rd_slots }
+		if = { limit = { check_variable = { NSP_rd_q_lksrc^num > t_j } } set_variable = { NSP_rd_q_lk0 = NSP_rd_q_lksrc^t_j } }
+	}
+	if = {
+		limit = { check_variable = { NSP_rd_q_n > 0 } }
+		set_variable = { NSP_rd_q_cf0 = 2 }
+		set_variable = { NSP_rd_q_id0 = NSP_rd_queue^0 }
+		set_temp_variable = { nsp_q = NSP_rd_q_id0 }
+		set_variable = { NSP_rd_q_prog0 = NSP_rd_prog^nsp_q }
+		round_variable = NSP_rd_q_prog0
+	}
+	set_variable = { NSP_rd_q_f0 = NSP_rd_q_prog0 }
+	divide_variable = { NSP_rd_q_f0 = 10 }
+	round_variable = NSP_rd_q_f0
+	add_to_variable = { NSP_rd_q_f0 = 1 }
+	clamp_variable = { var = NSP_rd_q_f0 min = 1 max = 11 }
+	# 第 2 格
+	set_variable = { NSP_rd_q_id1 = NSP_rd_blank }
+	set_variable = { NSP_rd_q_prog1 = 0 }
+	set_variable = { NSP_rd_q_cf1 = 3 }
+	set_variable = { NSP_rd_q_lk1 = 0 }
+	if = { limit = { check_variable = { NSP_rd_slots > 1 } } set_variable = { NSP_rd_q_cf1 = 1 } }
+	else = {
+		set_temp_variable = { t_j = 1 }
+		subtract_from_temp_variable = { t_j = NSP_rd_slots }
+		if = { limit = { check_variable = { NSP_rd_q_lksrc^num > t_j } } set_variable = { NSP_rd_q_lk1 = NSP_rd_q_lksrc^t_j } }
+	}
+	if = {
+		limit = { check_variable = { NSP_rd_q_n > 1 } }
+		set_variable = { NSP_rd_q_cf1 = 2 }
+		set_variable = { NSP_rd_q_id1 = NSP_rd_queue^1 }
+		set_temp_variable = { nsp_q = NSP_rd_q_id1 }
+		set_variable = { NSP_rd_q_prog1 = NSP_rd_prog^nsp_q }
+		round_variable = NSP_rd_q_prog1
+	}
+	set_variable = { NSP_rd_q_f1 = NSP_rd_q_prog1 }
+	divide_variable = { NSP_rd_q_f1 = 10 }
+	round_variable = NSP_rd_q_f1
+	add_to_variable = { NSP_rd_q_f1 = 1 }
+	clamp_variable = { var = NSP_rd_q_f1 min = 1 max = 11 }
+	# 第 3 格
+	set_variable = { NSP_rd_q_id2 = NSP_rd_blank }
+	set_variable = { NSP_rd_q_prog2 = 0 }
+	set_variable = { NSP_rd_q_cf2 = 3 }
+	set_variable = { NSP_rd_q_lk2 = 0 }
+	if = { limit = { check_variable = { NSP_rd_slots > 2 } } set_variable = { NSP_rd_q_cf2 = 1 } }
+	else = {
+		set_temp_variable = { t_j = 2 }
+		subtract_from_temp_variable = { t_j = NSP_rd_slots }
+		if = { limit = { check_variable = { NSP_rd_q_lksrc^num > t_j } } set_variable = { NSP_rd_q_lk2 = NSP_rd_q_lksrc^t_j } }
+	}
+	if = {
+		limit = { check_variable = { NSP_rd_q_n > 2 } }
+		set_variable = { NSP_rd_q_cf2 = 2 }
+		set_variable = { NSP_rd_q_id2 = NSP_rd_queue^2 }
+		set_temp_variable = { nsp_q = NSP_rd_q_id2 }
+		set_variable = { NSP_rd_q_prog2 = NSP_rd_prog^nsp_q }
+		round_variable = NSP_rd_q_prog2
+	}
+	set_variable = { NSP_rd_q_f2 = NSP_rd_q_prog2 }
+	divide_variable = { NSP_rd_q_f2 = 10 }
+	round_variable = NSP_rd_q_f2
+	add_to_variable = { NSP_rd_q_f2 = 1 }
+	clamp_variable = { var = NSP_rd_q_f2 min = 1 max = 11 }
+	# 第 4 格
+	set_variable = { NSP_rd_q_id3 = NSP_rd_blank }
+	set_variable = { NSP_rd_q_prog3 = 0 }
+	set_variable = { NSP_rd_q_cf3 = 3 }
+	set_variable = { NSP_rd_q_lk3 = 0 }
+	if = { limit = { check_variable = { NSP_rd_slots > 3 } } set_variable = { NSP_rd_q_cf3 = 1 } }
+	else = {
+		set_temp_variable = { t_j = 3 }
+		subtract_from_temp_variable = { t_j = NSP_rd_slots }
+		if = { limit = { check_variable = { NSP_rd_q_lksrc^num > t_j } } set_variable = { NSP_rd_q_lk3 = NSP_rd_q_lksrc^t_j } }
+	}
+	if = {
+		limit = { check_variable = { NSP_rd_q_n > 3 } }
+		set_variable = { NSP_rd_q_cf3 = 2 }
+		set_variable = { NSP_rd_q_id3 = NSP_rd_queue^3 }
+		set_temp_variable = { nsp_q = NSP_rd_q_id3 }
+		set_variable = { NSP_rd_q_prog3 = NSP_rd_prog^nsp_q }
+		round_variable = NSP_rd_q_prog3
+	}
+	set_variable = { NSP_rd_q_f3 = NSP_rd_q_prog3 }
+	divide_variable = { NSP_rd_q_f3 = 10 }
+	round_variable = NSP_rd_q_f3
+	add_to_variable = { NSP_rd_q_f3 = 1 }
+	clamp_variable = { var = NSP_rd_q_f3 min = 1 max = 11 }
+	# 第 5 格
+	set_variable = { NSP_rd_q_id4 = NSP_rd_blank }
+	set_variable = { NSP_rd_q_prog4 = 0 }
+	set_variable = { NSP_rd_q_cf4 = 3 }
+	set_variable = { NSP_rd_q_lk4 = 0 }
+	if = { limit = { check_variable = { NSP_rd_slots > 4 } } set_variable = { NSP_rd_q_cf4 = 1 } }
+	else = {
+		set_temp_variable = { t_j = 4 }
+		subtract_from_temp_variable = { t_j = NSP_rd_slots }
+		if = { limit = { check_variable = { NSP_rd_q_lksrc^num > t_j } } set_variable = { NSP_rd_q_lk4 = NSP_rd_q_lksrc^t_j } }
+	}
+	if = {
+		limit = { check_variable = { NSP_rd_q_n > 4 } }
+		set_variable = { NSP_rd_q_cf4 = 2 }
+		set_variable = { NSP_rd_q_id4 = NSP_rd_queue^4 }
+		set_temp_variable = { nsp_q = NSP_rd_q_id4 }
+		set_variable = { NSP_rd_q_prog4 = NSP_rd_prog^nsp_q }
+		round_variable = NSP_rd_q_prog4
+	}
+	set_variable = { NSP_rd_q_f4 = NSP_rd_q_prog4 }
+	divide_variable = { NSP_rd_q_f4 = 10 }
+	round_variable = NSP_rd_q_f4
+	add_to_variable = { NSP_rd_q_f4 = 1 }
+	clamp_variable = { var = NSP_rd_q_f4 min = 1 max = 11 }
+	# 第 6 格
+	set_variable = { NSP_rd_q_id5 = NSP_rd_blank }
+	set_variable = { NSP_rd_q_prog5 = 0 }
+	set_variable = { NSP_rd_q_cf5 = 3 }
+	set_variable = { NSP_rd_q_lk5 = 0 }
+	if = { limit = { check_variable = { NSP_rd_slots > 5 } } set_variable = { NSP_rd_q_cf5 = 1 } }
+	else = {
+		set_temp_variable = { t_j = 5 }
+		subtract_from_temp_variable = { t_j = NSP_rd_slots }
+		if = { limit = { check_variable = { NSP_rd_q_lksrc^num > t_j } } set_variable = { NSP_rd_q_lk5 = NSP_rd_q_lksrc^t_j } }
+	}
+	if = {
+		limit = { check_variable = { NSP_rd_q_n > 5 } }
+		set_variable = { NSP_rd_q_cf5 = 2 }
+		set_variable = { NSP_rd_q_id5 = NSP_rd_queue^5 }
+		set_temp_variable = { nsp_q = NSP_rd_q_id5 }
+		set_variable = { NSP_rd_q_prog5 = NSP_rd_prog^nsp_q }
+		round_variable = NSP_rd_q_prog5
+	}
+	set_variable = { NSP_rd_q_f5 = NSP_rd_q_prog5 }
+	divide_variable = { NSP_rd_q_f5 = 10 }
+	round_variable = NSP_rd_q_f5
+	add_to_variable = { NSP_rd_q_f5 = 1 }
+	clamp_variable = { var = NSP_rd_q_f5 min = 1 max = 11 }
+	# 第 7 格
+	set_variable = { NSP_rd_q_id6 = NSP_rd_blank }
+	set_variable = { NSP_rd_q_prog6 = 0 }
+	set_variable = { NSP_rd_q_cf6 = 3 }
+	set_variable = { NSP_rd_q_lk6 = 0 }
+	if = { limit = { check_variable = { NSP_rd_slots > 6 } } set_variable = { NSP_rd_q_cf6 = 1 } }
+	else = {
+		set_temp_variable = { t_j = 6 }
+		subtract_from_temp_variable = { t_j = NSP_rd_slots }
+		if = { limit = { check_variable = { NSP_rd_q_lksrc^num > t_j } } set_variable = { NSP_rd_q_lk6 = NSP_rd_q_lksrc^t_j } }
+	}
+	if = {
+		limit = { check_variable = { NSP_rd_q_n > 6 } }
+		set_variable = { NSP_rd_q_cf6 = 2 }
+		set_variable = { NSP_rd_q_id6 = NSP_rd_queue^6 }
+		set_temp_variable = { nsp_q = NSP_rd_q_id6 }
+		set_variable = { NSP_rd_q_prog6 = NSP_rd_prog^nsp_q }
+		round_variable = NSP_rd_q_prog6
+	}
+	set_variable = { NSP_rd_q_f6 = NSP_rd_q_prog6 }
+	divide_variable = { NSP_rd_q_f6 = 10 }
+	round_variable = NSP_rd_q_f6
+	add_to_variable = { NSP_rd_q_f6 = 1 }
+	clamp_variable = { var = NSP_rd_q_f6 min = 1 max = 11 }
+
+	NSP_budget_disp = yes   # 研发页预算 B 显示
+	# ---- 选中项派生值 ----
+	if = { limit = { check_variable = { NSP_rd_sel < 0 } } set_variable = { NSP_rd_sel = 0 } }
+	set_temp_variable = { p = NSP_rd_sel }
+	set_variable = { NSP_rd_sel_cost = NSP_rd_cost^p }
+	set_variable = { NSP_rd_sel_cost_b = NSP_rd_sel_cost } divide_variable = { NSP_rd_sel_cost_b = 1000 }   # 显示用 B
+	set_variable = { NSP_rd_sel_days = NSP_rd_days^p }
+	set_variable = { NSP_rd_sel_ahead = 0 }
+	if = {
+		limit = { check_variable = { NSP_rd_col^p > NSP_rd_era_now } }
+		set_variable = { NSP_rd_sel_ahead = 1 }
+		multiply_variable = { NSP_rd_sel_days = 1.5 }
+		round_variable = NSP_rd_sel_days
+	}
+	# 太空科技等级研发速度 +NSP_tier_rdspd% → 工期 × 100 / (100 + 加成)（开工时锁进 NSP_rd_deff）
+	if = {
+		limit = { check_variable = { NSP_tier_rdspd > 0 } }
+		set_temp_variable = { nsp_sp = NSP_tier_rdspd }
+		add_to_temp_variable = { nsp_sp = 100 }
+		multiply_variable = { NSP_rd_sel_days = 100 }
+		divide_variable = { NSP_rd_sel_days = nsp_sp }
+		round_variable = NSP_rd_sel_days
+	}
+	# 研发中 / 已完成：工期显示开工时锁定的实际工期，不再提示超前
+	if = {
+		limit = { check_variable = { NSP_rd_state^p > 1 } }
+		set_variable = { NSP_rd_sel_days = NSP_rd_deff^p }
+		set_variable = { NSP_rd_sel_ahead = 0 }
+	}
+	set_variable = { NSP_rd_sel_prog = NSP_rd_prog^p }
+	round_variable = NSP_rd_sel_prog
+	# 剩余天数 = 实际工期 × (100 - 进度) / 100
+	set_variable = { NSP_rd_sel_left = 100 }
+	subtract_from_variable = { NSP_rd_sel_left = NSP_rd_prog^p }
+	multiply_variable = { NSP_rd_sel_left = NSP_rd_deff^p }
+	divide_variable = { NSP_rd_sel_left = 100 }
+	round_variable = NSP_rd_sel_left
+	# 状态原因：0 需前置 · 1 时代未到 · 2 可研发 · 3 研发槽已满 · 4 预算不足 · 5 研发中 · 6 已完成
+	set_variable = { NSP_rd_sel_reason = 0 }
+	if = {
+		limit = { check_variable = { NSP_rd_state^p = 0 } check_variable = { NSP_rd_col^p > nsp_lim } }
+		set_variable = { NSP_rd_sel_reason = 1 }
+	}
+	if = {
+		limit = { check_variable = { NSP_rd_state^p = 1 } }
+		set_variable = { NSP_rd_sel_reason = 2 }
+		if = { limit = { NOT = { check_variable = { NSP_rd_q_n < NSP_rd_slots } } } set_variable = { NSP_rd_sel_reason = 3 } }
+		else_if = { limit = { check_variable = { NSP_space_budget < NSP_rd_sel_cost } } set_variable = { NSP_rd_sel_reason = 4 } }
+	}
+	if = { limit = { check_variable = { NSP_rd_state^p = 2 } } set_variable = { NSP_rd_sel_reason = 5 } }
+	if = { limit = { check_variable = { NSP_rd_state^p = 3 } } set_variable = { NSP_rd_sel_reason = 6 } }
+	# 抽屉帧：按钮 1 可研发 · 2 不可 · 3 研发中 · 4 已完成；大线稿同卡片（需前置用暗色组）
+	set_variable = { NSP_rd_f_start = 2 }
+	if = { limit = { check_variable = { NSP_rd_sel_reason = 2 } } set_variable = { NSP_rd_f_start = 1 } }
+	if = { limit = { check_variable = { NSP_rd_sel_reason = 5 } } set_variable = { NSP_rd_f_start = 3 } }
+	if = { limit = { check_variable = { NSP_rd_sel_reason = 6 } } set_variable = { NSP_rd_f_start = 4 } }
+	set_variable = { NSP_rd_f_selart = NSP_rd_art^p }
+	add_to_variable = { NSP_rd_f_selart = 1 }
+	set_variable = { NSP_rd_sel_req1 = NSP_rd_req1^p }
+	set_variable = { NSP_rd_sel_req2 = NSP_rd_req2^p }
+	if = { limit = { check_variable = { NSP_rd_sel_req1 < 0 } } set_variable = { NSP_rd_sel_req1 = NSP_rd_blank } }
+	if = { limit = { check_variable = { NSP_rd_sel_req2 < 0 } } set_variable = { NSP_rd_sel_req2 = NSP_rd_blank } }
+	NSP_rd_links_calc = yes   # 动态连线
+}
+
+# 研发进度改为每日结算（取代 gen_rd.py 的 NSP_rd_weekly：每周 +700/工期 → 每日 +100/工期）
+#   完成判定、状态、科技、研发槽逻辑与 NSP_rd_weekly 相同；但不再把太空科技截到上限（溢出留给升级）
+NSP_rd_daily = {
+	clear_array = NSP_rd_done_tmp
+	for_each_loop = {
+		array = NSP_rd_queue value = p
+		set_temp_variable = { nsp_inc = 100 }
+		divide_temp_variable = { nsp_inc = NSP_rd_deff^p }
+		set_temp_variable = { nsp_np = NSP_rd_prog^p }
+		add_to_temp_variable = { nsp_np = nsp_inc }
+		set_variable = { NSP_rd_prog^p = nsp_np }
+		if = { limit = { check_variable = { nsp_np > 99.9 } } add_to_array = { NSP_rd_done_tmp = p } }
+	}
+	set_variable = { NSP_rd_done_n = 0 }
+	for_each_loop = {
+		array = NSP_rd_done_tmp value = p
+		remove_from_array = { array = NSP_rd_queue value = p }
+		set_variable = { NSP_rd_state^p = 3 }
+		set_variable = { NSP_rd_prog^p = 100 }
+		add_to_variable = { NSP_tech = NSP_rd_tech^p }
+		if = { limit = { check_variable = { NSP_rd_bonus^p = 1 } } add_to_variable = { NSP_rd_slots = 1 } }
+		set_variable = { NSP_arg_rd = p }
+		NSP_rd_on_complete = yes
+	}
+	if = {
+		limit = { check_variable = { NSP_rd_done_n > 0 } }
+		country_event = { id = nsp.10 }
+		NSP_rd_apply_unlocks = yes
+	}
+	NSP_tech_tier_check = yes
+	NSP_tier_refresh = yes   # 被动加成 / 里程碑研发槽
+	NSP_rd_recalc = yes
+}
+
+# 调用前 set_variable = { NSP_arg_rd = 项目 id }
+NSP_rd_on_complete = {
+	set_temp_variable = { p = NSP_arg_rd }
+	set_variable = { NSP_rd_last_done = p }
+	add_to_variable = { NSP_rd_done_n = 1 }
+	set_variable = { NSP_arg_uk = NSP_rd_uk1^p } set_variable = { NSP_arg_uv = NSP_rd_uv1^p } NSP_rd_once_one = yes
+	set_variable = { NSP_arg_uk = NSP_rd_uk2^p } set_variable = { NSP_arg_uv = NSP_rd_uv2^p } NSP_rd_once_one = yes
+	if = { limit = { check_variable = { NSP_popularity > 100 } } set_variable = { NSP_popularity = 100 } }
+}
+
+# 内部：一次性效果（拨款 / 支持度）
+NSP_rd_once_one = {
+	if = { limit = { check_variable = { NSP_arg_uk = 10 } } add_to_variable = { NSP_space_budget = NSP_arg_uv } }
+	if = { limit = { check_variable = { NSP_arg_uk = 11 } } add_to_variable = { NSP_popularity = NSP_arg_uv } }
+}
+
+#############################################################################
+# 调试：一键完成全部研发（研发页「DEBUG」按钮，仅 debug 模式可见）
+#############################################################################
+NSP_rd_debug_all = {
+	for_loop_effect = {
+		start = 0 end = NSP_rd_count value = p
+		if = {
+			limit = { NOT = { check_variable = { NSP_rd_state^p = 3 } } }
+			# 研发槽奖励（载人航天中心）照常给
+			if = { limit = { check_variable = { NSP_rd_bonus^p = 1 } } add_to_variable = { NSP_rd_slots = 1 } }
+			set_variable = { NSP_rd_state^p = 3 }
+			set_variable = { NSP_rd_prog^p = 100 }
+			# 同正常完成——加太空科技 + 一次性奖励
+			add_to_variable = { NSP_tech = NSP_rd_tech^p }
+			set_variable = { NSP_arg_rd = p }
+			NSP_rd_on_complete = yes
+		}
+	}
+	clear_array = NSP_rd_queue
+	# 升级走新曲线（NSP_tier_levelup 可连升，只弹一次 nsp.11）
+	NSP_tier_levelup = yes
+	if = { limit = { check_variable = { NSP_popularity > 100 } } set_variable = { NSP_popularity = 100 } }
+	NSP_rd_apply_unlocks = yes
+	NSP_rd_recalc = yes
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+# ===========================================================================
+# 3. 解锁重算（按「已完成」状态从头算，可反复调用）
+# ===========================================================================
+
+# 从全部「已完成」项目重算解锁与被动加成（幂等）
+NSP_rd_apply_unlocks = {
+	for_loop_effect = { start = 0 end = 4 value = k set_variable = { NSP_pl_unl^k = 0 } set_variable = { NSP_ve_unl^k = 0 } }
+	for_loop_effect = { start = 0 end = 6 value = k set_variable = { NSP_dest_unl^k = 0 } }
+	for_loop_effect = { start = 0 end = 8 value = k set_variable = { NSP_mod_unl^k = 0 } }
+	# 不再有基础开放 —— 目的地也全部靠研发解锁
+	set_variable = { NSP_rd_b_vrel = 0 }
+	set_variable = { NSP_rd_b_prel = 0 }
+	set_variable = { NSP_rd_b_probe = 0 }
+	set_variable = { NSP_rd_b_cost = 0 }
+	set_variable = { NSP_rd_b_time = 0 }
+	for_loop_effect = {
+		start = 0 end = 95 value = p   # 本体研发 0..94；88..94 的解锁由下面的 NSP_unlock_* 处理
+		if = {
+			limit = { check_variable = { NSP_rd_state^p = 3 } }
+			set_variable = { NSP_arg_uk = NSP_rd_uk1^p } set_variable = { NSP_arg_uv = NSP_rd_uv1^p } NSP_rd_apply_one = yes
+			set_variable = { NSP_arg_uk = NSP_rd_uk2^p } set_variable = { NSP_arg_uv = NSP_rd_uv2^p } NSP_rd_apply_one = yes
+		}
+	}
+	# 上限：成本、工期最多 -40%；可靠性加成最多 +25
+	if = { limit = { check_variable = { NSP_rd_b_cost > 40 } } set_variable = { NSP_rd_b_cost = 40 } }
+	if = { limit = { check_variable = { NSP_rd_b_time > 40 } } set_variable = { NSP_rd_b_time = 40 } }
+	if = { limit = { check_variable = { NSP_rd_b_vrel > 25 } } set_variable = { NSP_rd_b_vrel = 25 } }
+	if = { limit = { check_variable = { NSP_rd_b_prel > 25 } } set_variable = { NSP_rd_b_prel = 25 } }
+	if = { limit = { check_variable = { NSP_rd_b_probe > 25 } } set_variable = { NSP_rd_b_probe = 25 } }
+	NSP_unlock_payloads_vehicles = yes   # 新载荷 / 新火箭。
+	NSP_unlock_modifiers = yes   # 修正 8..19 解锁。
+	NSP_unlock_sites = yes   # 发射场科技 / 发射场解锁。
+	NSP_unlock_defaults = yes   # 试验性载荷 9 / 试验性火箭 8 常开。
+	NSP_unlock_science_orbits = yes   # 中地球轨道 / 月球轨道 / 科研卫星 / 月球轨道器。
+	NSP_api_register = yes        # 本体属性表 + 扩展槽注册（子模组内容在这里补进数组）
+	# 子模组研发（id ≥ 95）的解锁 / 被动加成
+	for_loop_effect = {
+		start = 95 end = NSP_rd_count value = p
+		if = {
+			limit = { check_variable = { NSP_rd_state^p = 3 } }
+			set_variable = { NSP_arg_uk = NSP_rd_uk1^p } set_variable = { NSP_arg_uv = NSP_rd_uv1^p } NSP_rd_apply_one = yes
+			set_variable = { NSP_arg_uk = NSP_rd_uk2^p } set_variable = { NSP_arg_uv = NSP_rd_uv2^p } NSP_rd_apply_one = yes
+		}
+	}
+	if = { limit = { check_variable = { NSP_rd_b_cost > 40 } } set_variable = { NSP_rd_b_cost = 40 } }
+	if = { limit = { check_variable = { NSP_rd_b_time > 40 } } set_variable = { NSP_rd_b_time = 40 } }
+	if = { limit = { check_variable = { NSP_rd_b_vrel > 25 } } set_variable = { NSP_rd_b_vrel = 25 } }
+	if = { limit = { check_variable = { NSP_rd_b_prel > 25 } } set_variable = { NSP_rd_b_prel = 25 } }
+	if = { limit = { check_variable = { NSP_rd_b_probe > 25 } } set_variable = { NSP_rd_b_probe = 25 } }
+	NSP_api_apply_unlocks = yes   # 按 *_urd 表解锁子模组内容
+	NSP_hook_on_unlocks = yes     # 扩展槽钩子
+}
+
+# 内部：把一条 (NSP_arg_uk, NSP_arg_uv) 叠加到解锁表 / 被动加成（只处理可重算的 kind 1..9）
+NSP_rd_apply_one = {
+	set_temp_variable = { nsp_uv = NSP_arg_uv }
+	if = { limit = { check_variable = { NSP_arg_uk = 1 } } set_variable = { NSP_pl_unl^nsp_uv = 1 } }
+	if = { limit = { check_variable = { NSP_arg_uk = 2 } } set_variable = { NSP_ve_unl^nsp_uv = 1 } }
+	if = { limit = { check_variable = { NSP_arg_uk = 3 } } set_variable = { NSP_dest_unl^nsp_uv = 1 } }
+	if = { limit = { check_variable = { NSP_arg_uk = 4 } } set_variable = { NSP_mod_unl^nsp_uv = 1 } }
+	if = { limit = { check_variable = { NSP_arg_uk = 5 } } add_to_variable = { NSP_rd_b_vrel = nsp_uv } }
+	if = { limit = { check_variable = { NSP_arg_uk = 6 } } add_to_variable = { NSP_rd_b_prel = nsp_uv } }
+	if = { limit = { check_variable = { NSP_arg_uk = 7 } } add_to_variable = { NSP_rd_b_probe = nsp_uv } }
+	if = { limit = { check_variable = { NSP_arg_uk = 8 } } add_to_variable = { NSP_rd_b_cost = nsp_uv } }
+	if = { limit = { check_variable = { NSP_arg_uk = 9 } } add_to_variable = { NSP_rd_b_time = nsp_uv } }
+}
+
+# 由 NSP_rd_apply_unlocks 末尾调用（它已把 0..4 清零并按旧表重算过）
+NSP_unlock_payloads_vehicles = {
+	for_loop_effect = { start = 4 end = 9 value = k set_variable = { NSP_pl_unl^k = 0 } }
+	for_loop_effect = { start = 4 end = 8 value = k set_variable = { NSP_ve_unl^k = 0 } }
+
+	# 载荷
+	if = { limit = { check_variable = { NSP_rd_state^12 = 3 } } set_variable = { NSP_pl_unl^4 = 1 } }   # 水星飞船
+	if = { limit = { check_variable = { NSP_rd_state^42 = 3 } } set_variable = { NSP_pl_unl^5 = 1 } }   # Syncom
+	if = { limit = { check_variable = { NSP_rd_state^43 = 3 } } set_variable = { NSP_pl_unl^6 = 1 } }   # 雨云号
+	if = { limit = { check_variable = { NSP_rd_state^45 = 3 } } set_variable = { NSP_pl_unl^7 = 1 } }   # 勘测者号
+	if = { limit = { check_variable = { NSP_rd_state^16 = 3 } } set_variable = { NSP_pl_unl^8 = 1 } }   # 天空实验室
+	# 火箭
+	if = { limit = { check_variable = { NSP_rd_state^0 = 3 } } set_variable = { NSP_ve_unl^4 = 1 } }    # 红石
+	if = { limit = { check_variable = { NSP_rd_state^1 = 3 } } set_variable = { NSP_ve_unl^5 = 1 } }    # 宇宙神 LV-3B
+	if = { limit = { check_variable = { NSP_rd_state^4 = 3 } } set_variable = { NSP_ve_unl^6 = 1 } }    # 宇宙神-阿金纳
+	if = { limit = { check_variable = { NSP_rd_state^5 = 3 } } set_variable = { NSP_ve_unl^7 = 1 } }    # 宇宙神-半人马
+}
+
+#############################################################################
+#  发射场改为研发解锁 + 新增 3 个发射场
+#
+#  发射场 site（规划器下标）               解锁科技
+#    0 卡纳维拉尔角空军站 CCAFS             开局就有
+#    1 范登堡空军基地 VAFB                  89 范登堡空军基地
+#    2 沃洛普斯飞行设施 WFF   （小型）       88 沃洛普斯岛
+#    3 太平洋导弹靶场 PMRF                  90 太平洋导弹靶场
+#    4 白沙导弹靶场 WSMR      （小型）       91 白沙导弹靶场
+#    5 肯尼迪航天中心 KSC     （新）         53 39 号发射复合体；土星 V 只能从这里发射
+#    6 约翰斯顿环礁 JOHN      （TNO 里马绍尔群岛属日本，用它替代夸贾林；不能发重型）92 约翰斯顿环礁
+#    7 波克平原火箭靶场 PFRR  （新，小型）    93 波克平原
+#
+#  新研发项目（地面设施分类，第 4 行「发射场」/ 第 5 行「远程靶场」；线稿帧接在原 11 帧后，work/r53/art.py）
+#    id  名称            列 行  前置   成本 工期 科技  线稿帧
+#    88  沃洛普斯岛      0  3   —      15   120  2     11
+#    89  范登堡空军基地  1  3   88     30   180  3     12
+#    90  太平洋导弹靶场  2  3   89     60   270  4     13
+#    91  白沙导弹靶场    0  4   —      15   120  2     14
+#    92  约翰斯顿环礁    3  3   90     110  360  5     15
+#  88 沃洛普斯、89 范登堡、91 白沙在 1962 年前已建成 → 开局即完成（见 NSP_rd_start_1962）
+#    93  波克平原        2  4   91     60   240  4     16
+#############################################################################
+
+# 由 NSP_rd_apply_unlocks 末尾调用
+NSP_unlock_sites = {
+	clear_array = NSP_site_unl
+	for_loop_effect = { start = 0 end = 8 value = k add_to_array = { NSP_site_unl = 0 } }
+	set_variable = { NSP_site_unl^0 = 1 }
+	if = { limit = { check_variable = { NSP_rd_state^89 = 3 } } set_variable = { NSP_site_unl^1 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^88 = 3 } } set_variable = { NSP_site_unl^2 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^90 = 3 } } set_variable = { NSP_site_unl^3 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^91 = 3 } } set_variable = { NSP_site_unl^4 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^53 = 3 } } set_variable = { NSP_site_unl^5 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^92 = 3 } } set_variable = { NSP_site_unl^6 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^93 = 3 } } set_variable = { NSP_site_unl^7 = 1 } }
+	# 选中的发射场还没解锁 → 退回卡纳维拉尔角
+	set_temp_variable = { nsp_ss = NSP_sel_site }
+	if = { limit = { check_variable = { NSP_site_unl^nsp_ss = 0 } } set_variable = { NSP_sel_site = 0 } }
+}
+
+#############################################################################
+#  更多科技解锁可装配修正（修正 8..19）
+#
+#  id 类型 名称               ΔV    可靠性 成本  解锁科技            限制（NSP_mod_fits）
+#   8 发射 冗余制导           0     +4     3     36 惯性测量单元
+#   9 发射 S-IVB 二次点火     +0.4  -2     8     6  S-IVB 上面级        仅土星 IB / V
+#  10 发射 F-1 推力提升       +0.5  -4     10    9  F-1 发动机          仅土星 IB / V
+#  11 发射 NERVA 核热上面级   +1.2  -10    30    61 NERVA 核热发动机    仅土星 IB / V
+#  12 发射 快速发射流程       0     -3     2     37 遥测网              工期 -15%
+#  13 载荷 交会雷达           0     +4     2     31 交会雷达
+#  14 载荷 加厚防热罩         0     +4     3     29 烧蚀防热罩          仅载人
+#  15 载荷 生存装备包         0     +2     1     83 生存装备包          仅载人
+#  16 载荷 载人机动装置 MMU   0     +2     4     86 MMU                 仅载人
+#  17 载荷 S 波段应答机       0     +3     2     38 S 波段统一系统
+#  18 载荷 同位素电源 RTG     0     +6     6     72 先驱者 10 号        仅无人
+#  19 载荷 闭环生保           0     +5     8     68 闭环生保            仅载人
+#  图标：nsp_modifier_icons.dds 第 9..20 帧（work/r57/icons.py）
+#############################################################################
+
+# 由 NSP_rd_apply_unlocks 末尾调用（在 NSP_unlock_sites 之后）：按研发状态重算 8..19 的解锁
+NSP_unlock_modifiers = {
+	for_loop_effect = { start = 8 end = 20 value = k set_variable = { NSP_mod_unl^k = 0 } }
+	if = { limit = { check_variable = { NSP_rd_state^36 = 3 } } set_variable = { NSP_mod_unl^8 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^6 = 3 } }  set_variable = { NSP_mod_unl^9 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^9 = 3 } }  set_variable = { NSP_mod_unl^10 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^61 = 3 } } set_variable = { NSP_mod_unl^11 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^37 = 3 } } set_variable = { NSP_mod_unl^12 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^31 = 3 } } set_variable = { NSP_mod_unl^13 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^29 = 3 } } set_variable = { NSP_mod_unl^14 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^83 = 3 } } set_variable = { NSP_mod_unl^15 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^86 = 3 } } set_variable = { NSP_mod_unl^16 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^38 = 3 } } set_variable = { NSP_mod_unl^17 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^72 = 3 } } set_variable = { NSP_mod_unl^18 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^68 = 3 } } set_variable = { NSP_mod_unl^19 = 1 } }
+}
+
+#############################################################################
+# 默认载荷 / 火箭：试验性载荷（载荷 9）、试验性火箭（火箭 8），开局即可用、不靠研发
+#  ⭐ 由 NSP_rd_apply_unlocks 末尾调用
+#  ⭐ 美术：tools/gen_r92b_art.py → nsp_payload_art 第 10 帧、nsp_vehicle_art 第 9 帧
+#  ΔV 校核：火箭 干重 4 t / 燃料 21 t / 比冲 255 s + 载荷 0.014 t
+#    ln(25.014 / 4.014) × 255 × 9.81 / 1000 × 2.14 ≈ 9.8 km/s ≥ 近地轨道 9.4
+#############################################################################
+NSP_unlock_defaults = {
+	set_variable = { NSP_pl_unl^9 = 1 }
+	set_variable = { NSP_ve_unl^8 = 1 }
+}
+
+#############################################################################
+#  新目的地「中地球轨道」「月球轨道」+ 科研卫星科技 / 载荷
+#
+#  目的地（下标接在 0..5 之后）              所需 Delta-V    解锁
+#    6 中地球轨道 MEO                          10.2            研发 94 科研卫星
+#    7 月球轨道                                11.1            研发 46 月球轨道器
+#  规划器列表顺序（NSP_dest_ids）：近地 / 交会 / 中地球 / 静止 / 极地 / 地月转移 / 月球轨道 / 逃逸
+#
+#  载荷                    质量 t   原型成本   可靠性   目的地                解锁
+#   10 科研卫星（OGO）      0.49      8          80       近地 / 极地 / 中地球   研发 94
+#   11 月球轨道器           0.39      10         75       月球轨道               研发 46
+#  阿波罗也可去月球轨道（与地月转移一样需研发 30「月球返回再入」）。
+#  Delta-V 校核（NSP_recalc_planner 公式，无修正）：
+#    科研卫星 + 宇宙神-阿金纳 10.27 / 泰坦 II 10.31 ≥ 10.2
+#    月球轨道器 + 宇宙神-半人马 11.30 / 泰坦 IIIC 11.28 ≥ 11.1
+#
+#  新研发项目
+#    id  名称       分类 列 行  前置       成本 工期 科技  线稿帧（nsp_rd_tech_4 第 14 帧，work/r93/art.py）
+#    94  科研卫星   4    1  4   —          30   240  3     13
+#  放在无人探测第 5 行「科学卫星」（新行标签 NSP_RD_ROW_4_4；rowlab_4 对分类 4 也显示）。
+#  没有前置：连线只支持 dy ≤ 3，先锋号在第 1 行够不到。
+#############################################################################
+
+# 由 NSP_rd_apply_unlocks 末尾调用（在 NSP_unlock_defaults 之后）
+NSP_unlock_science_orbits = {
+	set_variable = { NSP_pl_unl^10 = 0 } set_variable = { NSP_pl_unl^11 = 0 }
+	set_variable = { NSP_dest_unl^6 = 0 } set_variable = { NSP_dest_unl^7 = 0 }
+	if = { limit = { check_variable = { NSP_rd_state^94 = 3 } } set_variable = { NSP_pl_unl^10 = 1 } set_variable = { NSP_dest_unl^6 = 1 } }
+	if = { limit = { check_variable = { NSP_rd_state^46 = 3 } } set_variable = { NSP_pl_unl^11 = 1 } set_variable = { NSP_dest_unl^7 = 1 } }
+}
+
+# ===========================================================================
+# 4. 科技效果（规划器重算时按完成状态现算）
+# ===========================================================================
+
+#############################################################################
+#  科技效果落地。原解锁表里只写了文字、没有实际效果的科技，在这里补上真实数值。
+#  全部按 NSP_rd_state^id = 3（已完成）现算，不存状态 → 读档 / 重算都幂等。
+#  由 NSP_recalc_planner 在对应位置调用；用到它的临时变量 p / ve / s / d / cost。
+#
+#  id  科技               效果
+#   6  S-IVB 上面级        土星 IB / V  ΔV +0.3
+#   7  H-1 改进型          土星 IB      ΔV +0.2
+#   8  J-2 发动机          土星 IB / V  ΔV +0.2
+#   9  F-1 发动机          土星 V       ΔV +0.4
+#  61  NERVA 核热发动机    土星 IB / V  ΔV +0.5
+#  62  核动力上面级        目的地 地月转移 / 逃逸地球  ΔV +0.6（所有火箭）
+#  36  惯性测量单元        所有目的地所需 ΔV -0.1
+#  75  SLC-6 范登堡        范登堡发射：极地轨道需求再 -0.2，其他轨道惩罚 +0.3 → +0.1
+#  50  LC-14 发射台        宇宙神系列（5/6/7）火箭可靠性 +3
+#  51  LC-19 发射台        泰坦系列（0/1）火箭可靠性 +3
+#  34  双子星计算机        双子星载荷可靠性 +3
+#  18  阿波罗 CSM Block II 阿波罗载荷可靠性 +5
+#  35  阿波罗制导计算机    阿波罗载荷可靠性 +3
+#  15  载人轨道实验室      目的地「交会：MOL 2」载荷可靠性 +5
+#  24  机动装置 AMU        携带「基础舱外活动系统」时载荷可靠性 +3
+#  44  徘徊者号            无人载荷去地月转移，载荷可靠性 +3
+#  72  先驱者 10 号        目的地「逃逸地球」载荷可靠性 +5
+#  73  旅行者号            目的地「逃逸地球」载荷可靠性 +5
+#  59  土星 INT-21         土星 IB / V 任务成本 -10%
+#  19  登月舱 LM           阿波罗地月转移任务成功：支持度 +3
+#  20  月球车 LRV          阿波罗地月转移任务成功：支持度 +2、科研 +100
+#############################################################################
+
+# 实际 ΔV 加成（在发射修正累加之后调用）
+NSP_rdfx_dv = {
+	if = {
+		limit = { OR = { check_variable = { ve = 2 } check_variable = { ve = 3 } } }
+		if = { limit = { check_variable = { NSP_rd_state^6 = 3 } } add_to_variable = { NSP_calc_act_dv = 0.3 } }
+		if = { limit = { check_variable = { NSP_rd_state^8 = 3 } } add_to_variable = { NSP_calc_act_dv = 0.2 } }
+		if = { limit = { check_variable = { NSP_rd_state^61 = 3 } } add_to_variable = { NSP_calc_act_dv = 0.5 } }
+	}
+	if = { limit = { check_variable = { ve = 2 } check_variable = { NSP_rd_state^7 = 3 } } add_to_variable = { NSP_calc_act_dv = 0.2 } }
+	if = { limit = { check_variable = { ve = 3 } check_variable = { NSP_rd_state^9 = 3 } } add_to_variable = { NSP_calc_act_dv = 0.4 } }
+	if = {
+		limit = {
+			check_variable = { NSP_rd_state^62 = 3 }
+			OR = { check_variable = { d = 4 } check_variable = { d = 5 } check_variable = { d = 7 } }   # + 月球轨道
+		}
+		add_to_variable = { NSP_calc_act_dv = 0.6 }
+	}
+}
+
+# 所需 ΔV 修正（在发射场修正之后、算余量之前调用）
+NSP_rdfx_req_dv = {
+	if = { limit = { check_variable = { NSP_rd_state^36 = 3 } } add_to_variable = { NSP_calc_req_dv = -0.1 } }
+	if = {
+		limit = { check_variable = { s = 1 } check_variable = { NSP_rd_state^75 = 3 } }
+		add_to_variable = { NSP_calc_req_dv = -0.2 }   # 极轨：-0.3 → -0.5；其他：+0.3 → +0.1
+	}
+}
+
+# 可靠性加成（在研发被动加成之后、0..100 夹取之前调用）
+NSP_rdfx_rel = {
+	# 火箭
+	if = {
+		limit = { check_variable = { NSP_rd_state^50 = 3 } check_variable = { ve > 4 } }
+		add_to_variable = { NSP_calc_rel_vehicle = 3 }
+	}
+	if = {
+		limit = { check_variable = { NSP_rd_state^51 = 3 } check_variable = { ve < 2 } }
+		add_to_variable = { NSP_calc_rel_vehicle = 3 }
+	}
+	# 载荷
+	if = { limit = { check_variable = { p = 0 } check_variable = { NSP_rd_state^34 = 3 } } add_to_variable = { NSP_calc_rel_payload = 3 } }
+	if = {
+		limit = { check_variable = { p = 1 } }
+		if = { limit = { check_variable = { NSP_rd_state^18 = 3 } } add_to_variable = { NSP_calc_rel_payload = 5 } }
+		if = { limit = { check_variable = { NSP_rd_state^35 = 3 } } add_to_variable = { NSP_calc_rel_payload = 3 } }
+	}
+	if = { limit = { check_variable = { d = 1 } check_variable = { NSP_rd_state^15 = 3 } } add_to_variable = { NSP_calc_rel_payload = 5 } }
+	if = { limit = { check_variable = { NSP_mod_sel^5 = 1 } check_variable = { NSP_rd_state^24 = 3 } } add_to_variable = { NSP_calc_rel_payload = 3 } }
+	if = {
+		limit = {
+			OR = { check_variable = { d = 4 } check_variable = { d = 7 } } check_variable = { NSP_rd_state^44 = 3 }   # + 月球轨道
+			OR = { check_variable = { p = 2 } check_variable = { p = 3 } check_variable = { p = 5 } check_variable = { p = 6 } check_variable = { p = 7 } check_variable = { p = 11 } }
+		}
+		add_to_variable = { NSP_calc_rel_payload = 3 }
+	}
+	if = {
+		limit = { check_variable = { d = 5 } }
+		if = { limit = { check_variable = { NSP_rd_state^72 = 3 } } add_to_variable = { NSP_calc_rel_payload = 5 } }
+		if = { limit = { check_variable = { NSP_rd_state^73 = 3 } } add_to_variable = { NSP_calc_rel_payload = 5 } }
+	}
+	NSP_rdfx_suit_rel = yes
+	set_variable = { NSP_bd_p1 = NSP_calc_rel_payload } set_variable = { NSP_bd_v1 = NSP_calc_rel_vehicle }   # 明细快照
+	NSP_dir_rel = yes   # 局长特质：外行局长
+}
+
+# 成本（在 × NSP_cost_mult 之后、研发成本减免之前调用；cost 是 recalc 里的临时变量）
+NSP_rdfx_cost = {
+	if = {
+		limit = { check_variable = { NSP_rd_state^59 = 3 } OR = { check_variable = { ve = 2 } check_variable = { ve = 3 } } }
+		multiply_temp_variable = { cost = 0.9 }
+	}
+	NSP_rdfx_suit_cost = yes
+	set_variable = { NSP_bd_c1 = cost }   # 明细快照
+	NSP_dir_cost = yes   # 局长特质：精于管理
+}
+
+# 任务成功奖励（NSP_apply_objectives 里调用，p / d 已是该任务的载荷 / 目的地）
+NSP_rdfx_success = {
+	if = {
+		limit = { check_variable = { p = 1 } check_variable = { d = 4 } }
+		if = { limit = { check_variable = { NSP_rd_state^19 = 3 } } add_to_variable = { NSP_popularity = 3 } }
+		if = {
+			limit = { check_variable = { NSP_rd_state^20 = 3 } }
+			add_to_variable = { NSP_popularity = 2 }
+			add_to_variable = { NSP_science = 100 }
+		}
+		clamp_variable = { var = NSP_popularity min = 0 max = 100 }
+	}
+	NSP_rdfx_suit_success = yes
+}
+
+#############################################################################
+#  宇航员装备线（76..86）落地真实效果，取代原来的「（预留）」。
+#  与上面的科技效果相同：按 NSP_rd_state^id = 3 现算，不存状态；由 NSP_rdfx_rel / _cost / _success 末尾调用。
+#  载荷：0 双子星 1 阿波罗 5 水星 9 天空实验室；目的地 d = 4 地月转移；NSP_mod_sel^5 = 基础舱外活动系统
+#
+#  id  科技               效果
+#  78  防眩光头盔面窗     携带舱外活动系统：载荷可靠性 +2
+#  79  液冷内衣 LCG       阿波罗地月转移：载荷可靠性 +2
+#  80  PLSS 背包          阿波罗地月转移：载荷可靠性 +3
+#  81  β 布阻燃外层       阿波罗：载荷可靠性 +3
+#  82  EMU 舱外服         天空实验室：载荷可靠性 +5
+#  84  舱外工具组         携带舱外活动系统：任务成本 -5%
+#  76  A7LB 月面服        阿波罗地月转移成功：支持度 +2
+#  85  月面地质工具       阿波罗地月转移成功：科研 +50
+#############################################################################
+NSP_rdfx_suit_rel = {
+	if = { limit = { check_variable = { NSP_mod_sel^5 = 1 } check_variable = { NSP_rd_state^78 = 3 } } add_to_variable = { NSP_calc_rel_payload = 2 } }
+	if = {
+		limit = { check_variable = { p = 1 } }
+		if = { limit = { check_variable = { NSP_rd_state^81 = 3 } } add_to_variable = { NSP_calc_rel_payload = 3 } }
+		if = {
+			limit = { check_variable = { d = 4 } }
+			if = { limit = { check_variable = { NSP_rd_state^79 = 3 } } add_to_variable = { NSP_calc_rel_payload = 2 } }
+			if = { limit = { check_variable = { NSP_rd_state^80 = 3 } } add_to_variable = { NSP_calc_rel_payload = 3 } }
+		}
+	}
+	if = { limit = { check_variable = { p = 8 } check_variable = { NSP_rd_state^82 = 3 } } add_to_variable = { NSP_calc_rel_payload = 5 } }
+}
+
+NSP_rdfx_suit_cost = {
+	if = { limit = { check_variable = { NSP_mod_sel^5 = 1 } check_variable = { NSP_rd_state^84 = 3 } } multiply_temp_variable = { cost = 0.95 } }
+}
+
+NSP_rdfx_suit_success = {
+	if = {
+		limit = { check_variable = { p = 1 } check_variable = { d = 4 } }
+		if = { limit = { check_variable = { NSP_rd_state^76 = 3 } } add_to_variable = { NSP_popularity = 2 } }
+		if = { limit = { check_variable = { NSP_rd_state^85 = 3 } } add_to_variable = { NSP_science = 50 } }
+		clamp_variable = { var = NSP_popularity min = 0 max = 100 }
+	}
+}
+
+# ===========================================================================
+# 5. 太空科技等级
+# ===========================================================================
+
+# 太空科技升级 （见 NSP_tier_levelup）
+NSP_tech_tier_check = {
+	NSP_tier_levelup = yes
+}
+
+#############################################################################
+#  太空科技等级系统
+#
+#  门槛：第 N 级升 N+1 级需要 30 + 10×N（2 级 50 … 9 级 120）。1962 开局 = 第 2 级 0/50。
+#        全部研发约 494 点 + 任务经验，正常一局能走到 9～10 级（旧版 +50 递增，打完全部研发也只到 5 级）。
+#  任务经验（任务成功时）：近地 5 · 极地 6 · 交会 / 地球静止 8 · 逃逸 10 · 地月转移 12；载人 +3。
+#  被动加成（按等级现算，幂等；存在 NSP_tier_rdspd / NSP_tier_rel）：
+#        研发速度 +4% / 级（第 1 级起算）    → NSP_rd_recalc 里换算成研发工期
+#        火箭可靠性 +1 / 级（第 1 级起算）    → NSP_recalc_planner
+#  里程碑（一次性，flag 记账）：第 4 / 7 / 10 级各 +1 研发槽。
+#  升级奖励：拨款 300 + 50×新等级（百万美元），支持度 +3。
+#############################################################################
+
+# 门槛 = 30 + 10 × 等级
+NSP_tier_set_max = {
+	set_variable = { NSP_tech_max = NSP_tech_tier }
+	multiply_variable = { NSP_tech_max = 10 }
+	add_to_variable = { NSP_tech_max = 30 }
+}
+
+# 被动加成 + 里程碑研发槽（幂等，每日 / 升级 / 开局调用）
+NSP_tier_refresh = {
+	set_variable = { NSP_tier_rdspd = NSP_tech_tier }
+	subtract_from_variable = { NSP_tier_rdspd = 1 }
+	if = { limit = { check_variable = { NSP_tier_rdspd < 0 } } set_variable = { NSP_tier_rdspd = 0 } }
+	set_variable = { NSP_tier_rel = NSP_tier_rdspd }
+	multiply_variable = { NSP_tier_rdspd = 4 }
+	if = { limit = { check_variable = { NSP_tech_tier > 3 } NOT = { has_country_flag = NSP_tier_slot4 } }  set_country_flag = NSP_tier_slot4  add_to_variable = { NSP_rd_slots = 1 } }
+	if = { limit = { check_variable = { NSP_tech_tier > 6 } NOT = { has_country_flag = NSP_tier_slot7 } }  set_country_flag = NSP_tier_slot7  add_to_variable = { NSP_rd_slots = 1 } }
+	if = { limit = { check_variable = { NSP_tech_tier > 9 } NOT = { has_country_flag = NSP_tier_slot10 } } set_country_flag = NSP_tier_slot10 add_to_variable = { NSP_rd_slots = 1 } }
+	# 显示用：下一级的奖励
+	set_variable = { NSP_tier_next_pay = NSP_tech_tier }
+	add_to_variable = { NSP_tier_next_pay = 1 }
+	multiply_variable = { NSP_tier_next_pay = 50 }
+	add_to_variable = { NSP_tier_next_pay = 300 }
+	set_variable = { NSP_tier_next_payb = NSP_tier_next_pay }
+	divide_variable = { NSP_tier_next_payb = 1000 }
+	# 等级圆圈 tooltip 用：下一级累计加成、还差多少、已得研发槽
+	set_variable = { NSP_tier_next_rdspd = NSP_tier_rdspd } add_to_variable = { NSP_tier_next_rdspd = 4 }
+	set_variable = { NSP_tier_next_rel = NSP_tier_rel } add_to_variable = { NSP_tier_next_rel = 1 }
+	set_variable = { NSP_tier_need = NSP_tech_max } subtract_from_variable = { NSP_tier_need = NSP_tech }
+	if = { limit = { check_variable = { NSP_tier_need < 0 } } set_variable = { NSP_tier_need = 0 } }
+	set_variable = { NSP_tier_slots_got = 0 }
+	if = { limit = { has_country_flag = NSP_tier_slot4 } add_to_variable = { NSP_tier_slots_got = 1 } }
+	if = { limit = { has_country_flag = NSP_tier_slot7 } add_to_variable = { NSP_tier_slots_got = 1 } }
+	if = { limit = { has_country_flag = NSP_tier_slot10 } add_to_variable = { NSP_tier_slots_got = 1 } }
+}
+
+# 升级（可连升；只弹一次 nsp.11）
+NSP_tier_levelup = {
+	set_temp_variable = { nsp_up = 0 }
+	while_loop_effect = {
+		limit = { NOT = { check_variable = { NSP_tech < NSP_tech_max } } }
+		subtract_from_variable = { NSP_tech = NSP_tech_max }
+		add_to_variable = { NSP_tech_tier = 1 }
+		NSP_tier_set_max = yes
+		set_variable = { NSP_tier_last_pay = NSP_tech_tier }
+		multiply_variable = { NSP_tier_last_pay = 50 }
+		add_to_variable = { NSP_tier_last_pay = 300 }
+		add_to_variable = { NSP_space_budget = NSP_tier_last_pay }
+		add_to_variable = { NSP_popularity = 3 }
+		set_temp_variable = { nsp_up = 1 }
+	}
+	if = { limit = { check_variable = { NSP_popularity > 100 } } set_variable = { NSP_popularity = 100 } }
+	NSP_tier_refresh = yes
+	if = {
+		limit = { check_variable = { nsp_up = 1 } }
+		set_variable = { NSP_tier_last_payb = NSP_tier_last_pay }
+		divide_variable = { NSP_tier_last_payb = 1000 }
+		country_event = { id = nsp.11 }
+	}
+}
+
+# 任务成功经验（nsp.1 调用；读 NSP_last_mission）
+NSP_tier_mission_xp = {
+	set_temp_variable = { nsp_lm = NSP_last_mission }
+	set_temp_variable = { nsp_xp = 5 }
+	if = {
+		limit = { check_variable = { NSP_m_dest^num > nsp_lm } }
+		set_temp_variable = { nsp_d = NSP_m_dest^nsp_lm }
+		if = { limit = { check_variable = { NSP_dest_xp^num > nsp_d } } set_temp_variable = { nsp_xp = NSP_dest_xp^nsp_d } }   # 经验改查 NSP_dest_xp
+	}
+	if = {
+		limit = { check_variable = { NSP_m_payload^num > nsp_lm } }
+		set_temp_variable = { nsp_p = NSP_m_payload^nsp_lm }
+		if = { limit = { check_variable = { NSP_pl_crewed^nsp_p = 1 } } add_to_temp_variable = { nsp_xp = 3 } }
+	}
+	add_to_variable = { NSP_tech = nsp_xp }
+	set_variable = { NSP_tier_last_xp = nsp_xp }
+	NSP_tier_levelup = yes
+}
+

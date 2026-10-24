@@ -1,0 +1,213 @@
+#############################################################################
+#  研究与发展页 NSP_rd_body（方案 B：TNO 原生蓝图科技树）
+#  work/rd/gen_rd.py 生成，勿手改。架构同 NSP_planner_body：
+#  独立容器，scripted_gui NSP_rd 用 parent_window_name = NSP_home_window 挂外壳，visible 只看 NSP_rd_open。
+#############################################################################
+guiTypes = {
+	containerWindowType = {
+		name = "NSP_rd_body"
+		position = { x = 12 y = 16 }
+		size = { width = 1075 height = 690 }
+		clipping = no
+		background = { name = "Background" quadTextureSprite = "GFX_NSP_window_frame" alwaystransparent = yes }
+
+		instantTextBoxType = { name = "NSP_rd_title" position = { x = 287 y = -16 } font = "vt323_72_WT_outline" text = "NSP_RD_TITLE" maxWidth = 500 maxHeight = 48 format = center fixedsize = yes alwaystransparent = yes }
+		buttonType = { name = "NSP_rd_back" position = { x = 1024 y = 12 } spriteType = "GFX_NSP_button_back" clicksound = click_close pdx_tooltip = "NSP_BACK_TT" shortcut = "ESCAPE" }
+
+		# 调试按钮：一键完成全部研发（scripted gui 里 _visible = is_debug）
+		buttonType = { name = "NSP_rd_debug_all" position = { x = 14 y = 26 } spriteType = "GFX_NSP_rd_tab" frame = 1 buttonText = "NSP_RD_DEBUG_ALL" buttonFont = "aldrich_16_outline" clicksound = click_default pdx_tooltip = "NSP_RD_DEBUG_ALL_TT" }
+		# 预算移到页眉右侧（抽屉 ③ 栏让给数值格）
+		instantTextBoxType = { name = "NSP_rd_budget" position = { x = 790 y = 30 } font = "aldrich_18_outline" text = "NSP_RD_BUDGET" maxWidth = 224 maxHeight = 20 format = right fixedsize = yes }
+		# ---- 分类页签（帧 1 未选 / 2 选中，由 properties 切）----
+		buttonType = { name = "NSP_rd_tab_0" position = { x = 14 y = 62 } spriteType = "GFX_NSP_rd_tab" frame = 2 buttonText = "NSP_RD_TRACK_0" buttonFont = "aldrich_16_outline" clicksound = click_default }
+		buttonType = { name = "NSP_rd_tab_1" position = { x = 170 y = 62 } spriteType = "GFX_NSP_rd_tab" frame = 1 buttonText = "NSP_RD_TRACK_1" buttonFont = "aldrich_16_outline" clicksound = click_default }
+		buttonType = { name = "NSP_rd_tab_2" position = { x = 326 y = 62 } spriteType = "GFX_NSP_rd_tab" frame = 1 buttonText = "NSP_RD_TRACK_2" buttonFont = "aldrich_16_outline" clicksound = click_default }
+		buttonType = { name = "NSP_rd_tab_3" position = { x = 482 y = 62 } spriteType = "GFX_NSP_rd_tab" frame = 1 buttonText = "NSP_RD_TRACK_3" buttonFont = "aldrich_16_outline" clicksound = click_default }
+		buttonType = { name = "NSP_rd_tab_4" position = { x = 638 y = 62 } spriteType = "GFX_NSP_rd_tab" frame = 1 buttonText = "NSP_RD_TRACK_4" buttonFont = "aldrich_16_outline" clicksound = click_default }
+		buttonType = { name = "NSP_rd_tab_5" position = { x = 794 y = 62 } spriteType = "GFX_NSP_rd_tab" frame = 1 buttonText = "NSP_RD_TRACK_5" buttonFont = "aldrich_16_outline" clicksound = click_default }
+
+		# ---- 树区滚动容器：滚轮 + 原版/TNO 滚动条 + 按住拖动----
+		containerWindowType = {
+			name = "NSP_rd_tree"
+			position = { x = 10 y = 92 }
+			size = { width = 1055 height = 538 }   # 底部留 48 高研发槽条
+			background = { name = "Background" quadTextureSprite = "GFX_tiled_window_transparent" }
+			verticalScrollbar = "right_vertical_slider"
+			horizontalScrollbar = "bottom_horizontal_slider"
+			drag_scroll = { left middle }
+			scroll_wheel_factor = 40
+			smooth_scrolling = yes
+			margin = { top = 0 left = 0 bottom = 24 right = 25 }
+			containerWindowType = {
+				name = "NSP_rd_canvas"
+				position = { x = 0 y = 0 }
+				size = { width = 2232 height = 753 }
+				clipping = no
+			# 坐标纸网格底纹（最先画，压在最底）
+			iconType = { name = "NSP_rd_grid_bg" position = { x = 0 y = 0 } spriteType = "GFX_NSP_rd_grid" alwaystransparent = yes }
+			# 年代轴
+			instantTextBoxType = { name = "NSP_rd_era_0" position = { x = 110 y = 6 } font = "aldrich_24_outline" text = "NSP_RD_ERA_0" maxWidth = 263 maxHeight = 26 format = center fixedsize = yes alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_era_1" position = { x = 373 y = 6 } font = "aldrich_24_outline" text = "NSP_RD_ERA_1" maxWidth = 263 maxHeight = 26 format = center fixedsize = yes alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_era_2" position = { x = 636 y = 6 } font = "aldrich_24_outline" text = "NSP_RD_ERA_2" maxWidth = 263 maxHeight = 26 format = center fixedsize = yes alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_era_3" position = { x = 899 y = 6 } font = "aldrich_24_outline" text = "NSP_RD_ERA_3" maxWidth = 263 maxHeight = 26 format = center fixedsize = yes alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_era_4" position = { x = 1162 y = 6 } font = "aldrich_24_outline" text = "NSP_RD_ERA_4" maxWidth = 263 maxHeight = 26 format = center fixedsize = yes alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_era_5" position = { x = 1425 y = 6 } font = "aldrich_24_outline" text = "NSP_RD_ERA_5" maxWidth = 263 maxHeight = 26 format = center fixedsize = yes alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_era_6" position = { x = 1688 y = 6 } font = "aldrich_24_outline" text = "NSP_RD_ERA_6" maxWidth = 263 maxHeight = 26 format = center fixedsize = yes alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_era_7" position = { x = 1951 y = 6 } font = "aldrich_24_outline" text = "NSP_RD_ERA_7" maxWidth = 263 maxHeight = 26 format = center fixedsize = yes alwaystransparent = yes }
+			# 行标签（随分类变，scripted loc）
+			instantTextBoxType = { name = "NSP_rd_rowlab_0" position = { x = 4 y = 50 } font = "aldrich_24_outline" text = "NSP_RD_ROWLAB_0" maxWidth = 100 maxHeight = 26 format = right fixedsize = yes alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_rowlab_1" position = { x = 4 y = 189 } font = "aldrich_24_outline" text = "NSP_RD_ROWLAB_1" maxWidth = 100 maxHeight = 26 format = right fixedsize = yes alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_rowlab_2" position = { x = 4 y = 328 } font = "aldrich_24_outline" text = "NSP_RD_ROWLAB_2" maxWidth = 100 maxHeight = 26 format = right fixedsize = yes alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_rowlab_3" position = { x = 4 y = 467 } font = "aldrich_24_outline" text = "NSP_RD_ROWLAB_3" maxWidth = 100 maxHeight = 26 format = right fixedsize = yes alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_rowlab_4" position = { x = 4 y = 606 } font = "aldrich_24_outline" text = "NSP_RD_ROWLAB_4" maxWidth = 100 maxHeight = 26 format = right fixedsize = yes alwaystransparent = yes }
+			# 连线：每个分类一帧，半分辨率 ×2
+			gridBoxType = { name = "NSP_rd_grid" position = { x = 110 y = 40 } size = { width = 2104 height = 695 } slotsize = { width = 263 height = 139 } max_slots_horizontal = 8 format = "UPPER_LEFT" }
+			# 右下留白 + 滚动条让位（撑开滚动范围）
+			iconType = { name = "NSP_rd_tree_pad" position = { x = 2224 y = 745 } spriteType = "GFX_NSP_rd_pad" alwaystransparent = yes }
+			}
+		}
+
+		# ---- 底部抽屉：选中项目详情 ----
+		# 研发槽条：7 格（研发槽上限 3 + 第 4/7/10 级 + 载人航天中心），按 NSP_rd_slots 显示
+		#   每格 126×40：上行名称 / 空闲 / 解锁条件，下行进度条 + 百分比；格子帧 1 空闲 / 2 研发中 / 3 未解锁
+		containerWindowType = {
+			name = "NSP_rd_qstrip"
+			position = { x = 10 y = 636 }
+			size = { width = 1055 height = 48 }
+			background = { name = "Background" quadTextureSprite = "GFX_NSP_panel_frame" }
+			instantTextBoxType = { name = "NSP_rd_q_head" position = { x = 12 y = 15 } font = "aldrich_16_outline" text = "NSP_RD_Q_HEAD" maxWidth = 112 maxHeight = 18 format = left fixedsize = yes }
+			iconType = { name = "NSP_rd_q_cell_0" position = { x = 128 y = 4 } spriteType = "GFX_NSP_rd_qslot" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_name_0" position = { x = 134 y = 7 } font = "aldrich_14_outline" text = "NSP_RD_Q_NAME_0" maxWidth = 114 maxHeight = 16 fixedsize = yes truncate = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_bar_0" position = { x = 134 y = 29 } spriteType = "GFX_NSP_rd_qbar_s" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_pct_0" position = { x = 210 y = 23 } font = "aldrich_14_outline" text = "NSP_RD_Q_PCT_0" maxWidth = 38 maxHeight = 16 format = right fixedsize = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_cell_1" position = { x = 259 y = 4 } spriteType = "GFX_NSP_rd_qslot" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_name_1" position = { x = 265 y = 7 } font = "aldrich_14_outline" text = "NSP_RD_Q_NAME_1" maxWidth = 114 maxHeight = 16 fixedsize = yes truncate = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_bar_1" position = { x = 265 y = 29 } spriteType = "GFX_NSP_rd_qbar_s" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_pct_1" position = { x = 341 y = 23 } font = "aldrich_14_outline" text = "NSP_RD_Q_PCT_1" maxWidth = 38 maxHeight = 16 format = right fixedsize = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_cell_2" position = { x = 390 y = 4 } spriteType = "GFX_NSP_rd_qslot" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_name_2" position = { x = 396 y = 7 } font = "aldrich_14_outline" text = "NSP_RD_Q_NAME_2" maxWidth = 114 maxHeight = 16 fixedsize = yes truncate = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_bar_2" position = { x = 396 y = 29 } spriteType = "GFX_NSP_rd_qbar_s" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_pct_2" position = { x = 472 y = 23 } font = "aldrich_14_outline" text = "NSP_RD_Q_PCT_2" maxWidth = 38 maxHeight = 16 format = right fixedsize = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_cell_3" position = { x = 521 y = 4 } spriteType = "GFX_NSP_rd_qslot" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_name_3" position = { x = 527 y = 7 } font = "aldrich_14_outline" text = "NSP_RD_Q_NAME_3" maxWidth = 114 maxHeight = 16 fixedsize = yes truncate = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_bar_3" position = { x = 527 y = 29 } spriteType = "GFX_NSP_rd_qbar_s" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_pct_3" position = { x = 603 y = 23 } font = "aldrich_14_outline" text = "NSP_RD_Q_PCT_3" maxWidth = 38 maxHeight = 16 format = right fixedsize = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_cell_4" position = { x = 652 y = 4 } spriteType = "GFX_NSP_rd_qslot" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_name_4" position = { x = 658 y = 7 } font = "aldrich_14_outline" text = "NSP_RD_Q_NAME_4" maxWidth = 114 maxHeight = 16 fixedsize = yes truncate = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_bar_4" position = { x = 658 y = 29 } spriteType = "GFX_NSP_rd_qbar_s" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_pct_4" position = { x = 734 y = 23 } font = "aldrich_14_outline" text = "NSP_RD_Q_PCT_4" maxWidth = 38 maxHeight = 16 format = right fixedsize = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_cell_5" position = { x = 783 y = 4 } spriteType = "GFX_NSP_rd_qslot" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_name_5" position = { x = 789 y = 7 } font = "aldrich_14_outline" text = "NSP_RD_Q_NAME_5" maxWidth = 114 maxHeight = 16 fixedsize = yes truncate = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_bar_5" position = { x = 789 y = 29 } spriteType = "GFX_NSP_rd_qbar_s" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_pct_5" position = { x = 865 y = 23 } font = "aldrich_14_outline" text = "NSP_RD_Q_PCT_5" maxWidth = 38 maxHeight = 16 format = right fixedsize = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_cell_6" position = { x = 914 y = 4 } spriteType = "GFX_NSP_rd_qslot" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_name_6" position = { x = 920 y = 7 } font = "aldrich_14_outline" text = "NSP_RD_Q_NAME_6" maxWidth = 114 maxHeight = 16 fixedsize = yes truncate = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_q_bar_6" position = { x = 920 y = 29 } spriteType = "GFX_NSP_rd_qbar_s" frame = 1 alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_q_pct_6" position = { x = 996 y = 23 } font = "aldrich_14_outline" text = "NSP_RD_Q_PCT_6" maxWidth = 38 maxHeight = 16 format = right fixedsize = yes alwaystransparent = yes }
+		}
+	}
+
+	# ---- 卡片条目（格位 190×100，卡片 176×84 偏移 6,8）----
+	containerWindowType = {
+		name = "NSP_rd_card_entry"
+		size = { width = 263 height = 139 }
+		clipping = no
+		# ⭐ 动态连线：每张卡画「从前置连过来」的线，最先画（压在本卡下面）。req1 / req2 各一套：
+		#   l?h0..6 = 父卡所在行的水平段（dy = -3..3，dy = 子行 - 父行），l?vu / l?vd = 拐点竖线 + 进卡短线（父在上 / 父在下）；l?lu / l?ld = TNO 式 L 形分叉（dx = 1）
+		iconType = { name = "NSP_rdc_l1h0" position = { x = -802 y = 484 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l1h1" position = { x = -802 y = 345 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l1h2" position = { x = -802 y = 206 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l1h3" position = { x = -802 y = 67 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l1h4" position = { x = -802 y = -72 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l1h5" position = { x = -802 y = -211 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l1h6" position = { x = -802 y = -350 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l1vu" position = { x = -4 y = -349 } spriteType = "GFX_NSP_rdl_vu" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l1vd" position = { x = -4 y = 67 } spriteType = "GFX_NSP_rdl_vd" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l1lu" position = { x = -54 y = -288 } spriteType = "GFX_NSP_rdl_lu" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l1ld" position = { x = -54 y = 67 } spriteType = "GFX_NSP_rdl_ld" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l2h0" position = { x = -802 y = 484 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l2h1" position = { x = -802 y = 345 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l2h2" position = { x = -802 y = 206 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l2h3" position = { x = -802 y = 67 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l2h4" position = { x = -802 y = -72 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l2h5" position = { x = -802 y = -211 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l2h6" position = { x = -802 y = -350 } spriteType = "GFX_NSP_rdl_h" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l2vu" position = { x = -4 y = -349 } spriteType = "GFX_NSP_rdl_vu" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l2vd" position = { x = -4 y = 67 } spriteType = "GFX_NSP_rdl_vd" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l2lu" position = { x = -54 y = -288 } spriteType = "GFX_NSP_rdl_lu" frame = 1 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_l2ld" position = { x = -54 y = 67 } spriteType = "GFX_NSP_rdl_ld" frame = 1 alwaystransparent = yes }
+		buttonType = { name = "NSP_rdc_bg" position = { x = 10 y = 12 } spriteType = "GFX_NSP_rd_card" frame = 2 clicksound = click_default pdx_tooltip = "NSP_RDC_TT" }
+		# 科技图：每个分类一张图集，只显示当前分类那张，帧 = 项目在本分类的序号
+		iconType = { name = "NSP_rdc_tech" position = { x = 10 y = 12 } spriteType = "GFX_NSP_rdart_0" alwaystransparent = yes }   # 单张图，image = "[GetNSPRDArt]"
+		# ⭐ TNO 科技边框（用户给的 TNO 南极决议科技边框，改名 nsp_rd_frame_*）：叠在科技图上；研发中换成循环动画（箭头流动）
+		iconType = { name = "NSP_rdc_frame" position = { x = 10 y = 12 } spriteType = "GFX_NSP_rd_frame_l" frame = 2 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_frame_r" position = { x = 10 y = 12 } spriteType = "GFX_NSP_rd_frame_l_anim" alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_state" position = { x = 2228 y = 14 } spriteType = "GFX_NSP_rd_state" frame = 2 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_sel" position = { x = 6 y = 8 } spriteType = "GFX_NSP_rd_sel" alwaystransparent = yes }
+		# 空文本：只用它的 _visible 写临时变量（帧），标题已印在科技图里
+		instantTextBoxType = { name = "NSP_rdc_name" position = { x = 16 y = 12 } font = "aldrich_14_outline" text = "NSP_RD_EMPTY" maxWidth = 10 maxHeight = 10 fixedsize = yes alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_prog" position = { x = 16 y = 105 } spriteType = "GFX_NSP_rd_prog" frame = 1 alwaystransparent = yes }
+		# ⭐ 小科技方卡（72×72 在 (10,34)），竖直居中，左对齐 x10（进卡短线照旧）
+		buttonType = { name = "NSP_rdc_sbg" position = { x = 10 y = 34 } spriteType = "GFX_NSP_rd_scard" frame = 2 clicksound = click_default pdx_tooltip = "NSP_RDC_TT" }
+		iconType = { name = "NSP_rdc_sart" position = { x = 10 y = 34 } spriteType = "GFX_NSP_rdsart_8" alwaystransparent = yes }   # 单张图，image = "[GetNSPRDSArt]"
+		iconType = { name = "NSP_rdc_sframe" position = { x = 10 y = 34 } spriteType = "GFX_NSP_rd_frame_s" frame = 2 alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_sframe_r" position = { x = 10 y = 34 } spriteType = "GFX_NSP_rd_frame_s_anim" alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_ssel" position = { x = 6 y = 30 } spriteType = "GFX_NSP_rd_ssel" alwaystransparent = yes }
+		iconType = { name = "NSP_rdc_sprog" position = { x = 16 y = 98 } spriteType = "GFX_NSP_rd_sprog" frame = 1 alwaystransparent = yes }
+		# 小科技的出线：方卡右缘 x82 → 大卡右缘 x248（子卡的 H 段从 x249 接上）
+		iconType = { name = "NSP_rdc_ltail" position = { x = 82 y = 67 } spriteType = "GFX_NSP_rdl_tail" frame = 1 alwaystransparent = yes }
+	}
+
+	#############################################################################
+	#  ⭐ 科技详情弹窗 NSP_rd_pop（照 TNO_GNG_Map_GUI_Info_Window 先例）
+	#  独立 scripted_gui，parent_window_name = NSP_home_window；visible = NSP_rd_open + NSP_rd_pop_open。
+	#  外层 clipping = yes 定位 + 裁剪，内层 position 在右侧屏外 → show_position 0，从树区右缘滑出（300ms）。
+	#  坐标（NSP_home_window 系）：树区 = body(12,16) + (10,92) → (22,108)..(1077,656)，减滚动条 25 → 右缘 1052。
+	#  弹窗 290×540 放在 (754,116)（底边 = 树区底边 656；效果区 y288 六行，启动按钮 y396，数值格 y454/471，状态 y498，排队 y516）。布局：名称 y14 | 时代 y44 | 线稿框 (23,66) 243×121 | 描述 y196 | 前置 y270 | 解锁 y290
+	#           | 启动按钮 (18,318) 254×48 | 数值格 y376/393 | 状态 y422 | 排队 y440
+	#############################################################################
+	containerWindowType = {
+		name = "NSP_rd_pop"
+		position = { x = 754 y = 116 }
+		size = { width = 290 height = 540 }
+		clipping = yes
+		containerWindowType = {
+			name = "NSP_rd_pop_inner"
+			size = { width = 290 height = 540 }
+			position = { x = 300 y = 0 }
+			show_position = { x = 0 y = 0 }
+			hide_position = { x = 300 y = 0 }
+			show_animation_type = decelerated
+			hide_animation_type = accelerated
+			animation_time = 300
+			background = { name = "Background" quadTextureSprite = "GFX_tiled_window_thin_border2" }
+
+			buttonType = { name = "NSP_rd_pop_close" position = { x = -30 y = 10 } quadTextureSprite = "GFX_crt_closebutton" Orientation = "UPPER_RIGHT" clicksound = click_close pdx_tooltip = "NSP_RD_POP_CLOSE_TT" }
+
+			instantTextBoxType = { name = "NSP_rd_d_name"  position = { x = 18 y = 14 }  font = "aldrich_24_outline" text = "NSP_RD_D_NAME"  maxWidth = 226 maxHeight = 28 fixedsize = yes truncate = yes }
+			instantTextBoxType = { name = "NSP_rd_d_where" position = { x = 18 y = 44 }  font = "aldrich_14_outline" text = "NSP_RD_D_WHERE" maxWidth = 254 maxHeight = 16 fixedsize = yes truncate = yes }
+
+			iconType = { name = "NSP_rd_d_artbox" position = { x = 23 y = 66 } spriteType = "GFX_NSP_rd_artbox" alwaystransparent = yes }
+			iconType = { name = "NSP_rd_d_tech" position = { x = 25 y = 68 } spriteType = "GFX_NSP_rdart_0" alwaystransparent = yes }   # 单张图，image = "[GetNSPRDSelArt]"
+
+			# 栏宽从 330 收到 254，描述给 4 行高
+			instantTextBoxType = { name = "NSP_rd_d_desc"   position = { x = 18 y = 196 } font = "aldrich_14_outline" text = "NSP_RD_D_DESC"   maxWidth = 254 maxHeight = 68 fixedsize = yes }
+			instantTextBoxType = { name = "NSP_rd_d_req"    position = { x = 18 y = 268 } font = "aldrich_14_outline" text = "NSP_RD_D_REQ"    maxWidth = 254 maxHeight = 16 fixedsize = yes truncate = yes }
+			# ⭐ 效果区改为原版科技式多行：「效果：」+ 最多 5 行（17px/行）
+			instantTextBoxType = { name = "NSP_rd_d_unlock" position = { x = 18 y = 288 } font = "aldrich_14_outline" text = "NSP_RD_D_UNLOCK" maxWidth = 254 maxHeight = 104 fixedsize = yes }
+
+			buttonType = { name = "NSP_rd_start" position = { x = 18 y = 396 } spriteType = "GFX_NSP_rd_start_btn" frame = 1 clicksound = click_ok pdx_tooltip = "NSP_RD_START_TT" }
+			instantTextBoxType = { name = "NSP_rd_start_label" position = { x = 18 y = 408 } font = "aldrich_24_outline" text = "NSP_RD_START" maxWidth = 254 maxHeight = 26 format = center fixedsize = yes alwaystransparent = yes }
+			iconType = { name = "NSP_rd_sdiv_0" position = { x = 102 y = 456 } spriteType = "GFX_NSP_rd_sdiv" alwaystransparent = yes }
+			iconType = { name = "NSP_rd_sdiv_1" position = { x = 186 y = 456 } spriteType = "GFX_NSP_rd_sdiv" alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_rd_cell_l0" position = { x = 18 y = 454 }  font = "aldrich_14_outline" text = "NSP_RD_C_COST_L" maxWidth = 84 maxHeight = 16 format = center fixedsize = yes }
+			instantTextBoxType = { name = "NSP_rd_cell_v0" position = { x = 18 y = 471 }  font = "aldrich_18_outline" text = "NSP_RD_C_COST"   maxWidth = 84 maxHeight = 20 format = center fixedsize = yes }
+			instantTextBoxType = { name = "NSP_rd_cell_l1" position = { x = 102 y = 454 } font = "aldrich_14_outline" text = "NSP_RD_C_DAYS_L" maxWidth = 84 maxHeight = 16 format = center fixedsize = yes }
+			instantTextBoxType = { name = "NSP_rd_cell_v1" position = { x = 102 y = 471 } font = "aldrich_18_outline" text = "NSP_RD_C_DAYS"   maxWidth = 84 maxHeight = 20 format = center fixedsize = yes }
+			instantTextBoxType = { name = "NSP_rd_cell_l2" position = { x = 186 y = 454 } font = "aldrich_14_outline" text = "NSP_RD_C_TECH_L" maxWidth = 86 maxHeight = 16 format = center fixedsize = yes }
+			instantTextBoxType = { name = "NSP_rd_cell_v2" position = { x = 186 y = 471 } font = "aldrich_18_outline" text = "NSP_RD_C_TECH"   maxWidth = 86 maxHeight = 20 format = center fixedsize = yes }
+			instantTextBoxType = { name = "NSP_rd_d_state" position = { x = 18 y = 498 } font = "aldrich_14_outline" text = "NSP_RD_D_STATE" maxWidth = 254 maxHeight = 16 format = center fixedsize = yes }
+			instantTextBoxType = { name = "NSP_rd_d_ahead" position = { x = 18 y = 516 } font = "aldrich_14_outline" text = "NSP_RD_D_AHEAD" maxWidth = 254 maxHeight = 16 format = center fixedsize = yes }
+		}
+	}
+}

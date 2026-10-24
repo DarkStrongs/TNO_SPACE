@@ -1,0 +1,210 @@
+#############################################################################
+#  研发页 NSP_rd_body + 研发详情弹窗 NSP_rd_pop（挂外壳）
+#  条目帧：在 NSP_rdc_name_visible 里写临时变量，properties 读。
+#
+#  ⛔ 文件名前的数字 = 注册顺序（引擎按文件名排序创建 scripted gui）：
+#     外壳 NSP_home_window 必须最先创建，parent_window_name 才挂得上；帮助层、乘组窗口最后创建，叠在最上面。
+#############################################################################
+
+scripted_gui = {
+	NSP_rd = {
+		context_type = player_context
+		window_name = "NSP_rd_body"
+		parent_window_name = NSP_home_window
+		dirty = NSP_dirty
+		visible = { has_country_flag = NSP_rd_open }
+
+		dynamic_lists = {
+			NSP_rd_grid = {
+				array = NSP_rd_view     # 20 格，值 = 项目 id（空格 = NSP_rd_blank）
+				value = v
+				index = i
+				change_scope = no
+				entry_container = "NSP_rd_card_entry"
+			}
+		}
+
+		effects = {
+			NSP_rd_back_click = { NSP_close_rd = yes }
+			NSP_rd_tab_0_click = { set_variable = { NSP_rd_track = 0 } NSP_rd_set_track = yes }
+			NSP_rd_tab_1_click = { set_variable = { NSP_rd_track = 1 } NSP_rd_set_track = yes }
+			NSP_rd_tab_2_click = { set_variable = { NSP_rd_track = 2 } NSP_rd_set_track = yes }
+			NSP_rd_tab_3_click = { set_variable = { NSP_rd_track = 3 } NSP_rd_set_track = yes }
+			NSP_rd_tab_4_click = { set_variable = { NSP_rd_track = 4 } NSP_rd_set_track = yes }
+			NSP_rd_tab_5_click = { set_variable = { NSP_rd_track = 5 } NSP_rd_set_track = yes }
+			NSP_rdc_bg_click = {
+				# ⭐ 点卡片 = 选中 + 弹出详情窗；再点同一张已选中的卡 = 收起
+				if = {
+					limit = { check_variable = { NSP_rd_sel = v } has_country_flag = NSP_rd_pop_open }
+					clr_country_flag = NSP_rd_pop_open
+				}
+				else = {
+					set_variable = { NSP_rd_sel = v }
+					set_country_flag = NSP_rd_pop_open
+				}
+				NSP_rd_recalc = yes
+				add_to_variable = { NSP_dirty = 1 }
+			}
+			NSP_rdc_sbg_click = {   # 小科技方卡
+				# ⭐ 点卡片 = 选中 + 弹出详情窗；再点同一张已选中的卡 = 收起
+				if = {
+					limit = { check_variable = { NSP_rd_sel = v } has_country_flag = NSP_rd_pop_open }
+					clr_country_flag = NSP_rd_pop_open
+				}
+				else = {
+					set_variable = { NSP_rd_sel = v }
+					set_country_flag = NSP_rd_pop_open
+				}
+				NSP_rd_recalc = yes
+				add_to_variable = { NSP_dirty = 1 }
+			}
+			NSP_rd_debug_all_click = { NSP_rd_debug_all = yes }   # 调试
+		}
+
+		triggers = {
+			NSP_rd_rowlab_3_visible = { OR = { check_variable = { NSP_rd_track = 0 } check_variable = { NSP_rd_track = 4 } check_variable = { NSP_rd_track = 5 } } }   # 地面设施第 4 行「发射场」
+			NSP_rd_rowlab_4_visible = { OR = { check_variable = { NSP_rd_track = 0 } check_variable = { NSP_rd_track = 4 } check_variable = { NSP_rd_track = 5 } } }   # 第 5 行「远程靶场」；无人探测第 5 行「科学卫星」
+			NSP_rd_debug_all_visible = { is_debug = yes }   # 只在 -debug 模式显示
+			NSP_rd_q_cell_0_visible = { check_variable = { NSP_rd_q_shown > 0 } }
+			NSP_rd_q_name_0_visible = { check_variable = { NSP_rd_q_shown > 0 } }
+			NSP_rd_q_bar_0_visible = { check_variable = { NSP_rd_q_n > 0 } }
+			NSP_rd_q_pct_0_visible = { check_variable = { NSP_rd_q_n > 0 } }
+			NSP_rd_q_cell_1_visible = { check_variable = { NSP_rd_q_shown > 1 } }
+			NSP_rd_q_name_1_visible = { check_variable = { NSP_rd_q_shown > 1 } }
+			NSP_rd_q_bar_1_visible = { check_variable = { NSP_rd_q_n > 1 } }
+			NSP_rd_q_pct_1_visible = { check_variable = { NSP_rd_q_n > 1 } }
+			NSP_rd_q_cell_2_visible = { check_variable = { NSP_rd_q_shown > 2 } }
+			NSP_rd_q_name_2_visible = { check_variable = { NSP_rd_q_shown > 2 } }
+			NSP_rd_q_bar_2_visible = { check_variable = { NSP_rd_q_n > 2 } }
+			NSP_rd_q_pct_2_visible = { check_variable = { NSP_rd_q_n > 2 } }
+			NSP_rd_q_cell_3_visible = { check_variable = { NSP_rd_q_shown > 3 } }
+			NSP_rd_q_name_3_visible = { check_variable = { NSP_rd_q_shown > 3 } }
+			NSP_rd_q_bar_3_visible = { check_variable = { NSP_rd_q_n > 3 } }
+			NSP_rd_q_pct_3_visible = { check_variable = { NSP_rd_q_n > 3 } }
+			NSP_rd_q_cell_4_visible = { check_variable = { NSP_rd_q_shown > 4 } }
+			NSP_rd_q_name_4_visible = { check_variable = { NSP_rd_q_shown > 4 } }
+			NSP_rd_q_bar_4_visible = { check_variable = { NSP_rd_q_n > 4 } }
+			NSP_rd_q_pct_4_visible = { check_variable = { NSP_rd_q_n > 4 } }
+			NSP_rd_q_cell_5_visible = { check_variable = { NSP_rd_q_shown > 5 } }
+			NSP_rd_q_name_5_visible = { check_variable = { NSP_rd_q_shown > 5 } }
+			NSP_rd_q_bar_5_visible = { check_variable = { NSP_rd_q_n > 5 } }
+			NSP_rd_q_pct_5_visible = { check_variable = { NSP_rd_q_n > 5 } }
+			NSP_rd_q_cell_6_visible = { check_variable = { NSP_rd_q_shown > 6 } }
+			NSP_rd_q_name_6_visible = { check_variable = { NSP_rd_q_shown > 6 } }
+			NSP_rd_q_bar_6_visible = { check_variable = { NSP_rd_q_n > 6 } }
+			NSP_rd_q_pct_6_visible = { check_variable = { NSP_rd_q_n > 6 } }
+			# ---- 卡片条目 ----
+			NSP_rdc_bg_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 0 } }
+			NSP_rdc_tech_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 0 } }   # 六个分类元素合成一个
+			# 小科技方卡（NSP_rd_small^v = 1 时换成方卡，大卡元素全藏）
+			NSP_rdc_sbg_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 1 } }
+			NSP_rdc_sart_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 1 } }
+			NSP_rdc_ssel_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 1 } check_variable = { NSP_rd_sel = v } }
+			NSP_rdc_sprog_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 1 } check_variable = { NSP_rd_state^v = 2 } }
+			# TNO 科技边框：研发中（state 2）显示动画版，其余显示静态版（帧 = t_rdf）
+			NSP_rdc_frame_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 0 } NOT = { check_variable = { NSP_rd_state^v = 2 } } }
+			NSP_rdc_frame_r_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 0 } check_variable = { NSP_rd_state^v = 2 } }
+			NSP_rdc_sframe_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 1 } NOT = { check_variable = { NSP_rd_state^v = 2 } } }
+			NSP_rdc_sframe_r_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 1 } check_variable = { NSP_rd_state^v = 2 } }
+			NSP_rdc_state_visible = { NOT = { check_variable = { v = NSP_rd_blank } } }
+			NSP_rdc_sel_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 0 } check_variable = { NSP_rd_sel = v } }
+			NSP_rdc_prog_visible = { NOT = { check_variable = { v = NSP_rd_blank } } check_variable = { NSP_rd_small^v = 0 } check_variable = { NSP_rd_state^v = 2 } }
+			NSP_rdc_name_visible = {
+				# 帧：卡片/状态方块 = 状态 + 1；科技图 = 本分类序号 + 1；进度条 = 进度 / 10 + 1
+				set_temp_variable = { t_rdf = NSP_rd_state^v }
+				add_to_temp_variable = { t_rdf = 1 }
+				set_temp_variable = { t_rda = NSP_rd_art^v }
+				add_to_temp_variable = { t_rda = 1 }
+				set_temp_variable = { t_rdp = NSP_rd_prog^v }
+				divide_temp_variable = { t_rdp = 10 }
+				round_temp_variable = t_rdp
+				add_to_temp_variable = { t_rdp = 1 }
+				if = { limit = { check_variable = { t_rdp > 11 } } set_temp_variable = { t_rdp = 11 } }
+				NOT = { check_variable = { v = NSP_rd_blank } }
+			}
+		}
+
+		properties = {
+			NSP_rd_tab_0 = { frame = NSP_rd_f_tab0 }
+			NSP_rd_tab_1 = { frame = NSP_rd_f_tab1 }
+			NSP_rd_tab_2 = { frame = NSP_rd_f_tab2 }
+			NSP_rd_tab_3 = { frame = NSP_rd_f_tab3 }
+			NSP_rd_tab_4 = { frame = NSP_rd_f_tab4 }
+			NSP_rd_tab_5 = { frame = NSP_rd_f_tab5 }
+			NSP_rd_q_cell_0 = { frame = NSP_rd_q_cf0 }
+			NSP_rd_q_bar_0 = { frame = NSP_rd_q_f0 }
+			NSP_rd_q_cell_1 = { frame = NSP_rd_q_cf1 }
+			NSP_rd_q_bar_1 = { frame = NSP_rd_q_f1 }
+			NSP_rd_q_cell_2 = { frame = NSP_rd_q_cf2 }
+			NSP_rd_q_bar_2 = { frame = NSP_rd_q_f2 }
+			NSP_rd_q_cell_3 = { frame = NSP_rd_q_cf3 }
+			NSP_rd_q_bar_3 = { frame = NSP_rd_q_f3 }
+			NSP_rd_q_cell_4 = { frame = NSP_rd_q_cf4 }
+			NSP_rd_q_bar_4 = { frame = NSP_rd_q_f4 }
+			NSP_rd_q_cell_5 = { frame = NSP_rd_q_cf5 }
+			NSP_rd_q_bar_5 = { frame = NSP_rd_q_f5 }
+			NSP_rd_q_cell_6 = { frame = NSP_rd_q_cf6 }
+			NSP_rd_q_bar_6 = { frame = NSP_rd_q_f6 }
+			# 动态连线：帧由 NSP_rd_links_calc 预算进数组，这里只读
+			NSP_rdc_l1h0 = { frame = NSP_rd_l1h0^v }
+			NSP_rdc_l1h1 = { frame = NSP_rd_l1h1^v }
+			NSP_rdc_l1h2 = { frame = NSP_rd_l1h2^v }
+			NSP_rdc_l1h3 = { frame = NSP_rd_l1h3^v }
+			NSP_rdc_l1h4 = { frame = NSP_rd_l1h4^v }
+			NSP_rdc_l1h5 = { frame = NSP_rd_l1h5^v }
+			NSP_rdc_l1h6 = { frame = NSP_rd_l1h6^v }
+			NSP_rdc_l1vu = { frame = NSP_rd_l1vu^v }
+			NSP_rdc_l1vd = { frame = NSP_rd_l1vd^v }
+			NSP_rdc_l1lu = { frame = NSP_rd_l1lu^v }
+			NSP_rdc_l1ld = { frame = NSP_rd_l1ld^v }
+			NSP_rdc_l2h0 = { frame = NSP_rd_l2h0^v }
+			NSP_rdc_l2h1 = { frame = NSP_rd_l2h1^v }
+			NSP_rdc_l2h2 = { frame = NSP_rd_l2h2^v }
+			NSP_rdc_l2h3 = { frame = NSP_rd_l2h3^v }
+			NSP_rdc_l2h4 = { frame = NSP_rd_l2h4^v }
+			NSP_rdc_l2h5 = { frame = NSP_rd_l2h5^v }
+			NSP_rdc_l2h6 = { frame = NSP_rd_l2h6^v }
+			NSP_rdc_l2vu = { frame = NSP_rd_l2vu^v }
+			NSP_rdc_l2vd = { frame = NSP_rd_l2vd^v }
+			NSP_rdc_l2lu = { frame = NSP_rd_l2lu^v }
+			NSP_rdc_l2ld = { frame = NSP_rd_l2ld^v }
+			NSP_rdc_bg   = { frame = t_rdf }
+			NSP_rdc_sbg = { frame = t_rdf }
+			NSP_rdc_frame = { frame = t_rdf }
+			NSP_rdc_sframe = { frame = t_rdf }
+			NSP_rdc_sart = { image = "[GetNSPRDSArt]" }
+			NSP_rdc_sprog = { frame = t_rdp }
+			NSP_rdc_ltail = { frame = NSP_rd_ltail^v }
+			NSP_rdc_tech = { image = "[GetNSPRDArt]" }
+			NSP_rdc_state = { frame = t_rdf }
+			NSP_rdc_prog = { frame = t_rdp }
+		}
+
+		ai_enabled = { always = no }
+	}
+
+	NSP_rd_pop = {
+		context_type = player_context
+		window_name = "NSP_rd_pop"
+		parent_window_name = NSP_home_window
+		dirty = NSP_dirty
+		visible = { has_country_flag = NSP_rd_open has_country_flag = NSP_rd_pop_open }
+
+		effects = {
+			NSP_rd_pop_close_click = { clr_country_flag = NSP_rd_pop_open add_to_variable = { NSP_dirty = 1 } }
+			NSP_rd_start_click = { NSP_rd_start = yes }
+		}
+
+		triggers = {
+			NSP_rd_d_tech_visible = { always = yes }
+			NSP_rd_start_click_enabled = { NSP_rd_can_start = yes }
+		}
+
+		properties = {
+			NSP_rd_start = { frame = NSP_rd_f_start }
+			NSP_rd_d_tech = { image = "[GetNSPRDSelArt]" }
+		}
+
+		ai_enabled = { always = no }
+	}
+}

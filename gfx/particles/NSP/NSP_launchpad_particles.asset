@@ -1,0 +1,1503 @@
+# =============================================================================
+#  r45 发射架粒子（烟雾 / 尾焰）· 先例：MD gfx/particles/shuttle_smoke.asset、shuttle_flame.asset
+#  参数手调即可（原始生成在 DEVLOG r45）；尺寸单位 = mesh 单位（1 m = 0.05）
+#  挂点（骨骼）：plume = 喷口（随火箭），vent = 一级顶部排气口，smoke_l / smoke_r = 导流槽两端
+#  r46：飞行 90 s → 尾焰 91 s、尾迹 88 s、地面烟 14 s
+#  r47b：实测 local Z = 世界向上（r47 方向反了，所有 z 分量取反）；原 r47：修正骨骼局部轴，尾焰朝下；地面烟改为水平铺开 + 上升，新增中心烟云
+#  只改数值：size（大小）、life（寿命 秒）、emission（每秒个数）、force amount（推力）
+# =============================================================================
+
+particle={
+	name="NSP_pad_flame_asset"
+	subsystem={
+		name="core"
+		max_amount=900
+		slave_particles=0
+
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.060 }
+		box_emitter_y={ 0.000 0.060 }
+		box_emitter_z={ 0.000 0.020 }
+		invert=no
+		trail=no
+		local_space=yes
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_flame_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAdditive"
+		}
+		color={
+			x=255.000
+			y=225.000
+			z=170.000
+			alpha={ 255.000,nsp_ffade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=91.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.000 0.000 }
+		life={ 0.350 0.450 }
+		emission=220.000
+		size={ 0.550,nsp_fire 0.100 }
+		rotation={ 0.000 180.000 }
+		force=nsp_down
+	}
+	subsystem={
+		name="glow"
+		max_amount=900
+		slave_particles=0
+
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.100 }
+		box_emitter_y={ 0.000 0.100 }
+		box_emitter_z={ 0.000 0.040 }
+		invert=no
+		trail=no
+		local_space=yes
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_flame_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAdditive"
+		}
+		color={
+			x=255.000
+			y=150.000
+			z=60.000
+			alpha={ 160.000,nsp_ffade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=91.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.000 0.000 }
+		life={ 0.550 0.700 }
+		emission=120.000
+		size={ 0.900,nsp_fire 0.150 }
+		rotation={ 0.000 180.000 }
+		force=nsp_down2
+	}
+	animation={
+		name="nsp_fire"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.350 0.250 1.000 1.000 0.250 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_ffade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 1.000 0.500 0.800 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_down"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 -1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=14.000
+	}
+	force={
+		type="planar"
+		name="nsp_down2"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 -1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=9.000
+	}
+}
+
+particle={
+	name="NSP_pad_smoke_L_asset"
+	subsystem={
+		name="billow"
+		max_amount=1500
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.250 }
+		box_emitter_y={ 0.000 0.700 }
+		box_emitter_z={ 0.000 0.080 }
+		invert=no
+		trail=no
+		local_space=no
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_smoke_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAlphaBlend"
+		}
+		color={
+			x=200.000
+			y=198.000
+			z=192.000
+			alpha={ 235.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=14.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.250 0.150 }
+		life={ 9.000 12.000 }
+		emission=22.000
+		size={ 2.400,nsp_grow 0.500 }
+		rotation={ 0.000 180.000 }
+		force=nsp_out
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_out"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			-0.450 0.000 0.700 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=0.090
+	}
+}
+
+particle={
+	name="NSP_pad_smoke_R_asset"
+	subsystem={
+		name="billow"
+		max_amount=1500
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.250 }
+		box_emitter_y={ 0.000 0.700 }
+		box_emitter_z={ 0.000 0.080 }
+		invert=no
+		trail=no
+		local_space=no
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_smoke_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAlphaBlend"
+		}
+		color={
+			x=200.000
+			y=198.000
+			z=192.000
+			alpha={ 235.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=14.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.250 0.150 }
+		life={ 9.000 12.000 }
+		emission=22.000
+		size={ 2.400,nsp_grow 0.500 }
+		rotation={ 0.000 180.000 }
+		force=nsp_out
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_out"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.450 0.000 0.700 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=0.090
+	}
+}
+
+particle={
+	name="NSP_pad_trail_asset"
+	subsystem={
+		name="trail"
+		max_amount=800
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.050 }
+		box_emitter_y={ 0.000 0.100 }
+		box_emitter_z={ 0.000 0.050 }
+		invert=no
+		trail=no
+		local_space=no
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_smoke_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAlphaBlend"
+		}
+		color={
+			x=215.000
+			y=212.000
+			z=205.000
+			alpha={ 220.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=88.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.050 0.050 }
+		life={ 9.000 12.000 }
+		emission=55.000
+		size={ 1.700,nsp_grow 0.400 }
+		rotation={ 0.000 180.000 }
+		force=nsp_wind
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_wind"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.800 0.000 0.250 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=0.050
+	}
+}
+
+particle={
+	name="NSP_pad_vent_asset"
+	subsystem={
+		name="vent"
+		max_amount=60
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.020 }
+		box_emitter_y={ 0.000 0.030 }
+		box_emitter_z={ 0.000 0.020 }
+		invert=no
+		trail=no
+		local_space=yes
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_smoke_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAlphaBlend"
+		}
+		color={
+			x=235.000
+			y=238.000
+			z=240.000
+			alpha={ 170.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=100000.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.030 0.020 }
+		life={ 2.200 2.800 }
+		emission=7.000
+		size={ 0.450,nsp_grow 0.150 }
+		rotation={ 0.000 180.000 }
+		force=nsp_sink
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_sink"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.700 0.000 -0.500 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=0.100
+	}
+}
+
+particle={
+	name="NSP_pad_vent_short_asset"
+	subsystem={
+		name="vent"
+		max_amount=60
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.020 }
+		box_emitter_y={ 0.000 0.030 }
+		box_emitter_z={ 0.000 0.020 }
+		invert=no
+		trail=no
+		local_space=yes
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_smoke_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAlphaBlend"
+		}
+		color={
+			x=235.000
+			y=238.000
+			z=240.000
+			alpha={ 170.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=1.800
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.030 0.020 }
+		life={ 2.200 2.800 }
+		emission=7.000
+		size={ 0.450,nsp_grow 0.150 }
+		rotation={ 0.000 180.000 }
+		force=nsp_sink
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_sink"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.700 0.000 -0.500 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=0.100
+	}
+}
+
+particle={
+	name="NSP_pad_smoke_C_asset"
+	subsystem={
+		name="billow"
+		max_amount=1500
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.900 }
+		box_emitter_y={ 0.000 0.900 }
+		box_emitter_z={ 0.000 0.080 }
+		invert=no
+		trail=no
+		local_space=no
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_smoke_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAlphaBlend"
+		}
+		color={
+			x=200.000
+			y=198.000
+			z=192.000
+			alpha={ 235.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=10.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.250 0.150 }
+		life={ 9.000 12.000 }
+		emission=30.000
+		size={ 2.400,nsp_grow 0.500 }
+		rotation={ 0.000 180.000 }
+		force=nsp_out
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_out"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=0.060
+	}
+}
+
+# ===== r48 失败分支：短版尾焰/尾迹 + 爆炸（火球、黑烟、碎片）+ 台上残火 =====
+particle={
+	name="NSP_pad_flame_air_asset"
+	subsystem={
+		name="core"
+		max_amount=900
+		slave_particles=0
+
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.060 }
+		box_emitter_y={ 0.000 0.060 }
+		box_emitter_z={ 0.000 0.020 }
+		invert=no
+		trail=no
+		local_space=yes
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_flame_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAdditive"
+		}
+		color={
+			x=255.000
+			y=225.000
+			z=170.000
+			alpha={ 255.000,nsp_ffade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=14.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.000 0.000 }
+		life={ 0.350 0.450 }
+		emission=220.000
+		size={ 0.550,nsp_fire 0.100 }
+		rotation={ 0.000 180.000 }
+		force=nsp_down
+	}
+	subsystem={
+		name="glow"
+		max_amount=900
+		slave_particles=0
+
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.100 }
+		box_emitter_y={ 0.000 0.100 }
+		box_emitter_z={ 0.000 0.040 }
+		invert=no
+		trail=no
+		local_space=yes
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_flame_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAdditive"
+		}
+		color={
+			x=255.000
+			y=150.000
+			z=60.000
+			alpha={ 160.000,nsp_ffade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=14.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.000 0.000 }
+		life={ 0.550 0.700 }
+		emission=120.000
+		size={ 0.900,nsp_fire 0.150 }
+		rotation={ 0.000 180.000 }
+		force=nsp_down2
+	}
+	animation={
+		name="nsp_fire"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.350 0.250 1.000 1.000 0.250 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_ffade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 1.000 0.500 0.800 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_down"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 -1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=14.000
+	}
+	force={
+		type="planar"
+		name="nsp_down2"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 -1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=9.000
+	}
+}
+
+particle={
+	name="NSP_pad_flame_padx_asset"
+	subsystem={
+		name="core"
+		max_amount=900
+		slave_particles=0
+
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.060 }
+		box_emitter_y={ 0.000 0.060 }
+		box_emitter_z={ 0.000 0.020 }
+		invert=no
+		trail=no
+		local_space=yes
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_flame_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAdditive"
+		}
+		color={
+			x=255.000
+			y=225.000
+			z=170.000
+			alpha={ 255.000,nsp_ffade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=2.500
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.000 0.000 }
+		life={ 0.350 0.450 }
+		emission=220.000
+		size={ 0.550,nsp_fire 0.100 }
+		rotation={ 0.000 180.000 }
+		force=nsp_down
+	}
+	subsystem={
+		name="glow"
+		max_amount=900
+		slave_particles=0
+
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.100 }
+		box_emitter_y={ 0.000 0.100 }
+		box_emitter_z={ 0.000 0.040 }
+		invert=no
+		trail=no
+		local_space=yes
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_flame_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAdditive"
+		}
+		color={
+			x=255.000
+			y=150.000
+			z=60.000
+			alpha={ 160.000,nsp_ffade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=2.500
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.000 0.000 }
+		life={ 0.550 0.700 }
+		emission=120.000
+		size={ 0.900,nsp_fire 0.150 }
+		rotation={ 0.000 180.000 }
+		force=nsp_down2
+	}
+	animation={
+		name="nsp_fire"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.350 0.250 1.000 1.000 0.250 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_ffade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 1.000 0.500 0.800 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_down"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 -1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=14.000
+	}
+	force={
+		type="planar"
+		name="nsp_down2"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 -1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=9.000
+	}
+}
+
+particle={
+	name="NSP_pad_trail_air_asset"
+	subsystem={
+		name="trail"
+		max_amount=800
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.050 }
+		box_emitter_y={ 0.000 0.100 }
+		box_emitter_z={ 0.000 0.050 }
+		invert=no
+		trail=no
+		local_space=no
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_smoke_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAlphaBlend"
+		}
+		color={
+			x=215.000
+			y=212.000
+			z=205.000
+			alpha={ 220.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=13.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.050 0.050 }
+		life={ 14.000 18.000 }
+		emission=55.000
+		size={ 1.700,nsp_grow 0.400 }
+		rotation={ 0.000 180.000 }
+		force=nsp_wind
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_wind"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.800 0.000 0.250 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=0.050
+	}
+}
+
+particle={
+	name="NSP_pad_fireball_asset"
+	subsystem={
+		name="billow"
+		max_amount=400
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.450 }
+		box_emitter_y={ 0.000 0.450 }
+		box_emitter_z={ 0.000 0.600 }
+		invert=no
+		trail=no
+		local_space=no
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_flame_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAdditive"
+		}
+		color={
+			x=255.000
+			y=170.000
+			z=80.000
+			alpha={ 235.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=0.600
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.250 0.150 }
+		life={ 1.200 2.000 }
+		emission=260.000
+		size={ 2.200,nsp_grow 0.600 }
+		rotation={ 0.000 180.000 }
+		force=nsp_out
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_out"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=0.900
+	}
+}
+
+particle={
+	name="NSP_pad_boomsmoke_asset"
+	subsystem={
+		name="billow"
+		max_amount=1500
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.500 }
+		box_emitter_y={ 0.000 0.500 }
+		box_emitter_z={ 0.000 0.500 }
+		invert=no
+		trail=no
+		local_space=no
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_smoke_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAlphaBlend"
+		}
+		color={
+			x=62.000
+			y=58.000
+			z=55.000
+			alpha={ 235.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=4.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.250 0.150 }
+		life={ 12.000 16.000 }
+		emission=45.000
+		size={ 3.000,nsp_grow 0.600 }
+		rotation={ 0.000 180.000 }
+		force=nsp_out
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_out"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=0.220
+	}
+}
+
+particle={
+	name="NSP_pad_debris_asset"
+	subsystem={
+		name="billow"
+		max_amount=500
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 1.400 }
+		box_emitter_y={ 0.000 1.400 }
+		box_emitter_z={ 0.000 1.000 }
+		invert=no
+		trail=no
+		local_space=no
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_flame_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAdditive"
+		}
+		color={
+			x=255.000
+			y=200.000
+			z=120.000
+			alpha={ 235.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=0.300
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 2.500 1.500 }
+		life={ 1.800 3.000 }
+		emission=400.000
+		size={ 0.180 0.080 }
+		rotation={ 0.000 180.000 }
+		force=nsp_out
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_out"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 -1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=3.000
+	}
+}
+
+particle={
+	name="NSP_pad_fire_asset"
+	subsystem={
+		name="billow"
+		max_amount=200
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.700 }
+		box_emitter_y={ 0.000 0.700 }
+		box_emitter_z={ 0.000 0.080 }
+		invert=no
+		trail=no
+		local_space=no
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_flame_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAdditive"
+		}
+		color={
+			x=255.000
+			y=140.000
+			z=50.000
+			alpha={ 235.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=25.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.250 0.150 }
+		life={ 0.800 1.300 }
+		emission=40.000
+		size={ 0.500,nsp_grow 0.200 }
+		rotation={ 0.000 180.000 }
+		force=nsp_out
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_out"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=0.800
+	}
+}
+
+particle={
+	name="NSP_pad_firesmoke_asset"
+	subsystem={
+		name="billow"
+		max_amount=1500
+		slave_particles=0
+		sort="depth"
+		emitter_type="box"
+		box_emitter_x={ 0.000 0.600 }
+		box_emitter_y={ 0.000 0.600 }
+		box_emitter_z={ 0.000 0.080 }
+		invert=no
+		trail=no
+		local_space=no
+		billboard=yes
+		hide=no
+		texture={
+			file="gfx/particles/NSP/nsp_smoke_puff.dds"
+			x=1
+			y=1
+			shader="ParticleAlphaBlend"
+		}
+		color={
+			x=55.000
+			y=52.000
+			z=50.000
+			alpha={ 235.000,nsp_fade 0.000 }
+		}
+		position={
+			x=0.000
+			y=0.000
+			z=0.000
+		}
+		start=0.000
+		duration=30.000
+		emitter_yaw={ 0.000 180.000 }
+		emitter_pitch={ 0.000 0.000 }
+		velocity_pitch={ 0.000 0.000 }
+		velocity_yaw={ 0.000 0.000 }
+		velocity={ 0.250 0.150 }
+		life={ 8.000 11.000 }
+		emission=8.000
+		size={ 1.400,nsp_grow 0.400 }
+		rotation={ 0.000 180.000 }
+		force=nsp_out
+	}
+	animation={
+		name="nsp_fade"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.000 0.150 1.000 0.600 0.700 1.000 0.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	animation={
+		name="nsp_grow"
+		start=0.000
+		duration=1.000
+		repeat=no
+		minValue=0.000
+		maxValue=1.000
+		curve={
+			0.000 0.200 0.250 0.650 1.000 1.000 
+		}
+		op="MUL"
+		time="life"
+	}
+	force={
+		type="planar"
+		name="nsp_out"
+		position={
+			0.000 0.000 0.000 
+		}
+		direction={
+			0.000 0.000 1.000 
+		}
+		local_force=yes
+		yaw=0.000
+		division=16
+		amount=0.200
+	}
+}

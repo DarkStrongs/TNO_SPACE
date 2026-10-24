@@ -1,0 +1,5 @@
+# 乘组头像换图（不用帧图）：NSP_crew_pf0..2 = 1 空座 / 2 不适用 / 3.. 宇航员 id + 3（NSP_mission_effects.txt 里算）
+# 返回 sprite 名，给 NSP_09_crew_guis.txt 的 properties image 用；键 NSP_CREW_FACE_n 在 NSP_space_l_simp_chinese.yml
+defined_text = { name = GetNSPCrewFace0 text = { localization_key = "NSP_CREW_FACE_[?NSP_crew_pf0]" } }
+defined_text = { name = GetNSPCrewFace1 text = { localization_key = "NSP_CREW_FACE_[?NSP_crew_pf1]" } }
+defined_text = { name = GetNSPCrewFace2 text = { localization_key = "NSP_CREW_FACE_[?NSP_crew_pf2]" } }

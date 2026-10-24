@@ -1,0 +1,6 @@
+# NASA 调试决议分类：只在 -debug 启动时出现
+NSP_debug_category = {
+	icon = generic_research
+	visible = { is_debug = yes }
+	allowed = { tag = USA }
+}

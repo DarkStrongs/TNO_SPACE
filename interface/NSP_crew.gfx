@@ -1,0 +1,44 @@
+# r95k 乘组选拔独立窗口贴图（tools/gen_crew_gui.py 生成；r95h 版式，New Mission Concept 风格）
+# ⚠ 2026-10-24 r95h 包里本文件被误清空（python 同一表达式里先以 w 打开再读）→ 精灵全部未定义；r95i 已恢复
+spriteTypes = {
+	spriteType = { name = "GFX_NSP_crew_bg"   texturefile = "gfx/interface/NSP/crew/nsp_crew_bg.dds"   legacy_lazy_load = no }   # 1060×610，框线全部烘进底图
+	spriteType = { name = "GFX_NSP_crew_row"  texturefile = "gfx/interface/NSP/crew/nsp_crew_row.dds"  effectFile = "gfx/FX/buttonstate.lua" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_crew_face" texturefile = "gfx/interface/NSP/crew/faces/nsp_crew_face_empty.dds" legacy_lazy_load = no }   # r95t 单张 156×210（显示 scale 0.75）：空座；也是元素基准 sprite，换图走 properties image = "[GetNSPCrewFace0..2]"
+	spriteType = { name = "GFX_NSP_crew_face_na" texturefile = "gfx/interface/NSP/crew/faces/nsp_crew_face_na.dds" legacy_lazy_load = no }   # 不适用的座位
+	spriteType = { name = "GFX_NSP_astro_0" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_00_shepard.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_1" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_01_grissom.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_2" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_02_glenn.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_3" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_03_carpenter.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_4" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_04_schirra.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_5" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_05_cooper.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_6" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_06_slayton.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_7" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_07_armstrong.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_8" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_08_borman.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_9" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_09_conrad.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_10" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_10_lovell.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_11" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_11_mcdivitt.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_12" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_12_see.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_13" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_13_stafford.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_14" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_14_white.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_15" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_15_young.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_16" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_16_aldrin.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_17" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_17_anders.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_18" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_18_bassett.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_19" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_19_bean.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_20" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_20_cernan.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_21" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_21_chaffee.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_22" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_22_collins.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_23" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_23_cunningham.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_24" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_24_eisele.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_25" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_25_freeman.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_26" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_26_gordon.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_27" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_27_schweickart.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_28" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_28_scott.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_astro_29" texturefile = "gfx/interface/NSP/crew/faces/nsp_astro_29_williams.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_crew_card" texturefile = "gfx/interface/NSP/crew/nsp_crew_card.dds" noOfFrames = 2 legacy_lazy_load = no }   # r95h 卡框 133×244（整张卡是按钮，帧由 properties 绑定）：1 红 = 空座/不适用 2 浅色 = 已选
+	# 帧由 properties 绑定 → 不挂 buttonstate.lua
+	spriteType = { name = "GFX_NSP_crew_ok"   texturefile = "gfx/interface/NSP/crew/nsp_crew_ok.dds"   noOfFrames = 2 legacy_lazy_load = no }   # 1 可确定 2 未选满
+	# r95p 两侧装饰柱 100×590（tools/gen_crew_gui.py 由 TNO map_bg.dds 重新上色生成）
+	spriteType = { name = "GFX_NSP_crew_pillar"   texturefile = "gfx/interface/NSP/crew/nsp_crew_pillar.dds"   legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_crew_pillar_r" texturefile = "gfx/interface/NSP/crew/nsp_crew_pillar_r.dds" legacy_lazy_load = no }
+}

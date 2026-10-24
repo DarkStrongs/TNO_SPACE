@@ -1,0 +1,128 @@
+# NSP_rd_scripted_loc.txt
+
+#############################################################################
+#  研究与发展 scripted localisation（work/rd/gen_rd.py 生成）
+#############################################################################
+defined_text = { name = GetNSPRDRow0 text = { localization_key = "NSP_RD_ROW_[?NSP_rd_track]_0" } }
+defined_text = { name = GetNSPRDRow1 text = { localization_key = "NSP_RD_ROW_[?NSP_rd_track]_1" } }
+defined_text = { name = GetNSPRDRow2 text = { localization_key = "NSP_RD_ROW_[?NSP_rd_track]_2" } }
+defined_text = { name = GetNSPRDRow3 text = { localization_key = "NSP_RD_ROW_[?NSP_rd_track]_3" } }
+defined_text = { name = GetNSPRDRow4 text = { localization_key = "NSP_RD_ROW_[?NSP_rd_track]_4" } }
+# 卡片（v = 项目 id）
+# ⭐ 卡片 tooltip（TNO 科技 tooltip 样式）。v 进 tooltip 的先例：GetNSPPtabTT。
+#   数字统一「trigger 里算进 temp → loc 里 [?t_rc*|0] 读」，拼键不加 |0（带 |0 的拼键实机为空）
+defined_text = { name = GetNSPRDCardName text = { localization_key = "NSP_RD_N_[?v]" } }
+defined_text = { name = GetNSPRDCardUnlock
+	text = { trigger = { set_temp_variable = { t_rcu = v } check_variable = { t_rcu = 87 } } localization_key = NSP_RDC_NOFX }
+	text = { localization_key = "NSP_RD_UNLOCK_[?v]" }
+}
+defined_text = { name = GetNSPRDCardDays
+	# 研发中 / 已完成：开工时锁定的实际工期
+	text = {
+		trigger = { set_temp_variable = { t_rcs = NSP_rd_state^v } check_variable = { t_rcs > 1 } set_temp_variable = { t_rcd = NSP_rd_deff^v } }
+		localization_key = NSP_RDC_DAYS
+	}
+	# 超前于时代：×1.5，再算太空科技研发速度加成（同 NSP_rd_recalc）
+	text = {
+		trigger = {
+			set_temp_variable = { t_rca = NSP_rd_col^v }
+			check_variable = { t_rca > NSP_rd_era_now }
+			set_temp_variable = { t_rcd = NSP_rd_days^v }
+			multiply_temp_variable = { t_rcd = 1.5 }
+			set_temp_variable = { t_rcx = NSP_tier_rdspd } add_to_temp_variable = { t_rcx = 100 }
+			multiply_temp_variable = { t_rcd = 100 } divide_temp_variable = { t_rcd = t_rcx } round_temp_variable = t_rcd
+		}
+		localization_key = NSP_RDC_DAYS_AHEAD
+	}
+	text = {
+		trigger = {
+			set_temp_variable = { t_rcd = NSP_rd_days^v }
+			set_temp_variable = { t_rcx = NSP_tier_rdspd } add_to_temp_variable = { t_rcx = 100 }
+			multiply_temp_variable = { t_rcd = 100 } divide_temp_variable = { t_rcd = t_rcx } round_temp_variable = t_rcd
+		}
+		localization_key = NSP_RDC_DAYS
+	}
+}
+defined_text = { name = GetNSPRDCardState
+	text = { trigger = { set_temp_variable = { t_rcs = NSP_rd_state^v } check_variable = { t_rcs = 3 } } localization_key = NSP_RDC_ST_DONE }
+	text = { trigger = { set_temp_variable = { t_rcs = NSP_rd_state^v } check_variable = { t_rcs = 2 } set_temp_variable = { t_rcp = NSP_rd_prog^v } } localization_key = NSP_RDC_ST_RUN }
+	text = { localization_key = NSP_RD_EMPTY }
+}
+# 抽屉（选中项）
+defined_text = { name = GetNSPRDSelName text = { localization_key = "NSP_RD_N_[?NSP_rd_sel]" } }
+defined_text = { name = GetNSPRDSelDesc text = { localization_key = "NSP_RD_DESC_[?NSP_rd_sel]" } }
+defined_text = { name = GetNSPRDSelUnlock text = { localization_key = "NSP_RD_UNLOCK_[?NSP_rd_sel]" } }
+defined_text = { name = GetNSPRDSelTrack text = { localization_key = "NSP_RD_TRACK_[?NSP_rd_trk^NSP_rd_sel]" } }
+defined_text = { name = GetNSPRDSelEra text = { localization_key = "NSP_RD_ERA_[?NSP_rd_col^NSP_rd_sel]" } }
+defined_text = { name = GetNSPRDSelState text = { localization_key = "NSP_RD_REASON_[?NSP_rd_sel_reason]" } }
+defined_text = { name = GetNSPRDSelAhead text = { localization_key = "NSP_RD_AHEAD_[?NSP_rd_sel_ahead]" } }
+defined_text = { name = GetNSPRDSelReqs text = { localization_key = "NSP_RD_REQS_[?NSP_rd_sel]" } }
+defined_text = { name = GetNSPRDStartL0 text = { trigger = { check_variable = { NSP_rd_sel_reason = 2 } } localization_key = NSP_RD_START_L0G } text = { localization_key = NSP_RD_START_L0X } }
+defined_text = { name = GetNSPRDStartLabel text = { trigger = { check_variable = { NSP_rd_sel_reason = 5 } } localization_key = NSP_RD_START_L5 } text = { trigger = { check_variable = { NSP_rd_sel_reason = 6 } } localization_key = NSP_RD_START_L6 } text = { localization_key = NSP_RD_START_L0 } }
+# 研发槽条：研发中 → 项目名；空闲 → 灰字；未解锁 → 解锁条件（NSP_rd_q_lk：1004 / 1007 / 1010 = 科技等级里程碑，其余 = 研发 id）
+defined_text = { name = GetNSPRDQ0
+	text = { trigger = { check_variable = { NSP_rd_q_n > 0 } } localization_key = "NSP_RD_N_[?NSP_rd_q_id0]" }
+	text = { trigger = { check_variable = { NSP_rd_slots > 0 } } localization_key = NSP_RD_Q_IDLE }
+	text = { trigger = { check_variable = { NSP_rd_q_lk0 > 999 } } localization_key = "NSP_RD_Q_LOCK_T[?NSP_rd_q_lk0]" }
+	text = { localization_key = NSP_RD_Q_LOCK_RD0 }
+}
+defined_text = { name = GetNSPRDQLk0 text = { localization_key = "NSP_RD_N_[?NSP_rd_q_lk0]" } }
+defined_text = { name = GetNSPRDQPct0 text = { trigger = { check_variable = { NSP_rd_q_n > 0 } } localization_key = NSP_RD_Q_PCTV_0 } text = { localization_key = NSP_RD_EMPTY } }
+defined_text = { name = GetNSPRDQ1
+	text = { trigger = { check_variable = { NSP_rd_q_n > 1 } } localization_key = "NSP_RD_N_[?NSP_rd_q_id1]" }
+	text = { trigger = { check_variable = { NSP_rd_slots > 1 } } localization_key = NSP_RD_Q_IDLE }
+	text = { trigger = { check_variable = { NSP_rd_q_lk1 > 999 } } localization_key = "NSP_RD_Q_LOCK_T[?NSP_rd_q_lk1]" }
+	text = { localization_key = NSP_RD_Q_LOCK_RD1 }
+}
+defined_text = { name = GetNSPRDQLk1 text = { localization_key = "NSP_RD_N_[?NSP_rd_q_lk1]" } }
+defined_text = { name = GetNSPRDQPct1 text = { trigger = { check_variable = { NSP_rd_q_n > 1 } } localization_key = NSP_RD_Q_PCTV_1 } text = { localization_key = NSP_RD_EMPTY } }
+defined_text = { name = GetNSPRDQ2
+	text = { trigger = { check_variable = { NSP_rd_q_n > 2 } } localization_key = "NSP_RD_N_[?NSP_rd_q_id2]" }
+	text = { trigger = { check_variable = { NSP_rd_slots > 2 } } localization_key = NSP_RD_Q_IDLE }
+	text = { trigger = { check_variable = { NSP_rd_q_lk2 > 999 } } localization_key = "NSP_RD_Q_LOCK_T[?NSP_rd_q_lk2]" }
+	text = { localization_key = NSP_RD_Q_LOCK_RD2 }
+}
+defined_text = { name = GetNSPRDQLk2 text = { localization_key = "NSP_RD_N_[?NSP_rd_q_lk2]" } }
+defined_text = { name = GetNSPRDQPct2 text = { trigger = { check_variable = { NSP_rd_q_n > 2 } } localization_key = NSP_RD_Q_PCTV_2 } text = { localization_key = NSP_RD_EMPTY } }
+defined_text = { name = GetNSPRDQ3
+	text = { trigger = { check_variable = { NSP_rd_q_n > 3 } } localization_key = "NSP_RD_N_[?NSP_rd_q_id3]" }
+	text = { trigger = { check_variable = { NSP_rd_slots > 3 } } localization_key = NSP_RD_Q_IDLE }
+	text = { trigger = { check_variable = { NSP_rd_q_lk3 > 999 } } localization_key = "NSP_RD_Q_LOCK_T[?NSP_rd_q_lk3]" }
+	text = { localization_key = NSP_RD_Q_LOCK_RD3 }
+}
+defined_text = { name = GetNSPRDQLk3 text = { localization_key = "NSP_RD_N_[?NSP_rd_q_lk3]" } }
+defined_text = { name = GetNSPRDQPct3 text = { trigger = { check_variable = { NSP_rd_q_n > 3 } } localization_key = NSP_RD_Q_PCTV_3 } text = { localization_key = NSP_RD_EMPTY } }
+defined_text = { name = GetNSPRDQ4
+	text = { trigger = { check_variable = { NSP_rd_q_n > 4 } } localization_key = "NSP_RD_N_[?NSP_rd_q_id4]" }
+	text = { trigger = { check_variable = { NSP_rd_slots > 4 } } localization_key = NSP_RD_Q_IDLE }
+	text = { trigger = { check_variable = { NSP_rd_q_lk4 > 999 } } localization_key = "NSP_RD_Q_LOCK_T[?NSP_rd_q_lk4]" }
+	text = { localization_key = NSP_RD_Q_LOCK_RD4 }
+}
+defined_text = { name = GetNSPRDQLk4 text = { localization_key = "NSP_RD_N_[?NSP_rd_q_lk4]" } }
+defined_text = { name = GetNSPRDQPct4 text = { trigger = { check_variable = { NSP_rd_q_n > 4 } } localization_key = NSP_RD_Q_PCTV_4 } text = { localization_key = NSP_RD_EMPTY } }
+defined_text = { name = GetNSPRDQ5
+	text = { trigger = { check_variable = { NSP_rd_q_n > 5 } } localization_key = "NSP_RD_N_[?NSP_rd_q_id5]" }
+	text = { trigger = { check_variable = { NSP_rd_slots > 5 } } localization_key = NSP_RD_Q_IDLE }
+	text = { trigger = { check_variable = { NSP_rd_q_lk5 > 999 } } localization_key = "NSP_RD_Q_LOCK_T[?NSP_rd_q_lk5]" }
+	text = { localization_key = NSP_RD_Q_LOCK_RD5 }
+}
+defined_text = { name = GetNSPRDQLk5 text = { localization_key = "NSP_RD_N_[?NSP_rd_q_lk5]" } }
+defined_text = { name = GetNSPRDQPct5 text = { trigger = { check_variable = { NSP_rd_q_n > 5 } } localization_key = NSP_RD_Q_PCTV_5 } text = { localization_key = NSP_RD_EMPTY } }
+defined_text = { name = GetNSPRDQ6
+	text = { trigger = { check_variable = { NSP_rd_q_n > 6 } } localization_key = "NSP_RD_N_[?NSP_rd_q_id6]" }
+	text = { trigger = { check_variable = { NSP_rd_slots > 6 } } localization_key = NSP_RD_Q_IDLE }
+	text = { trigger = { check_variable = { NSP_rd_q_lk6 > 999 } } localization_key = "NSP_RD_Q_LOCK_T[?NSP_rd_q_lk6]" }
+	text = { localization_key = NSP_RD_Q_LOCK_RD6 }
+}
+defined_text = { name = GetNSPRDQLk6 text = { localization_key = "NSP_RD_N_[?NSP_rd_q_lk6]" } }
+defined_text = { name = GetNSPRDQPct6 text = { trigger = { check_variable = { NSP_rd_q_n > 6 } } localization_key = NSP_RD_Q_PCTV_6 } text = { localization_key = NSP_RD_EMPTY } }
+
+# 研发完成通知用
+defined_text = { name = GetNSPRDLastName text = { localization_key = "NSP_RD_N_[?NSP_rd_last_done]" } }
+defined_text = { name = GetNSPRDLastUnlock text = { localization_key = "NSP_RD_UNLOCK_[?NSP_rd_last_done]" } }
+
+# 科技卡面单张图（不用帧图）：返回 sprite 名，键在 NSP_rd_l_simp_chinese.yml（NSP_RDART_<id> / NSP_RDSART_<id>）
+#   子模组研发：在自己的 loc 里写 NSP_RDART_<id>: "GFX_你的图"（方卡写 NSP_RDSART_<id>）
+defined_text = { name = GetNSPRDArt    text = { localization_key = "NSP_RDART_[?v]" } }
+defined_text = { name = GetNSPRDSArt   text = { localization_key = "NSP_RDSART_[?v]" } }
+defined_text = { name = GetNSPRDSelArt text = { localization_key = "NSP_RDART_[?NSP_rd_sel]" } }

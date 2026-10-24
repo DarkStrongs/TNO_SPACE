@@ -1,0 +1,89 @@
+# =============================================================================
+# NASA 调试决议（complete_effect 加 game.log 探针）（is_debug 才显示）
+#  地图发射架（州 366 Florida，见 NSP_launchpad_effects.txt）
+#    空 / 火箭 / 发射：强制切换并锁定，每天的任务条件不再覆盖
+#    发射可以反复点，每次都会重播动画
+#    恢复自动：解锁并立即按任务阶段重算
+# =============================================================================
+NSP_debug_category = {
+	NSP_dbg_pad_empty = {
+		icon = generic_research
+		visible = { is_debug = yes }
+		available = { always = yes }
+		cost = 0
+		fire_only_once = no
+		days_re_enable = 0
+		complete_effect = { log = "NSP pad decision 0 clicked" NSP_pad_debug_0 = yes }
+		ai_will_do = { factor = 0 }
+	}
+	NSP_dbg_pad_ready = {
+		icon = generic_research
+		visible = { is_debug = yes }
+		available = { always = yes }
+		cost = 0
+		fire_only_once = no
+		days_re_enable = 0
+		complete_effect = { log = "NSP pad decision 1 clicked" NSP_pad_debug_1 = yes }
+		ai_will_do = { factor = 0 }
+	}
+	NSP_dbg_pad_launch = {
+		icon = generic_research
+		visible = { is_debug = yes }
+		available = { always = yes }
+		cost = 0
+		fire_only_once = no
+		days_re_enable = 0
+		complete_effect = { log = "NSP pad decision 2 clicked" NSP_pad_debug_2 = yes }
+		ai_will_do = { factor = 0 }
+	}
+	NSP_dbg_pad_fail_pad = {
+		icon = generic_research
+		visible = { is_debug = yes }
+		available = { always = yes }
+		cost = 0
+		fire_only_once = no
+		days_re_enable = 0
+		complete_effect = { log = "NSP pad decision 3 clicked" NSP_pad_debug_3 = yes }
+		ai_will_do = { factor = 0 }
+	}
+	NSP_dbg_pad_fail_air = {
+		icon = generic_research
+		visible = { is_debug = yes }
+		available = { always = yes }
+		cost = 0
+		fire_only_once = no
+		days_re_enable = 0
+		complete_effect = { log = "NSP pad decision 4 clicked" NSP_pad_debug_4 = yes }
+		ai_will_do = { factor = 0 }
+	}
+	NSP_dbg_pad_auto = {
+		icon = generic_research
+		visible = { is_debug = yes }
+		available = { always = yes }
+		cost = 0
+		fire_only_once = no
+		days_re_enable = 0
+		complete_effect = { log = "NSP pad decision auto clicked" NSP_pad_debug_auto = yes }
+		ai_will_do = { factor = 0 }
+	}
+	NSP_dbg_rd_all = {
+		icon = generic_research
+		visible = { is_debug = yes }
+		available = { always = yes }
+		cost = 0
+		fire_only_once = no
+		days_re_enable = 0
+		complete_effect = { NSP_rd_debug_all = yes }
+		ai_will_do = { factor = 0 }
+	}
+	NSP_dbg_event_api = {
+		icon = generic_research
+		visible = { is_debug = yes }
+		available = { always = yes }
+		cost = 0
+		fire_only_once = no
+		days_re_enable = 0
+		complete_effect = { country_event = nsp_dbg.1 }
+		ai_will_do = { factor = 0 }
+	}
+}

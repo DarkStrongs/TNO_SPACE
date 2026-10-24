@@ -1,0 +1,444 @@
+# National Space Program (NSP) — generated textures
+# All DDS: uncompressed A8R8G8B8, no mipmaps
+spriteTypes = {
+
+    # r60 发射类修正：橙色描边版（载荷类沿用紫色原版）
+    corneredTileSpriteType = {
+        name = "GFX_NSP_modifier_frame_launch"
+        texturefile = "gfx/interface/NSP/planner/modifiers/nsp_modifier_frame_launch.dds"
+        size = { x = 32 y = 32 }
+        borderSize = { x = 6 y = 6 }
+        effectFile = "gfx/FX/buttonstate_nodowneffect.lua"
+    }
+    spriteType = {
+        name = "GFX_NSP_modifier_slot_launch"
+        texturefile = "gfx/interface/NSP/planner/modifiers/nsp_modifier_slot_launch.dds"
+        noOfFrames = 3
+        legacy_lazy_load = no
+    }
+    corneredTileSpriteType = {
+        name = "GFX_NSP_window_frame"
+        texturefile = "gfx/interface/NSP/shared/nsp_window_frame.dds"
+        size = { x = 64 y = 64 }
+        borderSize = { x = 12 y = 12 }
+        effectFile = "gfx/FX/buttonstate_nodowneffect.lua"
+    }
+    corneredTileSpriteType = {
+        name = "GFX_NSP_panel_frame"
+        texturefile = "gfx/interface/NSP/shared/nsp_panel_frame.dds"
+        size = { x = 32 y = 32 }
+        borderSize = { x = 6 y = 6 }
+        effectFile = "gfx/FX/buttonstate_nodowneffect.lua"
+    }
+    # r87 Mission Control 任务卡（tools/gen_mc_card.py）
+    corneredTileSpriteType = {
+        name = "GFX_NSP_mc_card"
+        texturefile = "gfx/interface/NSP/home/mission_control/nsp_mc_card.dds"
+        size = { x = 32 y = 32 }
+        borderSize = { x = 5 y = 5 }
+        effectFile = "gfx/FX/buttonstate_nodowneffect.lua"
+    }
+    spriteType = { name = "GFX_NSP_mc_iconbox" texturefile = "gfx/interface/NSP/home/mission_control/nsp_mc_iconbox.dds" legacy_lazy_load = no }
+    spriteType = { name = "GFX_NSP_mc_dash"    texturefile = "gfx/interface/NSP/home/mission_control/nsp_mc_dash.dds"    legacy_lazy_load = no }
+    spriteType = {
+        name = "GFX_NSP_mc_bar"
+        texturefile = "gfx/interface/NSP/home/mission_control/nsp_mc_bar.dds"
+        noOfFrames = 21
+        legacy_lazy_load = no
+    }
+    corneredTileSpriteType = {
+        name = "GFX_NSP_card_frame"
+        texturefile = "gfx/interface/NSP/shared/nsp_card_frame.dds"
+        size = { x = 32 y = 32 }
+        borderSize = { x = 10 y = 10 }
+        effectFile = "gfx/FX/buttonstate_nodowneffect.lua"
+    }
+    corneredTileSpriteType = {
+        name = "GFX_NSP_modifier_frame"
+        texturefile = "gfx/interface/NSP/planner/modifiers/nsp_modifier_frame.dds"
+        size = { x = 32 y = 32 }
+        borderSize = { x = 6 y = 6 }
+        effectFile = "gfx/FX/buttonstate_nodowneffect.lua"
+    }
+    corneredTileSpriteType = {
+        name = "GFX_NSP_stat_frame_blue"
+        texturefile = "gfx/interface/NSP/planner/stats/nsp_stat_frame_blue.dds"
+        size = { x = 48 y = 48 }
+        borderSize = { x = 8 y = 8 }
+        effectFile = "gfx/FX/buttonstate_nodowneffect.lua"
+    }
+    corneredTileSpriteType = {
+        name = "GFX_NSP_stat_frame_purple"
+        texturefile = "gfx/interface/NSP/planner/stats/nsp_stat_frame_purple.dds"
+        size = { x = 48 y = 48 }
+        borderSize = { x = 8 y = 8 }
+        effectFile = "gfx/FX/buttonstate_nodowneffect.lua"
+    }
+    corneredTileSpriteType = {
+        name = "GFX_NSP_stat_frame_yellow"
+        texturefile = "gfx/interface/NSP/planner/stats/nsp_stat_frame_yellow.dds"
+        size = { x = 48 y = 48 }
+        borderSize = { x = 8 y = 8 }
+        effectFile = "gfx/FX/buttonstate_nodowneffect.lua"
+    }
+    spriteType = {
+        name = "GFX_NSP_bar_budget"
+        texturefile = "gfx/interface/NSP/home/programs/nsp_bar_budget.dds"
+        noOfFrames = 21
+        legacy_lazy_load = no
+    }
+    spriteType = {
+        name = "GFX_NSP_bar_mission"
+        texturefile = "gfx/interface/NSP/home/mission_control/nsp_bar_mission.dds"
+        noOfFrames = 21
+        legacy_lazy_load = no
+    }
+    spriteType = {
+        name = "GFX_NSP_button_create"
+        texturefile = "gfx/interface/NSP/home/nsp_button_create.dds"
+        effectFile = "gfx/FX/buttonstate.lua"
+    }
+    spriteType = {
+        name = "GFX_NSP_button_rd"
+        texturefile = "gfx/interface/NSP/home/nsp_button_rd.dds"
+        effectFile = "gfx/FX/buttonstate.lua"
+    }
+    spriteType = {
+        name = "GFX_NSP_button_info"
+        texturefile = "gfx/interface/NSP/home/nsp_button_info.dds"
+        effectFile = "gfx/FX/buttonstate.lua"
+    }
+    spriteType = {
+        name = "GFX_NSP_button_close"
+        texturefile = "gfx/interface/NSP/home/nsp_button_close.dds"
+        effectFile = "gfx/FX/buttonstate.lua"
+    }
+    spriteType = {
+        name = "GFX_NSP_button_back"
+        texturefile = "gfx/interface/NSP/shared/nsp_button_back.dds"
+        effectFile = "gfx/FX/buttonstate.lua"
+    }
+    # ---------- AR 同款页签底牌（2026-10-21）----------
+    # 素材原样取自 TNOAR gfx/interface/DS/ds_tab_bra.dds（原出处 = 主 mod
+    # gfx/interface/brazil/map/tab.dds，448x34 两帧 224x34：帧 1 未选 / 帧 2 选中）。
+    # 斜切角标签牌。⚠ 不要加 effectFile=buttonstate.lua（AR 同款就没加，
+    # 多帧 + buttonstate 会接管 frame 取帧越界 —— 见 TNOAR gfx 里旧 GFX_DS_tab 的注释）。
+    spriteType = {
+        name = "GFX_NSP_tab_bra"
+        texturefile = "gfx/interface/NSP/home/nsp_tab_bra.dds"
+        noOfFrames = 2
+        legacy_lazy_load = no
+    }
+    # frames 1-5 normal: mercury,gemini,apollo,locked,unknown; 6-10 selected
+    spriteType = {
+        name = "GFX_NSP_prog_done"
+        texturefile = "gfx/interface/NSP/home/programs/nsp_prog_done.dds"
+        legacy_lazy_load = no
+    }
+    # r67：页签帧（work/r67/art.py）：帧 = 图标*2+1 普通 / +2 选中；图标 0 锁 1 ? 2 ‹ 3 › 4+p 计划 p。加计划要改 noOfFrames
+    spriteType = {
+        name = "GFX_NSP_program_tabs"
+        texturefile = "gfx/interface/NSP/home/programs/nsp_program_tabs.dds"
+        noOfFrames = 22   # r92：14 → 22（计划 3..6，tools/gen_prog_icons.py）
+        legacy_lazy_load = no
+        effectFile = "gfx/FX/buttonstate.lua"
+    }
+    spriteType = {
+        name = "GFX_NSP_badge_gemini"
+        texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_gemini.dds"
+    }
+    spriteType = {
+        name = "GFX_NSP_badge_mercury"
+        texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_mercury.dds"
+    }
+    spriteType = {
+        name = "GFX_NSP_badge_apollo"
+        texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_apollo.dds"
+    }
+    # r92 新计划徽章（tools/gen_prog_icons.py）
+    spriteType = { name = "GFX_NSP_badge_sat" texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_sat.dds" }
+    spriteType = { name = "GFX_NSP_badge_lander" texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_lander.dds" }
+    spriteType = { name = "GFX_NSP_badge_planet" texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_planet.dds" }
+    spriteType = { name = "GFX_NSP_badge_station" texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_station.dds" }
+    # r93b 载荷徽章（work/r93/badges.py）
+    spriteType = { name = "GFX_NSP_badge_comm" texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_comm.dds" }
+    spriteType = { name = "GFX_NSP_badge_explorer" texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_explorer.dds" }
+    spriteType = { name = "GFX_NSP_badge_science" texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_science.dds" }
+    spriteType = { name = "GFX_NSP_badge_lunarorb" texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_lunarorb.dds" }
+    spriteType = {
+        name = "GFX_NSP_badge_unassigned"
+        texturefile = "gfx/interface/NSP/home/programs/badges/nsp_badge_unassigned.dds"
+    }
+    # 1 empty, 2 checked, 3 incomplete(red)
+    # r65：目标卡分段进度条（9 帧，见 work/r65/art.py）
+    spriteType = {
+        name = "GFX_NSP_obj_bar"
+        texturefile = "gfx/interface/NSP/home/programs/nsp_obj_bar.dds"
+        noOfFrames = 9
+        legacy_lazy_load = no
+    }
+    spriteType = {
+        name = "GFX_NSP_map_earth"
+        texturefile = "gfx/interface/NSP/home/solar_system/earth_map/nsp_map_earth.dds"
+    }
+    spriteType = {
+        name = "GFX_NSP_map_lunar"
+        texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_bg_lunar.dds"
+    }
+    spriteType = {
+        name = "GFX_NSP_map_solar"
+        texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_bg_solar.dds"
+    }
+    spriteType = {
+        name = "GFX_NSP_map_frame"
+        texturefile = "gfx/interface/NSP/home/solar_system/earth_map/nsp_map_frame.dds"
+        alwaystransparent = yes
+    }
+    spriteType = {   # r85 地图发射场标记（tools/gen_lsite_marker.py）
+        name = "GFX_NSP_lsite_marker"
+        texturefile = "gfx/interface/NSP/home/solar_system/earth_map/nsp_lsite_marker.dds"
+        noOfFrames = 2
+    }
+    spriteType = {
+        name = "GFX_NSP_station_marker"
+        texturefile = "gfx/interface/NSP/home/solar_system/earth_map/nsp_station_marker.dds"
+    }
+    # r95r：12 帧，帧 = 载荷 id + 1（tools/gen_mission_icons.py）
+    #   1 双子星 2 阿波罗 3 TIROS 4 水手 5 水星 6 Syncom 7 雨云 8 勘测者 9 天空实验室 10 试验性载荷 11 科研卫星 12 月球轨道器
+    spriteType = {
+        name = "GFX_NSP_mission_icons"
+        texturefile = "gfx/interface/NSP/home/mission_control/nsp_mission_icons.dds"
+        noOfFrames = 12
+        legacy_lazy_load = no
+    }
+    # 1 budget, 2 science/tech, 3 station
+    spriteType = {
+        name = "GFX_NSP_small_icons"
+        texturefile = "gfx/interface/NSP/home/programs/nsp_small_icons.dds"
+        noOfFrames = 3
+        legacy_lazy_load = no
+    }
+    spriteType = {
+        name = "GFX_NSP_director_generic"
+        texturefile = "gfx/interface/NSP/home/director/nsp_director_generic.dds"
+    }
+    # 1 Gemini, 2 Apollo CSM, 3 TIROS, 4 Mariner, 5 Mercury, 6 Syncom, 7 Nimbus, 8 Surveyor, 9 Skylab（r88b 删掉苏联空帧）
+    spriteType = {
+        name = "GFX_NSP_payload_art"
+        texturefile = "gfx/interface/NSP/planner/selection/nsp_payload_art.dds"
+        noOfFrames = 12   # r92b：+10 试验性载荷（tools/gen_r92b_art.py）；r93：+11 科研卫星 +12 月球轨道器（work/r93/art.py）
+        legacy_lazy_load = no
+    }
+    # 1 Titan IIIC, 2 Titan II GLV, 3 Saturn IB, 4 Saturn V, 5 Redstone, 6 Atlas LV-3B, 7 Atlas-Agena, 8 Atlas-Centaur（r51）
+    spriteType = {
+        name = "GFX_NSP_vehicle_art"
+        texturefile = "gfx/interface/NSP/planner/selection/nsp_vehicle_art.dds"
+        noOfFrames = 9   # r92b：+9 试验性火箭（tools/gen_r92b_art.py）
+        legacy_lazy_load = no
+    }
+    # 1 LEO,2 MOL rendezvous,3 GEO,4 Polar,5 TLI,6 Earth escape
+    spriteType = {
+        name = "GFX_NSP_trajectory"
+        texturefile = "gfx/interface/NSP/planner/destination/nsp_trajectory.dds"
+        noOfFrames = 8   # r93：+7 中地球轨道 +8 月球轨道
+        legacy_lazy_load = no
+    }
+    # 1 normal, 2 selected, 3 unavailable
+    spriteType = {
+        name = "GFX_NSP_list_row"
+        texturefile = "gfx/interface/NSP/planner/selection/nsp_list_row.dds"
+        noOfFrames = 3
+        legacy_lazy_load = no
+        effectFile = "gfx/FX/buttonstate.lua"
+    }
+    spriteType = {
+        name = "GFX_NSP_section_num"
+        texturefile = "gfx/interface/NSP/planner/selection/nsp_section_num.dds"
+    }
+    spriteType = {   # r71：箭头置灰版
+        name = "GFX_NSP_arrow_left_off"
+        texturefile = "gfx/interface/NSP/planner/selection/nsp_arrow_left_off.dds"
+    }
+    spriteType = {   # r71：箭头置灰版
+        name = "GFX_NSP_arrow_right_off"
+        texturefile = "gfx/interface/NSP/planner/selection/nsp_arrow_right_off.dds"
+    }
+    spriteType = {
+        name = "GFX_NSP_arrow_left"
+        texturefile = "gfx/interface/NSP/planner/selection/nsp_arrow_left.dds"
+        effectFile = "gfx/FX/buttonstate.lua"
+    }
+    spriteType = {
+        name = "GFX_NSP_arrow_right"
+        texturefile = "gfx/interface/NSP/planner/selection/nsp_arrow_right.dds"
+        effectFile = "gfx/FX/buttonstate.lua"
+    }
+    spriteType = {
+        name = "GFX_NSP_modifier_slot"
+        texturefile = "gfx/interface/NSP/planner/modifiers/nsp_modifier_slot.dds"
+        noOfFrames = 3
+        legacy_lazy_load = no
+    }
+    # 1 Strap-on Boosters,2 Centaur,3 Uprated Engines,4 Adv. Gemini Alterations,5 Docking,6 EVA,7 Solar Panels,8 Fuel Cells
+    spriteType = {
+        name = "GFX_NSP_modifier_icons"
+        texturefile = "gfx/interface/NSP/planner/modifiers/nsp_modifier_icons.dds"
+        noOfFrames = 20
+        legacy_lazy_load = no
+        effectFile = "gfx/FX/buttonstate.lua"
+    }
+    # 1 future, 2 current/complete
+    spriteType = {   # r74：时间线表格线
+        name = "GFX_NSP_tl_table"
+        texturefile = "gfx/interface/NSP/planner/timeline/nsp_tl_table.dds"
+    }
+    spriteType = {
+        name = "GFX_NSP_timeline_row"
+        texturefile = "gfx/interface/NSP/planner/timeline/nsp_timeline_row.dds"
+        noOfFrames = 8   # r92f：8 阶段 8 色（tools/gen_r92f_tlrow.py：5 乘组紫、8 返程蓝）
+        legacy_lazy_load = no
+    }
+
+    # ===================== 实时 3D 天体（gfx/FX/nsp_sphere.shader / nsp_sun.shader）=====================
+    # ⭐ effectFile 直接指向 .shader（Scars Radar Graph / Flaxbeard 图表同款写法）；Time 来自 sprite_animation.fxh
+    # ⚠ 这些贴图是「经纬度图压成正方形」，看起来是扁的属正常；显示尺寸由 .gui 的 scale 控制
+    spriteType = { name = "GFX_NSP3D_moon" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_moon.dds" effectFile = "gfx/FX/nsp_sphere.shader" alwaystransparent = yes legacy_lazy_load = no }
+    spriteType = { name = "GFX_NSP3D_sun" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_sun.dds" effectFile = "gfx/FX/nsp_sun.shader" alwaystransparent = yes legacy_lazy_load = no }
+    # ⭐ 地球视图动态云层（nsp_clouds.shader）；贴图 2× 尺寸，.gui scale = 0.5
+    spriteType = { name = "GFX_NSP3D_earth_clouds" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_earth_clouds.dds" effectFile = "gfx/FX/nsp_clouds.shader" alwaystransparent = yes legacy_lazy_load = no }
+    # ⭐ 轨道示意图地球的动态大气（nsp_atmo.shader）；贴图 256²，.gui scale = 0.25 → 64×64
+    spriteType = { name = "GFX_NSP3D_traj_atmo" texturefile = "gfx/interface/NSP/planner/destination/nsp3d_traj_atmo.dds" effectFile = "gfx/FX/nsp_atmo.shader" alwaystransparent = yes legacy_lazy_load = no }
+    # ⭐ v17 太阳系行星悬停放大（buttonType，Over 态放大到月球尺寸）
+    # ⭐ v18 点击聚焦动画
+	# 隐形滚动条（NSP_hidden_slider）用的透明九宫格，alpha 3/255
+	corneredTileSpriteType = { name = "GFX_NSP_scroll_clear" texturefile = "gfx/interface/NSP/shared/nsp_scroll_bg.dds" size = { x = 8 y = 8 } borderSize = { x = 0 y = 0 } }
+	# r7：指标条标题与数值之间的竖分隔线（2×34，青色半透明）
+	spriteType = { name = "GFX_NSP_stat_sep" texturefile = "gfx/interface/NSP/planner/stats/nsp_stat_sep.dds" }
+
+	# ===== 原 NSP_click_v20.gfx（r94b 合并）=====
+
+	# v21 行星点击命中区：实心 alpha 贴图 + nsp_hit.shader 隐形绘制
+	spriteType = { name = "GFX_NSP_hit_map" texturefile = "gfx/interface/NSP/home/solar_system/hitmasks/nsp3d_hit_map.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+
+	# ===== 原 NSP_focus_v22.gfx（r94b 合并）=====
+
+	# v22 退出动画：同一张贴图，倒放 shader
+
+	# v25：A/B 两份，每次点击切换 image，强制动画从第 0 帧重播
+
+	# ==== r30 聚焦动画（buttonType 用）：普通 spriteType，时间轴来自 AnimationTime ====
+	spriteType = { name = "GFX_NSP3D_focusbt_mercury" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_mercury.dds" effectFile = "gfx/FX/nsp_focus_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusbt_venus" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_venus.dds" effectFile = "gfx/FX/nsp_focus_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusbt_earth" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_earth.dds" effectFile = "gfx/FX/nsp_focus_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusbt_mars" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_mars.dds" effectFile = "gfx/FX/nsp_focus_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusbt_jupiter" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_jupiter.dds" effectFile = "gfx/FX/nsp_focus_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusbt_saturn" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_saturn.dds" effectFile = "gfx/FX/nsp_focus_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusbt_uranus" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_uranus.dds" effectFile = "gfx/FX/nsp_focus_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusbt_neptune" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_neptune.dds" effectFile = "gfx/FX/nsp_focus_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusoutbt_mercury" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_mercury.dds" effectFile = "gfx/FX/nsp_focus_out_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusoutbt_venus" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_venus.dds" effectFile = "gfx/FX/nsp_focus_out_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusoutbt_earth" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_earth.dds" effectFile = "gfx/FX/nsp_focus_out_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusoutbt_mars" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_mars.dds" effectFile = "gfx/FX/nsp_focus_out_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusoutbt_jupiter" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_jupiter.dds" effectFile = "gfx/FX/nsp_focus_out_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusoutbt_saturn" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_saturn.dds" effectFile = "gfx/FX/nsp_focus_out_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusoutbt_uranus" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_uranus.dds" effectFile = "gfx/FX/nsp_focus_out_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_focusoutbt_neptune" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_neptune.dds" effectFile = "gfx/FX/nsp_focus_out_bt.shader" noOfFrames = 20 legacy_lazy_load = no }
+	# r63 选中轨道线（同贴图，nsp_sat_line.shader）
+	spriteType = { name = "GFX_NSP3D_satlH_1" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_1.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satlH_2" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_2.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satlH_3" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_3.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satlH_4" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_4.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satlH_5" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_5.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satlH_6" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_6.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satlH_7" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_7.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satlH_8" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_8.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satlH_9" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_9.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satlH_10" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_10.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satsH_1" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_1.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satsH_2" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_2.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satsH_3" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_3.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satsH_4" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_4.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satsH_5" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_5.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satsH_6" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_6.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satsH_7" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_7.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satsH_8" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_8.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satsH_9" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_9.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satsH_10" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_10.dds" effectFile = "gfx/FX/nsp_sat_line.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_sat_marker_sel" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp_sat_marker_sel.dds" legacy_lazy_load = no }
+	# r61 卫星详情小图标（16x16）
+	spriteType = { name = "GFX_NSP_sat_marker" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp_sat_marker.dds" effectFile = "gfx/FX/buttonstate.lua" legacy_lazy_load = no }
+	# r58b 卫星轨道单层（l = 普通行星 / 月球，s = 土星）+ 调试按钮
+	spriteType = { name = "GFX_NSP3D_satl_1" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_1.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satl_2" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_2.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satl_3" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_3.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satl_4" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_4.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satl_5" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_5.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satl_6" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_6.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satl_7" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_7.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satl_8" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_8.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satl_9" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_9.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_satl_10" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_satl_10.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_sats_1" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_1.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_sats_2" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_2.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_sats_3" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_3.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_sats_4" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_4.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_sats_5" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_5.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_sats_6" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_6.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_sats_7" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_7.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_sats_8" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_8.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_sats_9" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_9.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP3D_sats_10" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp3d_sats_10.dds" effectFile = "gfx/FX/nsp_sat_bt.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_sat_btn" texturefile = "gfx/interface/NSP/home/solar_system/satellites/nsp_sat_btn.dds" noOfFrames = 2 effectFile = "gfx/FX/buttonstate.lua" legacy_lazy_load = no }
+
+	# ===== 原 NSP_orbit_v24.gfx（r94b 合并）=====
+
+	frameAnimatedSpriteType = { name = "GFX_NSP3D_orbit_mercury" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_mercury.dds" effectFile = "gfx/FX/nsp_orbit.shader" noOfFrames = 20 animation_rate_fps = 1 looping = no play_on_show = no alwaystransparent = yes legacy_lazy_load = no }
+	frameAnimatedSpriteType = { name = "GFX_NSP3D_orbit_venus" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_venus.dds" effectFile = "gfx/FX/nsp_orbit.shader" noOfFrames = 20 animation_rate_fps = 1 looping = no play_on_show = no alwaystransparent = yes legacy_lazy_load = no }
+	frameAnimatedSpriteType = { name = "GFX_NSP3D_orbit_earth" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_earth.dds" effectFile = "gfx/FX/nsp_orbit.shader" noOfFrames = 20 animation_rate_fps = 1 looping = no play_on_show = no alwaystransparent = yes legacy_lazy_load = no }
+	frameAnimatedSpriteType = { name = "GFX_NSP3D_orbit_mars" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_mars.dds" effectFile = "gfx/FX/nsp_orbit.shader" noOfFrames = 20 animation_rate_fps = 1 looping = no play_on_show = no alwaystransparent = yes legacy_lazy_load = no }
+	frameAnimatedSpriteType = { name = "GFX_NSP3D_orbit_jupiter" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_jupiter.dds" effectFile = "gfx/FX/nsp_orbit.shader" noOfFrames = 20 animation_rate_fps = 1 looping = no play_on_show = no alwaystransparent = yes legacy_lazy_load = no }
+	frameAnimatedSpriteType = { name = "GFX_NSP3D_orbit_saturn" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_saturn.dds" effectFile = "gfx/FX/nsp_orbit.shader" noOfFrames = 20 animation_rate_fps = 1 looping = no play_on_show = no alwaystransparent = yes legacy_lazy_load = no }
+	frameAnimatedSpriteType = { name = "GFX_NSP3D_orbit_uranus" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_uranus.dds" effectFile = "gfx/FX/nsp_orbit.shader" noOfFrames = 20 animation_rate_fps = 1 looping = no play_on_show = no alwaystransparent = yes legacy_lazy_load = no }
+	frameAnimatedSpriteType = { name = "GFX_NSP3D_orbit_neptune" texturefile = "gfx/interface/NSP/home/solar_system/bodies/nsp3d_focus_neptune.dds" effectFile = "gfx/FX/nsp_orbit.shader" noOfFrames = 20 animation_rate_fps = 1 looping = no play_on_show = no alwaystransparent = yes legacy_lazy_load = no }
+
+	spriteType = { name = "GFX_NSP_seg_6" texturefile = "gfx/interface/NSP/home/solar_system/orbits/nsp3d_seg_6.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_seg_7" texturefile = "gfx/interface/NSP/home/solar_system/orbits/nsp3d_seg_7.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_seg_8" texturefile = "gfx/interface/NSP/home/solar_system/orbits/nsp3d_seg_8.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_seg_9" texturefile = "gfx/interface/NSP/home/solar_system/orbits/nsp3d_seg_9.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_seg_10" texturefile = "gfx/interface/NSP/home/solar_system/orbits/nsp3d_seg_10.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_seg_11" texturefile = "gfx/interface/NSP/home/solar_system/orbits/nsp3d_seg_11.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_seg_12" texturefile = "gfx/interface/NSP/home/solar_system/orbits/nsp3d_seg_12.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_seg_13" texturefile = "gfx/interface/NSP/home/solar_system/orbits/nsp3d_seg_13.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_seg_14" texturefile = "gfx/interface/NSP/home/solar_system/orbits/nsp3d_seg_14.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_seg_15" texturefile = "gfx/interface/NSP/home/solar_system/orbits/nsp3d_seg_15.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_seg_16" texturefile = "gfx/interface/NSP/home/solar_system/orbits/nsp3d_seg_16.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	# r25：太阳/月球隐形 tooltip 命中区（3D shader 贴图自带 alwaystransparent，接不到鼠标）
+	spriteType = { name = "GFX_NSP_hit_sun" texturefile = "gfx/interface/NSP/home/solar_system/hitmasks/nsp3d_hit_sun.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_hit_moon" texturefile = "gfx/interface/NSP/home/solar_system/hitmasks/nsp3d_hit_moon.dds" effectFile = "gfx/FX/nsp_hit.shader" legacy_lazy_load = no }
+
+	# ===== 原 NSP_r32.gfx（r94b 合并）=====
+
+	# ==== r32 地图下方重设计（/workspace nsp_r32/gen.py 生成贴图）====
+	# ⚠ 不挂 buttonstate.lua：它会接管 frame，properties 绑的选中帧会失效（v19 实测）
+	# 帧：1 = 未选中，2 = 选中
+	spriteType = { name = "GFX_NSP_view_tab" texturefile = "gfx/interface/NSP/home/solar_system/controls/nsp_view_tab.dds" noOfFrames = 2 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_orbit_row" texturefile = "gfx/interface/NSP/home/solar_system/controls/nsp_orbit_row.dds" noOfFrames = 2 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rule" texturefile = "gfx/interface/NSP/home/solar_system/controls/nsp_rule.dds" legacy_lazy_load = no }
+
+	# ===== 原 NSP_r33.gfx（r94b 合并）=====
+
+	# ==== r33 底栏重设计（科技等级 + 局长面板；贴图由 nsp_r33/gen.py 生成）====
+	# ⚠ 帧型精灵不挂 buttonstate.lua（会接管 frame）；条帧 1 = 0%、21 = 100%，沿用 NSP_f_tech / NSP_f_popularity
+	spriteType = { name = "GFX_NSP_tech_bar"  texturefile = "gfx/interface/NSP/home/tech/nsp_tech_bar.dds"  noOfFrames = 21 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_tech_ring" texturefile = "gfx/interface/NSP/home/tech/nsp_tech_ring.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_dir_frame" texturefile = "gfx/interface/NSP/home/director/nsp_dir_frame.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_dir_head"  texturefile = "gfx/interface/NSP/home/director/nsp_dir_head.dds"  legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_pop_bar"   texturefile = "gfx/interface/NSP/home/director/nsp_pop_bar.dds"   noOfFrames = 21 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_dir_tab_wide" texturefile = "gfx/interface/NSP/home/director/nsp_dir_tab_wide.dds" effectFile = "gfx/FX/buttonstate.lua" legacy_lazy_load = no }	# r94d：公众支持度单页签，222 宽
+
+	# ===== 原 NSP_r34.gfx（r94b 合并）=====
+
+	# ==== r34 研发抽屉减负（nsp_r34/gen.py 生成）====
+	spriteType = { name = "GFX_NSP_rd_vdiv" texturefile = "gfx/interface/NSP/rd/drawer/nsp_rd_vdiv.dds" legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_rd_sdiv" texturefile = "gfx/interface/NSP/rd/drawer/nsp_rd_sdiv.dds" legacy_lazy_load = no }
+}

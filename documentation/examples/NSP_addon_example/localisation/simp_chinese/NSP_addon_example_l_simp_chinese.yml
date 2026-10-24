@@ -1,0 +1,20 @@
+﻿l_simp_chinese:
+ # ---- 研发 200 ----
+ NSP_RD_N_200: "先驱者计划"
+ NSP_RD_DESC_200: "用小型探测器和雷神-艾布尔火箭进入日心轨道，测量行星际空间的磁场和粒子。"
+ NSP_RD_UNLOCK_200: "§D解锁载荷§!§Y先驱者 5 号§!\n§D解锁火箭§!§Y雷神-艾布尔§!\n§D解锁目的地§!§Y日心轨道§!\n民意：§G+2§!"
+ NSP_RD_REQS_200: "科研卫星"
+ # ---- 载荷 50 ----
+ NSP_PL_NAME_50: "先驱者 5 号"
+ NSP_PL_SHORT_50: "Pioneer 5"
+ NSP_PL_TYPE_50: "无人行星际探测器"
+ NSP_PLBADGE_50: "GFX_NSP_badge_planet"
+ NSP_PLART_50: "GFX_NSP_payload_art"
+ # ---- 火箭 50 ----
+ NSP_VE_NAME_50: "雷神-艾布尔"
+ NSP_VE_TYPE_50: "轻型运载火箭"
+ NSP_VEART_50: "GFX_NSP_vehicle_art"
+ # ---- 目的地 16 ----
+ NSP_DEST_16: "日心轨道"
+ NSP_DEST_PHRASE_16: "进入日心轨道"
+ NSP_TRAJART_16: "GFX_NSP_trajectory"

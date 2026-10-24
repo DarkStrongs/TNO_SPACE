@@ -1,0 +1,24 @@
+# 调试用：-debug 启动时，在 SPACE 的调试决议分类里直接触发示例事件
+NSP_debug_category = {
+	NSP_ex_fire_1 = {
+		icon = generic_research
+		visible = { is_debug = yes }
+		available = { always = yes }
+		complete_effect = { country_event = nsp_ex.1 }
+		ai_will_do = { factor = 0 }
+	}
+	NSP_ex_fire_2 = {
+		icon = generic_research
+		visible = { is_debug = yes }
+		available = { always = yes }
+		complete_effect = { country_event = nsp_ex.2 }
+		ai_will_do = { factor = 0 }
+	}
+	NSP_ex_fire_3 = {
+		icon = generic_research
+		visible = { is_debug = yes }
+		available = { always = yes }
+		complete_effect = { country_event = nsp_ex.3 }
+		ai_will_do = { factor = 0 }
+	}
+}

@@ -1,0 +1,150 @@
+# 帮助层（仿 TNO Kartenhaus_Help）。由 work/r69/gen.py 生成，别手改。
+#   NSP_help_window 盖在主窗上：遮罩 frame = 页码+1（只挖空当前讲解区），
+#   假 gridbox 的数组只有 1 个元素，entry_container 名字由 GetNSPHelpBox 按页码选 → 对话框换位置。
+guiTypes = {
+	containerWindowType = {
+		name = "NSP_help_window"
+		position = { x = 0 y = 0 }
+		size = { width = 1099 height = 718 }
+		iconType = { name = "NSP_help_overlay" position = { x = 0 y = 0 } spriteType = "GFX_NSP_help_overlay" frame = 1 scale = 2 }
+		gridBoxType = {
+			name = "NSP_help_grid"
+			position = { x = 0 y = 0 }
+			size = { width = 1099 height = 718 }
+			slotsize = { width = 1099 height = 718 }
+			format = "UPPER_LEFT"
+		}
+	}
+	containerWindowType = {
+		name = "NSP_help_box_0"
+		size = { width = 1099 height = 718 }
+			containerWindowType = {
+			name = "NSP_help_dlg_0"
+			position = { x = 409 y = 196 }
+			size = { width = 280 height = 300 }
+			background = { name = "Background" quadTextureSprite = "GFX_NSP_card_frame" }
+			buttonType = { name = "NSP_help_prev"  position = { x = 10 y = 10 }  spriteType = "GFX_NSP_help_prev"  clicksound = click_default pdx_tooltip = "NSP_HELP_PREV_TT" }
+			buttonType = { name = "NSP_help_next"  position = { x = 34 y = 10 }  spriteType = "GFX_NSP_help_next"  clicksound = click_default pdx_tooltip = "NSP_HELP_NEXT_TT" }
+			instantTextBoxType = { name = "NSP_help_pg" position = { x = 58 y = 12 } font = "aldrich_16_outline" text = "NSP_HELP_PG" maxWidth = 164 maxHeight = 18 fixedsize = yes format = center alwaystransparent = yes }
+			buttonType = { name = "NSP_help_toc"   position = { x = 226 y = 10 } spriteType = "GFX_NSP_help_toc"   clicksound = click_default pdx_tooltip = "NSP_HELP_TOC_TT" }
+			buttonType = { name = "NSP_help_close" position = { x = 250 y = 10 } spriteType = "GFX_NSP_help_close" clicksound = click_close pdx_tooltip = "NSP_HELP_CLOSE_TT" }
+			instantTextBoxType = { name = "NSP_help_title" position = { x = 10 y = 38 } font = "aldrich_18_outline" text = "NSP_HELP_TITLE" maxWidth = 260 maxHeight = 22 fixedsize = yes format = center alwaystransparent = yes }
+			iconType = { name = "NSP_help_div" position = { x = 12 y = 64 } spriteType = "GFX_NSP_help_div" alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_help_text" position = { x = 14 y = 72 } font = "aldrich_16_outline" text = "NSP_HELP_TEXT" maxWidth = 252 maxHeight = 72 fixedsize = yes format = left alwaystransparent = yes }
+			buttonType = { name = "NSP_help_link_1" position = { x = 27 y = 148 } spriteType = "GFX_NSP_help_link" buttonText = "NSP_HELP_T_1" buttonFont = "aldrich_16_outline" clicksound = click_default }
+			buttonType = { name = "NSP_help_link_2" position = { x = 27 y = 172 } spriteType = "GFX_NSP_help_link" buttonText = "NSP_HELP_T_2" buttonFont = "aldrich_16_outline" clicksound = click_default }
+			buttonType = { name = "NSP_help_link_3" position = { x = 27 y = 196 } spriteType = "GFX_NSP_help_link" buttonText = "NSP_HELP_T_3" buttonFont = "aldrich_16_outline" clicksound = click_default }
+			buttonType = { name = "NSP_help_link_4" position = { x = 27 y = 220 } spriteType = "GFX_NSP_help_link" buttonText = "NSP_HELP_T_4" buttonFont = "aldrich_16_outline" clicksound = click_default }
+			buttonType = { name = "NSP_help_link_5" position = { x = 27 y = 244 } spriteType = "GFX_NSP_help_link" buttonText = "NSP_HELP_T_5" buttonFont = "aldrich_16_outline" clicksound = click_default }
+			buttonType = { name = "NSP_help_link_6" position = { x = 27 y = 268 } spriteType = "GFX_NSP_help_link" buttonText = "NSP_HELP_T_6" buttonFont = "aldrich_16_outline" clicksound = click_default }
+		}
+	}
+	containerWindowType = {
+		name = "NSP_help_box_1"
+		size = { width = 1099 height = 718 }
+			containerWindowType = {
+			name = "NSP_help_dlg_1"
+			position = { x = 288 y = 116 }
+			size = { width = 280 height = 300 }
+			background = { name = "Background" quadTextureSprite = "GFX_NSP_card_frame" }
+			buttonType = { name = "NSP_help_prev"  position = { x = 10 y = 10 }  spriteType = "GFX_NSP_help_prev"  clicksound = click_default pdx_tooltip = "NSP_HELP_PREV_TT" }
+			buttonType = { name = "NSP_help_next"  position = { x = 34 y = 10 }  spriteType = "GFX_NSP_help_next"  clicksound = click_default pdx_tooltip = "NSP_HELP_NEXT_TT" }
+			instantTextBoxType = { name = "NSP_help_pg" position = { x = 58 y = 12 } font = "aldrich_16_outline" text = "NSP_HELP_PG" maxWidth = 164 maxHeight = 18 fixedsize = yes format = center alwaystransparent = yes }
+			buttonType = { name = "NSP_help_toc"   position = { x = 226 y = 10 } spriteType = "GFX_NSP_help_toc"   clicksound = click_default pdx_tooltip = "NSP_HELP_TOC_TT" }
+			buttonType = { name = "NSP_help_close" position = { x = 250 y = 10 } spriteType = "GFX_NSP_help_close" clicksound = click_close pdx_tooltip = "NSP_HELP_CLOSE_TT" }
+			instantTextBoxType = { name = "NSP_help_title" position = { x = 10 y = 38 } font = "aldrich_18_outline" text = "NSP_HELP_TITLE" maxWidth = 260 maxHeight = 22 fixedsize = yes format = center alwaystransparent = yes }
+			iconType = { name = "NSP_help_div" position = { x = 12 y = 64 } spriteType = "GFX_NSP_help_div" alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_help_text" position = { x = 14 y = 72 } font = "aldrich_16_outline" text = "NSP_HELP_TEXT" maxWidth = 252 maxHeight = 216 fixedsize = yes format = left alwaystransparent = yes }
+		}
+	}
+	containerWindowType = {
+		name = "NSP_help_box_2"
+		size = { width = 1099 height = 718 }
+			containerWindowType = {
+			name = "NSP_help_dlg_2"
+			position = { x = 797 y = 116 }
+			size = { width = 280 height = 300 }
+			background = { name = "Background" quadTextureSprite = "GFX_NSP_card_frame" }
+			buttonType = { name = "NSP_help_prev"  position = { x = 10 y = 10 }  spriteType = "GFX_NSP_help_prev"  clicksound = click_default pdx_tooltip = "NSP_HELP_PREV_TT" }
+			buttonType = { name = "NSP_help_next"  position = { x = 34 y = 10 }  spriteType = "GFX_NSP_help_next"  clicksound = click_default pdx_tooltip = "NSP_HELP_NEXT_TT" }
+			instantTextBoxType = { name = "NSP_help_pg" position = { x = 58 y = 12 } font = "aldrich_16_outline" text = "NSP_HELP_PG" maxWidth = 164 maxHeight = 18 fixedsize = yes format = center alwaystransparent = yes }
+			buttonType = { name = "NSP_help_toc"   position = { x = 226 y = 10 } spriteType = "GFX_NSP_help_toc"   clicksound = click_default pdx_tooltip = "NSP_HELP_TOC_TT" }
+			buttonType = { name = "NSP_help_close" position = { x = 250 y = 10 } spriteType = "GFX_NSP_help_close" clicksound = click_close pdx_tooltip = "NSP_HELP_CLOSE_TT" }
+			instantTextBoxType = { name = "NSP_help_title" position = { x = 10 y = 38 } font = "aldrich_18_outline" text = "NSP_HELP_TITLE" maxWidth = 260 maxHeight = 22 fixedsize = yes format = center alwaystransparent = yes }
+			iconType = { name = "NSP_help_div" position = { x = 12 y = 64 } spriteType = "GFX_NSP_help_div" alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_help_text" position = { x = 14 y = 72 } font = "aldrich_16_outline" text = "NSP_HELP_TEXT" maxWidth = 252 maxHeight = 216 fixedsize = yes format = left alwaystransparent = yes }
+		}
+	}
+	containerWindowType = {
+		name = "NSP_help_box_3"
+		size = { width = 1099 height = 718 }
+			containerWindowType = {
+			name = "NSP_help_dlg_3"
+			position = { x = 540 y = 116 }
+			size = { width = 280 height = 300 }
+			background = { name = "Background" quadTextureSprite = "GFX_NSP_card_frame" }
+			buttonType = { name = "NSP_help_prev"  position = { x = 10 y = 10 }  spriteType = "GFX_NSP_help_prev"  clicksound = click_default pdx_tooltip = "NSP_HELP_PREV_TT" }
+			buttonType = { name = "NSP_help_next"  position = { x = 34 y = 10 }  spriteType = "GFX_NSP_help_next"  clicksound = click_default pdx_tooltip = "NSP_HELP_NEXT_TT" }
+			instantTextBoxType = { name = "NSP_help_pg" position = { x = 58 y = 12 } font = "aldrich_16_outline" text = "NSP_HELP_PG" maxWidth = 164 maxHeight = 18 fixedsize = yes format = center alwaystransparent = yes }
+			buttonType = { name = "NSP_help_toc"   position = { x = 226 y = 10 } spriteType = "GFX_NSP_help_toc"   clicksound = click_default pdx_tooltip = "NSP_HELP_TOC_TT" }
+			buttonType = { name = "NSP_help_close" position = { x = 250 y = 10 } spriteType = "GFX_NSP_help_close" clicksound = click_close pdx_tooltip = "NSP_HELP_CLOSE_TT" }
+			instantTextBoxType = { name = "NSP_help_title" position = { x = 10 y = 38 } font = "aldrich_18_outline" text = "NSP_HELP_TITLE" maxWidth = 260 maxHeight = 22 fixedsize = yes format = center alwaystransparent = yes }
+			iconType = { name = "NSP_help_div" position = { x = 12 y = 64 } spriteType = "GFX_NSP_help_div" alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_help_text" position = { x = 14 y = 72 } font = "aldrich_16_outline" text = "NSP_HELP_TEXT" maxWidth = 252 maxHeight = 216 fixedsize = yes format = left alwaystransparent = yes }
+		}
+	}
+	containerWindowType = {
+		name = "NSP_help_box_4"
+		size = { width = 1099 height = 718 }
+			containerWindowType = {
+			name = "NSP_help_dlg_4"
+			position = { x = 410 y = 252 }
+			size = { width = 280 height = 300 }
+			background = { name = "Background" quadTextureSprite = "GFX_NSP_card_frame" }
+			buttonType = { name = "NSP_help_prev"  position = { x = 10 y = 10 }  spriteType = "GFX_NSP_help_prev"  clicksound = click_default pdx_tooltip = "NSP_HELP_PREV_TT" }
+			buttonType = { name = "NSP_help_next"  position = { x = 34 y = 10 }  spriteType = "GFX_NSP_help_next"  clicksound = click_default pdx_tooltip = "NSP_HELP_NEXT_TT" }
+			instantTextBoxType = { name = "NSP_help_pg" position = { x = 58 y = 12 } font = "aldrich_16_outline" text = "NSP_HELP_PG" maxWidth = 164 maxHeight = 18 fixedsize = yes format = center alwaystransparent = yes }
+			buttonType = { name = "NSP_help_toc"   position = { x = 226 y = 10 } spriteType = "GFX_NSP_help_toc"   clicksound = click_default pdx_tooltip = "NSP_HELP_TOC_TT" }
+			buttonType = { name = "NSP_help_close" position = { x = 250 y = 10 } spriteType = "GFX_NSP_help_close" clicksound = click_close pdx_tooltip = "NSP_HELP_CLOSE_TT" }
+			instantTextBoxType = { name = "NSP_help_title" position = { x = 10 y = 38 } font = "aldrich_18_outline" text = "NSP_HELP_TITLE" maxWidth = 260 maxHeight = 22 fixedsize = yes format = center alwaystransparent = yes }
+			iconType = { name = "NSP_help_div" position = { x = 12 y = 64 } spriteType = "GFX_NSP_help_div" alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_help_text" position = { x = 14 y = 72 } font = "aldrich_16_outline" text = "NSP_HELP_TEXT" maxWidth = 252 maxHeight = 216 fixedsize = yes format = left alwaystransparent = yes }
+		}
+	}
+	containerWindowType = {
+		name = "NSP_help_box_5"
+		size = { width = 1099 height = 718 }
+			containerWindowType = {
+			name = "NSP_help_dlg_5"
+			position = { x = 52 y = 252 }
+			size = { width = 280 height = 300 }
+			background = { name = "Background" quadTextureSprite = "GFX_NSP_card_frame" }
+			buttonType = { name = "NSP_help_prev"  position = { x = 10 y = 10 }  spriteType = "GFX_NSP_help_prev"  clicksound = click_default pdx_tooltip = "NSP_HELP_PREV_TT" }
+			buttonType = { name = "NSP_help_next"  position = { x = 34 y = 10 }  spriteType = "GFX_NSP_help_next"  clicksound = click_default pdx_tooltip = "NSP_HELP_NEXT_TT" }
+			instantTextBoxType = { name = "NSP_help_pg" position = { x = 58 y = 12 } font = "aldrich_16_outline" text = "NSP_HELP_PG" maxWidth = 164 maxHeight = 18 fixedsize = yes format = center alwaystransparent = yes }
+			buttonType = { name = "NSP_help_toc"   position = { x = 226 y = 10 } spriteType = "GFX_NSP_help_toc"   clicksound = click_default pdx_tooltip = "NSP_HELP_TOC_TT" }
+			buttonType = { name = "NSP_help_close" position = { x = 250 y = 10 } spriteType = "GFX_NSP_help_close" clicksound = click_close pdx_tooltip = "NSP_HELP_CLOSE_TT" }
+			instantTextBoxType = { name = "NSP_help_title" position = { x = 10 y = 38 } font = "aldrich_18_outline" text = "NSP_HELP_TITLE" maxWidth = 260 maxHeight = 22 fixedsize = yes format = center alwaystransparent = yes }
+			iconType = { name = "NSP_help_div" position = { x = 12 y = 64 } spriteType = "GFX_NSP_help_div" alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_help_text" position = { x = 14 y = 72 } font = "aldrich_16_outline" text = "NSP_HELP_TEXT" maxWidth = 252 maxHeight = 216 fixedsize = yes format = left alwaystransparent = yes }
+		}
+	}
+	containerWindowType = {
+		name = "NSP_help_box_6"
+		size = { width = 1099 height = 718 }
+			containerWindowType = {
+			name = "NSP_help_dlg_6"
+			position = { x = 770 y = 252 }
+			size = { width = 280 height = 300 }
+			background = { name = "Background" quadTextureSprite = "GFX_NSP_card_frame" }
+			buttonType = { name = "NSP_help_prev"  position = { x = 10 y = 10 }  spriteType = "GFX_NSP_help_prev"  clicksound = click_default pdx_tooltip = "NSP_HELP_PREV_TT" }
+			buttonType = { name = "NSP_help_next"  position = { x = 34 y = 10 }  spriteType = "GFX_NSP_help_next"  clicksound = click_default pdx_tooltip = "NSP_HELP_NEXT_TT" }
+			instantTextBoxType = { name = "NSP_help_pg" position = { x = 58 y = 12 } font = "aldrich_16_outline" text = "NSP_HELP_PG" maxWidth = 164 maxHeight = 18 fixedsize = yes format = center alwaystransparent = yes }
+			buttonType = { name = "NSP_help_toc"   position = { x = 226 y = 10 } spriteType = "GFX_NSP_help_toc"   clicksound = click_default pdx_tooltip = "NSP_HELP_TOC_TT" }
+			buttonType = { name = "NSP_help_close" position = { x = 250 y = 10 } spriteType = "GFX_NSP_help_close" clicksound = click_close pdx_tooltip = "NSP_HELP_CLOSE_TT" }
+			instantTextBoxType = { name = "NSP_help_title" position = { x = 10 y = 38 } font = "aldrich_18_outline" text = "NSP_HELP_TITLE" maxWidth = 260 maxHeight = 22 fixedsize = yes format = center alwaystransparent = yes }
+			iconType = { name = "NSP_help_div" position = { x = 12 y = 64 } spriteType = "GFX_NSP_help_div" alwaystransparent = yes }
+			instantTextBoxType = { name = "NSP_help_text" position = { x = 14 y = 72 } font = "aldrich_16_outline" text = "NSP_HELP_TEXT" maxWidth = 252 maxHeight = 216 fixedsize = yes format = left alwaystransparent = yes }
+		}
+	}
+}

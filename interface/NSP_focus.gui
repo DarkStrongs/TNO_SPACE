@@ -1,0 +1,734 @@
+guiTypes = {
+	# 位置 = NSP_home_body(0,26) + NSP_map_col(268,70) + 地图(30,10)；挪动地图时一起改
+	# ==== 聚焦动画层（常驻窗口，只放 16 个动画按钮）====
+	# ⭐ 时间轴 = Time - AnimationTime（按钮进入当前状态的时刻）。
+	# 实测：AnimationTime 有效（调试角标全绿），但按钮状态从不变化 → 每颗行星只播第一次。
+	#   窗口常驻，不再隐藏；按钮的 click_enabled 跟着 NSP_focus/NSP_fmode 切换。
+	#   禁用 → 启用 = 一次状态切换 = 新的 AnimationTime。禁用态（Disable）在 shader 里输出全透明。
+	#   ⚠ 本窗口必须声明在 in/out 窗口之前（期望画在它们下面，边框盖在动画上）
+	containerWindowType = {
+		name = "NSP_focus_fx_window"
+		position = { x = 310 y = 96 }
+		size = { width = 480 height = 270 }
+		clipping = no
+		buttonType = { name = "NSP_fin_mercury" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusbt_mercury" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fin_venus" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusbt_venus" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fin_earth" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusbt_earth" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fin_mars" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusbt_mars" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fin_jupiter" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusbt_jupiter" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fin_saturn" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusbt_saturn" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fin_uranus" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusbt_uranus" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fin_neptune" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusbt_neptune" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fout_mercury" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusoutbt_mercury" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fout_venus" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusoutbt_venus" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fout_earth" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusoutbt_earth" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fout_mars" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusoutbt_mars" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fout_jupiter" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusoutbt_jupiter" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fout_saturn" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusoutbt_saturn" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fout_uranus" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusoutbt_uranus" scale = 2 alwaystransparent = yes }
+		buttonType = { name = "NSP_fout_neptune" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_focusoutbt_neptune" scale = 2 alwaystransparent = yes }
+		# 卫星轨道：每颗行星 10 个单帧按钮（第 i 条轨道 + 卫星）。启用 = 聚焦该行星 且 卫星数 >= i；禁用态 shader 全透明
+		# 选中轨道线：普通行星共用 satlH_i，土星用 satsH_i；放在卫星层之前，卫星圆点压在线上
+		buttonType = { name = "NSP_satH_l_1" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satlH_1" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_l_2" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satlH_2" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_l_3" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satlH_3" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_l_4" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satlH_4" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_l_5" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satlH_5" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_l_6" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satlH_6" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_l_7" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satlH_7" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_l_8" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satlH_8" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_l_9" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satlH_9" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_l_10" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satlH_10" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_s_1" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satsH_1" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_s_2" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satsH_2" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_s_3" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satsH_3" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_s_4" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satsH_4" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_s_5" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satsH_5" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_s_6" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satsH_6" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_s_7" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satsH_7" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_s_8" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satsH_8" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_s_9" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satsH_9" alwaystransparent = yes }
+		buttonType = { name = "NSP_satH_s_10" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satsH_10" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mercury_1" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_1" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mercury_2" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_2" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mercury_3" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_3" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mercury_4" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_4" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mercury_5" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_5" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mercury_6" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_6" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mercury_7" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_7" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mercury_8" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_8" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mercury_9" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_9" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mercury_10" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_10" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_venus_1" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_1" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_venus_2" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_2" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_venus_3" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_3" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_venus_4" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_4" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_venus_5" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_5" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_venus_6" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_6" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_venus_7" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_7" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_venus_8" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_8" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_venus_9" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_9" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_venus_10" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_10" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_earth_1" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_1" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_earth_2" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_2" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_earth_3" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_3" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_earth_4" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_4" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_earth_5" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_5" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_earth_6" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_6" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_earth_7" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_7" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_earth_8" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_8" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_earth_9" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_9" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_earth_10" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_10" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mars_1" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_1" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mars_2" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_2" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mars_3" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_3" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mars_4" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_4" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mars_5" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_5" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mars_6" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_6" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mars_7" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_7" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mars_8" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_8" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mars_9" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_9" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mars_10" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_10" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_jupiter_1" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_1" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_jupiter_2" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_2" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_jupiter_3" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_3" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_jupiter_4" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_4" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_jupiter_5" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_5" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_jupiter_6" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_6" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_jupiter_7" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_7" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_jupiter_8" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_8" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_jupiter_9" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_9" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_jupiter_10" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_10" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_saturn_1" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_sats_1" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_saturn_2" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_sats_2" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_saturn_3" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_sats_3" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_saturn_4" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_sats_4" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_saturn_5" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_sats_5" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_saturn_6" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_sats_6" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_saturn_7" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_sats_7" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_saturn_8" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_sats_8" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_saturn_9" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_sats_9" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_saturn_10" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_sats_10" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_uranus_1" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_1" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_uranus_2" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_2" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_uranus_3" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_3" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_uranus_4" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_4" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_uranus_5" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_5" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_uranus_6" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_6" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_uranus_7" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_7" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_uranus_8" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_8" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_uranus_9" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_9" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_uranus_10" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_10" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_neptune_1" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_1" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_neptune_2" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_2" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_neptune_3" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_3" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_neptune_4" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_4" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_neptune_5" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_5" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_neptune_6" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_6" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_neptune_7" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_7" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_neptune_8" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_8" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_neptune_9" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_9" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_neptune_10" position = { x = 0 y = 0 } spriteType = "GFX_NSP3D_satl_10" alwaystransparent = yes }
+	}
+
+	containerWindowType = {
+		name = "NSP_focus_in_window"
+		# 298 → 310：内容容器 NSP_home_body 从 (0,26) 内缩到 (12,26)（外层九宫格框四周留 12px），
+		# 地图左上角跟着右移 12px，聚焦动画窗挂在【外层 NSP_home_window】上，必须同步 +12。
+		position = { x = 310 y = 96 }
+		size = { width = 480 height = 270 }
+		iconType = { name = "NSP_fin_frame" position = { x = 0 y = 0 } spriteType = "GFX_NSP_map_frame" alwaystransparent = yes }
+		buttonType = { name = "NSP_focus_back" position = { x = 0 y = 0 } spriteType = "GFX_NSP_hit_map" pdx_tooltip = "NSP_TT_FOCUS" pdx_tooltip_delayed = "NSP_TT_FOCUS_D" clicksound = click_default }
+		# 卫星计数 + 调试按钮（放在返回命中区之后 → 点得到；按钮只在 -debug 下显示）
+		instantTextBoxType = { name = "NSP_sat_count" position = { x = 300 y = 10 } font = "aldrich_16_outline" text = "NSP_SAT_COUNT" maxWidth = 112 maxHeight = 16 format = right alwaystransparent = yes }
+		# 卫星详情：每颗卫星一个小图标，悬停显示发射信息（卫星本身随 shader 运动，无法承载 tooltip）
+		buttonType = { name = "NSP_sat_mk_0" position = { x = 452 y = 38 } spriteType = "GFX_NSP_sat_marker" clicksound = click_default pdx_tooltip = "NSP_SAT_TT_0" }
+		iconType = { name = "NSP_sat_mks_0" position = { x = 452 y = 38 } spriteType = "GFX_NSP_sat_marker_sel" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mk_1" position = { x = 452 y = 59 } spriteType = "GFX_NSP_sat_marker" clicksound = click_default pdx_tooltip = "NSP_SAT_TT_1" }
+		iconType = { name = "NSP_sat_mks_1" position = { x = 452 y = 59 } spriteType = "GFX_NSP_sat_marker_sel" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mk_2" position = { x = 452 y = 80 } spriteType = "GFX_NSP_sat_marker" clicksound = click_default pdx_tooltip = "NSP_SAT_TT_2" }
+		iconType = { name = "NSP_sat_mks_2" position = { x = 452 y = 80 } spriteType = "GFX_NSP_sat_marker_sel" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mk_3" position = { x = 452 y = 101 } spriteType = "GFX_NSP_sat_marker" clicksound = click_default pdx_tooltip = "NSP_SAT_TT_3" }
+		iconType = { name = "NSP_sat_mks_3" position = { x = 452 y = 101 } spriteType = "GFX_NSP_sat_marker_sel" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mk_4" position = { x = 452 y = 122 } spriteType = "GFX_NSP_sat_marker" clicksound = click_default pdx_tooltip = "NSP_SAT_TT_4" }
+		iconType = { name = "NSP_sat_mks_4" position = { x = 452 y = 122 } spriteType = "GFX_NSP_sat_marker_sel" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mk_5" position = { x = 452 y = 143 } spriteType = "GFX_NSP_sat_marker" clicksound = click_default pdx_tooltip = "NSP_SAT_TT_5" }
+		iconType = { name = "NSP_sat_mks_5" position = { x = 452 y = 143 } spriteType = "GFX_NSP_sat_marker_sel" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mk_6" position = { x = 452 y = 164 } spriteType = "GFX_NSP_sat_marker" clicksound = click_default pdx_tooltip = "NSP_SAT_TT_6" }
+		iconType = { name = "NSP_sat_mks_6" position = { x = 452 y = 164 } spriteType = "GFX_NSP_sat_marker_sel" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mk_7" position = { x = 452 y = 185 } spriteType = "GFX_NSP_sat_marker" clicksound = click_default pdx_tooltip = "NSP_SAT_TT_7" }
+		iconType = { name = "NSP_sat_mks_7" position = { x = 452 y = 185 } spriteType = "GFX_NSP_sat_marker_sel" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mk_8" position = { x = 452 y = 206 } spriteType = "GFX_NSP_sat_marker" clicksound = click_default pdx_tooltip = "NSP_SAT_TT_8" }
+		iconType = { name = "NSP_sat_mks_8" position = { x = 452 y = 206 } spriteType = "GFX_NSP_sat_marker_sel" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_mk_9" position = { x = 452 y = 227 } spriteType = "GFX_NSP_sat_marker" clicksound = click_default pdx_tooltip = "NSP_SAT_TT_9" }
+		iconType = { name = "NSP_sat_mks_9" position = { x = 452 y = 227 } spriteType = "GFX_NSP_sat_marker_sel" alwaystransparent = yes }
+		buttonType = { name = "NSP_sat_dbg_add" position = { x = 418 y = 6 } spriteType = "GFX_NSP_sat_btn" frame = 1 clicksound = click_default pdx_tooltip = "NSP_SAT_DBG_ADD" }
+		buttonType = { name = "NSP_sat_dbg_sub" position = { x = 446 y = 6 } spriteType = "GFX_NSP_sat_btn" frame = 2 clicksound = click_default pdx_tooltip = "NSP_SAT_DBG_SUB" }
+	}
+	containerWindowType = {
+		name = "NSP_focus_out_window"
+		# 298 → 310：内容容器 NSP_home_body 从 (0,26) 内缩到 (12,26)（外层九宫格框四周留 12px），
+		# 地图左上角跟着右移 12px，聚焦动画窗挂在【外层 NSP_home_window】上，必须同步 +12。
+		position = { x = 310 y = 96 }
+		size = { width = 480 height = 270 }
+		buttonType = { name = "NSP_fo_mercury_s0" position = { x = 281 y = 132 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s1" position = { x = 278 y = 126 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s2" position = { x = 272 y = 122 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s3" position = { x = 265 y = 120 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s4" position = { x = 258 y = 118 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s5" position = { x = 251 y = 117 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s6" position = { x = 244 y = 116 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s7" position = { x = 237 y = 116 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s8" position = { x = 230 y = 116 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s9" position = { x = 224 y = 117 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s10" position = { x = 218 y = 118 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s11" position = { x = 211 y = 119 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s12" position = { x = 205 y = 121 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s13" position = { x = 199 y = 124 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s14" position = { x = 193 y = 130 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s15" position = { x = 194 y = 136 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s16" position = { x = 200 y = 141 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s17" position = { x = 206 y = 143 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s18" position = { x = 213 y = 145 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s19" position = { x = 219 y = 147 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s20" position = { x = 226 y = 148 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s21" position = { x = 232 y = 148 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s22" position = { x = 239 y = 148 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s23" position = { x = 246 y = 148 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s24" position = { x = 253 y = 147 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s25" position = { x = 260 y = 146 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s26" position = { x = 267 y = 144 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mercury_s27" position = { x = 273 y = 141 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MERCURY" pdx_tooltip_delayed = "NSP_TT_MERCURY_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s0" position = { x = 299 y = 132 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s1" position = { x = 297 y = 126 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s2" position = { x = 291 y = 120 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s3" position = { x = 284 y = 117 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s4" position = { x = 278 y = 115 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s5" position = { x = 271 y = 113 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s6" position = { x = 265 y = 111 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s7" position = { x = 258 y = 110 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s8" position = { x = 251 y = 110 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s9" position = { x = 244 y = 109 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s10" position = { x = 237 y = 109 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s11" position = { x = 230 y = 109 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s12" position = { x = 224 y = 109 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s13" position = { x = 217 y = 110 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s14" position = { x = 211 y = 111 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s15" position = { x = 204 y = 112 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s16" position = { x = 197 y = 114 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s17" position = { x = 191 y = 117 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s18" position = { x = 185 y = 119 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s19" position = { x = 179 y = 124 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s20" position = { x = 175 y = 130 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s21" position = { x = 176 y = 136 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s22" position = { x = 181 y = 142 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s23" position = { x = 187 y = 146 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s24" position = { x = 193 y = 148 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s25" position = { x = 199 y = 150 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s26" position = { x = 206 y = 152 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s27" position = { x = 212 y = 153 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s28" position = { x = 219 y = 154 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s29" position = { x = 226 y = 155 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s30" position = { x = 232 y = 155 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s31" position = { x = 239 y = 155 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s32" position = { x = 246 y = 155 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s33" position = { x = 253 y = 154 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s34" position = { x = 260 y = 153 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s35" position = { x = 266 y = 152 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s36" position = { x = 273 y = 151 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s37" position = { x = 280 y = 149 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s38" position = { x = 286 y = 146 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_venus_s39" position = { x = 292 y = 143 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_VENUS" pdx_tooltip_delayed = "NSP_TT_VENUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s0" position = { x = 319 y = 132 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s1" position = { x = 317 y = 126 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s2" position = { x = 313 y = 120 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s3" position = { x = 307 y = 116 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s4" position = { x = 300 y = 113 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s5" position = { x = 294 y = 111 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s6" position = { x = 288 y = 108 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s7" position = { x = 282 y = 107 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s8" position = { x = 275 y = 105 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s9" position = { x = 269 y = 104 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s10" position = { x = 262 y = 103 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s11" position = { x = 255 y = 103 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s12" position = { x = 248 y = 102 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s13" position = { x = 242 y = 102 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s14" position = { x = 235 y = 102 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s15" position = { x = 228 y = 102 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s16" position = { x = 221 y = 103 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s17" position = { x = 215 y = 103 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s18" position = { x = 209 y = 104 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s19" position = { x = 202 y = 105 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s20" position = { x = 195 y = 106 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s21" position = { x = 189 y = 108 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s22" position = { x = 182 y = 110 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s23" position = { x = 176 y = 112 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s24" position = { x = 170 y = 115 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s25" position = { x = 164 y = 119 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s26" position = { x = 158 y = 123 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s27" position = { x = 156 y = 129 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s28" position = { x = 155 y = 135 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s29" position = { x = 158 y = 141 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s30" position = { x = 164 y = 145 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s31" position = { x = 170 y = 149 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s32" position = { x = 176 y = 152 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s33" position = { x = 182 y = 154 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s34" position = { x = 188 y = 156 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s35" position = { x = 194 y = 158 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s36" position = { x = 200 y = 159 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s37" position = { x = 207 y = 160 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s38" position = { x = 214 y = 161 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s39" position = { x = 221 y = 161 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s40" position = { x = 228 y = 162 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s41" position = { x = 235 y = 162 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s42" position = { x = 241 y = 162 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s43" position = { x = 248 y = 162 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s44" position = { x = 255 y = 161 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s45" position = { x = 262 y = 161 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s46" position = { x = 269 y = 160 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s47" position = { x = 275 y = 159 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s48" position = { x = 282 y = 157 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s49" position = { x = 288 y = 156 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s50" position = { x = 294 y = 153 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s51" position = { x = 300 y = 151 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s52" position = { x = 306 y = 148 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s53" position = { x = 312 y = 144 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_earth_s54" position = { x = 317 y = 138 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_EARTH" pdx_tooltip_delayed = "NSP_TT_EARTH_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s0" position = { x = 339 y = 132 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s1" position = { x = 338 y = 126 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s2" position = { x = 334 y = 120 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s3" position = { x = 328 y = 116 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s4" position = { x = 322 y = 112 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s5" position = { x = 316 y = 108 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s6" position = { x = 310 y = 96 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s7" position = { x = 303 y = 104 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s8" position = { x = 296 y = 102 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s9" position = { x = 290 y = 100 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s10" position = { x = 284 y = 99 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s11" position = { x = 277 y = 98 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s12" position = { x = 271 y = 97 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s13" position = { x = 265 y = 96 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s14" position = { x = 258 y = 96 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s15" position = { x = 251 y = 95 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s16" position = { x = 244 y = 95 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s17" position = { x = 237 y = 95 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s18" position = { x = 230 y = 95 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s19" position = { x = 224 y = 95 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s20" position = { x = 217 y = 96 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s21" position = { x = 210 y = 96 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s22" position = { x = 203 y = 97 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s23" position = { x = 197 y = 98 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s24" position = { x = 190 y = 99 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s25" position = { x = 184 y = 100 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s26" position = { x = 178 y = 102 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s27" position = { x = 172 y = 103 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s28" position = { x = 166 y = 106 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s29" position = { x = 159 y = 108 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s30" position = { x = 153 y = 111 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s31" position = { x = 147 y = 114 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s32" position = { x = 141 y = 119 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s33" position = { x = 137 y = 125 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s34" position = { x = 135 y = 131 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s35" position = { x = 136 y = 137 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s36" position = { x = 140 y = 143 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s37" position = { x = 146 y = 148 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s38" position = { x = 152 y = 152 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s39" position = { x = 158 y = 156 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s40" position = { x = 164 y = 158 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s41" position = { x = 171 y = 160 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s42" position = { x = 178 y = 162 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s43" position = { x = 184 y = 164 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s44" position = { x = 190 y = 165 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s45" position = { x = 197 y = 166 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s46" position = { x = 203 y = 167 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s47" position = { x = 209 y = 168 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s48" position = { x = 216 y = 168 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s49" position = { x = 223 y = 169 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s50" position = { x = 230 y = 169 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s51" position = { x = 237 y = 169 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s52" position = { x = 244 y = 169 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s53" position = { x = 250 y = 169 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s54" position = { x = 257 y = 168 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s55" position = { x = 264 y = 168 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s56" position = { x = 271 y = 167 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s57" position = { x = 277 y = 166 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s58" position = { x = 284 y = 165 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s59" position = { x = 290 y = 164 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s60" position = { x = 296 y = 162 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s61" position = { x = 302 y = 161 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s62" position = { x = 308 y = 158 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s63" position = { x = 315 y = 156 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s64" position = { x = 321 y = 153 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s65" position = { x = 327 y = 150 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s66" position = { x = 333 y = 145 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_mars_s67" position = { x = 337 y = 139 } spriteType = "GFX_NSP_seg_6" pdx_tooltip = "NSP_TT_MARS" pdx_tooltip_delayed = "NSP_TT_MARS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s0" position = { x = 374 y = 131 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s1" position = { x = 372 y = 123 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s2" position = { x = 366 y = 115 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s3" position = { x = 358 y = 108 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s4" position = { x = 350 y = 103 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s5" position = { x = 342 y = 99 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s6" position = { x = 334 y = 96 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s7" position = { x = 325 y = 93 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s8" position = { x = 317 y = 91 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s9" position = { x = 309 y = 89 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s10" position = { x = 301 y = 87 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s11" position = { x = 292 y = 85 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s12" position = { x = 283 y = 84 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s13" position = { x = 274 y = 83 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s14" position = { x = 265 y = 82 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s15" position = { x = 255 y = 81 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s16" position = { x = 246 y = 81 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s17" position = { x = 238 y = 81 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s18" position = { x = 229 y = 81 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s19" position = { x = 219 y = 81 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s20" position = { x = 210 y = 82 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s21" position = { x = 200 y = 83 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s22" position = { x = 191 y = 84 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s23" position = { x = 182 y = 85 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s24" position = { x = 173 y = 86 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s25" position = { x = 165 y = 88 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s26" position = { x = 157 y = 90 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s27" position = { x = 149 y = 92 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s28" position = { x = 140 y = 95 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s29" position = { x = 132 y = 98 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s30" position = { x = 124 y = 102 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s31" position = { x = 116 y = 106 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s32" position = { x = 108 y = 112 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s33" position = { x = 102 y = 120 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s34" position = { x = 98 y = 128 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s35" position = { x = 99 y = 136 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s36" position = { x = 103 y = 144 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s37" position = { x = 111 y = 152 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s38" position = { x = 119 y = 157 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s39" position = { x = 127 y = 162 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s40" position = { x = 135 y = 165 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s41" position = { x = 144 y = 168 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s42" position = { x = 153 y = 171 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s43" position = { x = 161 y = 173 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s44" position = { x = 169 y = 175 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s45" position = { x = 178 y = 176 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s46" position = { x = 187 y = 178 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s47" position = { x = 196 y = 179 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s48" position = { x = 205 y = 180 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s49" position = { x = 214 y = 180 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s50" position = { x = 222 y = 181 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s51" position = { x = 231 y = 181 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s52" position = { x = 241 y = 181 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s53" position = { x = 250 y = 181 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s54" position = { x = 258 y = 180 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s55" position = { x = 267 y = 180 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s56" position = { x = 276 y = 179 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s57" position = { x = 285 y = 178 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s58" position = { x = 294 y = 176 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s59" position = { x = 303 y = 175 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s60" position = { x = 311 y = 173 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s61" position = { x = 319 y = 171 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s62" position = { x = 327 y = 169 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s63" position = { x = 335 y = 166 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s64" position = { x = 343 y = 162 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s65" position = { x = 352 y = 158 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s66" position = { x = 360 y = 153 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_jupiter_s67" position = { x = 368 y = 146 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_JUPITER" pdx_tooltip_delayed = "NSP_TT_JUPITER_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s0" position = { x = 408 y = 131 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s1" position = { x = 407 y = 123 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s2" position = { x = 402 y = 115 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s3" position = { x = 395 y = 107 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s4" position = { x = 387 y = 101 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s5" position = { x = 379 y = 97 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s6" position = { x = 370 y = 92 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s7" position = { x = 361 y = 88 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s8" position = { x = 352 y = 85 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s9" position = { x = 343 y = 83 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s10" position = { x = 334 y = 80 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s11" position = { x = 325 y = 78 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s12" position = { x = 317 y = 76 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s13" position = { x = 308 y = 75 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s14" position = { x = 300 y = 73 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s15" position = { x = 291 y = 72 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s16" position = { x = 281 y = 71 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s17" position = { x = 272 y = 70 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s18" position = { x = 262 y = 70 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s19" position = { x = 253 y = 69 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s20" position = { x = 243 y = 69 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s21" position = { x = 234 y = 69 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s22" position = { x = 226 y = 69 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s23" position = { x = 217 y = 69 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s24" position = { x = 207 y = 70 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s25" position = { x = 198 y = 71 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s26" position = { x = 188 y = 71 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s27" position = { x = 179 y = 72 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s28" position = { x = 170 y = 74 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s29" position = { x = 161 y = 75 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s30" position = { x = 153 y = 77 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s31" position = { x = 144 y = 79 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s32" position = { x = 136 y = 80 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s33" position = { x = 127 y = 83 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s34" position = { x = 118 y = 86 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s35" position = { x = 109 y = 89 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s36" position = { x = 100 y = 93 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s37" position = { x = 92 y = 97 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s38" position = { x = 84 y = 102 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s39" position = { x = 76 y = 108 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s40" position = { x = 69 y = 116 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s41" position = { x = 65 y = 124 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s42" position = { x = 64 y = 132 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s43" position = { x = 66 y = 140 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s44" position = { x = 71 y = 148 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s45" position = { x = 78 y = 156 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s46" position = { x = 87 y = 162 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s47" position = { x = 96 y = 167 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s48" position = { x = 105 y = 171 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s49" position = { x = 113 y = 174 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s50" position = { x = 121 y = 177 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s51" position = { x = 129 y = 179 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s52" position = { x = 138 y = 182 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s53" position = { x = 147 y = 184 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s54" position = { x = 155 y = 186 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s55" position = { x = 164 y = 187 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s56" position = { x = 172 y = 189 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s57" position = { x = 181 y = 190 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s58" position = { x = 191 y = 191 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s59" position = { x = 200 y = 192 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s60" position = { x = 210 y = 192 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s61" position = { x = 219 y = 193 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s62" position = { x = 229 y = 193 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s63" position = { x = 238 y = 193 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s64" position = { x = 246 y = 193 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s65" position = { x = 255 y = 193 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s66" position = { x = 265 y = 192 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s67" position = { x = 274 y = 191 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s68" position = { x = 284 y = 191 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s69" position = { x = 293 y = 190 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s70" position = { x = 302 y = 188 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s71" position = { x = 311 y = 187 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s72" position = { x = 319 y = 185 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s73" position = { x = 328 y = 183 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s74" position = { x = 336 y = 182 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s75" position = { x = 345 y = 179 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s76" position = { x = 354 y = 176 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s77" position = { x = 363 y = 173 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s78" position = { x = 372 y = 169 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s79" position = { x = 380 y = 165 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s80" position = { x = 388 y = 160 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s81" position = { x = 396 y = 154 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_saturn_s82" position = { x = 403 y = 146 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_SATURN" pdx_tooltip_delayed = "NSP_TT_SATURN_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s0" position = { x = 439 y = 131 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s1" position = { x = 438 y = 123 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s2" position = { x = 434 y = 115 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s3" position = { x = 428 y = 107 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s4" position = { x = 420 y = 100 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s5" position = { x = 412 y = 94 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s6" position = { x = 403 y = 89 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s7" position = { x = 395 y = 85 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s8" position = { x = 387 y = 82 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s9" position = { x = 379 y = 78 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s10" position = { x = 370 y = 75 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s11" position = { x = 361 y = 73 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s12" position = { x = 353 y = 71 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s13" position = { x = 345 y = 69 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s14" position = { x = 337 y = 67 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s15" position = { x = 328 y = 65 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s16" position = { x = 320 y = 64 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s17" position = { x = 311 y = 62 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s18" position = { x = 302 y = 61 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s19" position = { x = 293 y = 60 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s20" position = { x = 284 y = 59 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s21" position = { x = 276 y = 58 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s22" position = { x = 267 y = 58 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s23" position = { x = 258 y = 57 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s24" position = { x = 250 y = 57 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s25" position = { x = 241 y = 57 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s26" position = { x = 231 y = 57 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s27" position = { x = 222 y = 57 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s28" position = { x = 214 y = 57 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s29" position = { x = 205 y = 58 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s30" position = { x = 196 y = 58 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s31" position = { x = 188 y = 59 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s32" position = { x = 179 y = 60 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s33" position = { x = 170 y = 61 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s34" position = { x = 161 y = 62 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s35" position = { x = 152 y = 64 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s36" position = { x = 144 y = 65 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s37" position = { x = 135 y = 67 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s38" position = { x = 127 y = 69 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s39" position = { x = 119 y = 71 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s40" position = { x = 111 y = 73 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s41" position = { x = 102 y = 75 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s42" position = { x = 93 y = 78 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s43" position = { x = 85 y = 82 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s44" position = { x = 77 y = 85 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s45" position = { x = 69 y = 89 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s46" position = { x = 61 y = 93 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s47" position = { x = 53 y = 99 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s48" position = { x = 45 y = 106 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s49" position = { x = 39 y = 114 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s50" position = { x = 34 y = 122 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s51" position = { x = 33 y = 130 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s52" position = { x = 34 y = 138 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s53" position = { x = 37 y = 146 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s54" position = { x = 43 y = 154 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s55" position = { x = 51 y = 162 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s56" position = { x = 59 y = 167 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s57" position = { x = 67 y = 172 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s58" position = { x = 76 y = 176 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s59" position = { x = 85 y = 180 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s60" position = { x = 93 y = 184 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s61" position = { x = 102 y = 187 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s62" position = { x = 111 y = 189 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s63" position = { x = 119 y = 191 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s64" position = { x = 127 y = 193 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s65" position = { x = 135 y = 195 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s66" position = { x = 144 y = 197 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s67" position = { x = 152 y = 198 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s68" position = { x = 161 y = 200 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s69" position = { x = 170 y = 201 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s70" position = { x = 179 y = 202 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s71" position = { x = 188 y = 203 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s72" position = { x = 196 y = 204 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s73" position = { x = 205 y = 204 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s74" position = { x = 214 y = 205 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s75" position = { x = 222 y = 205 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s76" position = { x = 231 y = 205 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s77" position = { x = 241 y = 205 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s78" position = { x = 250 y = 205 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s79" position = { x = 258 y = 205 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s80" position = { x = 267 y = 204 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s81" position = { x = 276 y = 204 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s82" position = { x = 284 y = 203 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s83" position = { x = 293 y = 202 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s84" position = { x = 302 y = 201 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s85" position = { x = 311 y = 200 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s86" position = { x = 320 y = 198 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s87" position = { x = 328 y = 197 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s88" position = { x = 337 y = 195 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s89" position = { x = 345 y = 193 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s90" position = { x = 353 y = 191 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s91" position = { x = 361 y = 189 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s92" position = { x = 370 y = 187 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s93" position = { x = 379 y = 184 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s94" position = { x = 387 y = 180 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s95" position = { x = 395 y = 177 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s96" position = { x = 403 y = 173 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s97" position = { x = 411 y = 169 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s98" position = { x = 419 y = 163 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s99" position = { x = 427 y = 156 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s100" position = { x = 433 y = 148 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_uranus_s101" position = { x = 438 y = 140 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_URANUS" pdx_tooltip_delayed = "NSP_TT_URANUS_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s0" position = { x = 466 y = 131 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s1" position = { x = 465 y = 123 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s2" position = { x = 462 y = 115 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s3" position = { x = 456 y = 107 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s4" position = { x = 448 y = 99 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s5" position = { x = 440 y = 93 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s6" position = { x = 431 y = 87 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s7" position = { x = 423 y = 83 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s8" position = { x = 415 y = 79 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s9" position = { x = 407 y = 75 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s10" position = { x = 399 y = 72 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s11" position = { x = 390 y = 69 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s12" position = { x = 381 y = 66 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s13" position = { x = 373 y = 64 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s14" position = { x = 365 y = 62 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s15" position = { x = 357 y = 60 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s16" position = { x = 349 y = 59 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s17" position = { x = 340 y = 57 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s18" position = { x = 332 y = 56 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s19" position = { x = 323 y = 54 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s20" position = { x = 314 y = 53 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s21" position = { x = 305 y = 52 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s22" position = { x = 296 y = 51 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s23" position = { x = 286 y = 50 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s24" position = { x = 277 y = 49 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s25" position = { x = 267 y = 49 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s26" position = { x = 258 y = 48 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s27" position = { x = 250 y = 48 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s28" position = { x = 241 y = 48 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s29" position = { x = 231 y = 48 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s30" position = { x = 222 y = 48 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s31" position = { x = 214 y = 48 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s32" position = { x = 205 y = 49 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s33" position = { x = 195 y = 49 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s34" position = { x = 186 y = 50 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s35" position = { x = 176 y = 51 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s36" position = { x = 167 y = 52 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s37" position = { x = 158 y = 53 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s38" position = { x = 149 y = 54 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s39" position = { x = 140 y = 56 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s40" position = { x = 132 y = 57 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s41" position = { x = 123 y = 59 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s42" position = { x = 115 y = 60 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s43" position = { x = 107 y = 62 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s44" position = { x = 99 y = 64 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s45" position = { x = 91 y = 66 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s46" position = { x = 82 y = 69 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s47" position = { x = 73 y = 72 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s48" position = { x = 65 y = 75 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s49" position = { x = 57 y = 79 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s50" position = { x = 49 y = 83 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s51" position = { x = 41 y = 87 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s52" position = { x = 33 y = 92 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s53" position = { x = 25 y = 98 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s54" position = { x = 17 y = 105 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s55" position = { x = 12 y = 113 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s56" position = { x = 8 y = 121 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s57" position = { x = 6 y = 129 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s58" position = { x = 7 y = 137 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s59" position = { x = 9 y = 145 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s60" position = { x = 14 y = 153 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s61" position = { x = 21 y = 161 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s62" position = { x = 29 y = 167 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s63" position = { x = 37 y = 172 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s64" position = { x = 46 y = 178 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s65" position = { x = 54 y = 182 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s66" position = { x = 62 y = 185 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s67" position = { x = 70 y = 188 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s68" position = { x = 79 y = 192 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s69" position = { x = 88 y = 194 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s70" position = { x = 97 y = 197 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s71" position = { x = 105 y = 199 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s72" position = { x = 113 y = 201 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s73" position = { x = 121 y = 203 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s74" position = { x = 129 y = 205 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s75" position = { x = 138 y = 206 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s76" position = { x = 147 y = 208 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s77" position = { x = 156 y = 209 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s78" position = { x = 165 y = 210 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s79" position = { x = 174 y = 211 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s80" position = { x = 183 y = 212 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s81" position = { x = 191 y = 212 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s82" position = { x = 200 y = 213 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s83" position = { x = 210 y = 213 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s84" position = { x = 219 y = 214 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s85" position = { x = 229 y = 214 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s86" position = { x = 238 y = 214 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s87" position = { x = 246 y = 214 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s88" position = { x = 255 y = 214 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s89" position = { x = 265 y = 213 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s90" position = { x = 274 y = 213 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s91" position = { x = 284 y = 212 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s92" position = { x = 293 y = 211 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s93" position = { x = 302 y = 210 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s94" position = { x = 312 y = 209 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s95" position = { x = 321 y = 208 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s96" position = { x = 330 y = 207 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s97" position = { x = 338 y = 205 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s98" position = { x = 347 y = 204 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s99" position = { x = 355 y = 202 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s100" position = { x = 363 y = 200 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s101" position = { x = 371 y = 198 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s102" position = { x = 379 y = 196 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s103" position = { x = 388 y = 193 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s104" position = { x = 397 y = 190 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s105" position = { x = 405 y = 187 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s106" position = { x = 413 y = 184 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s107" position = { x = 421 y = 180 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s108" position = { x = 429 y = 176 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s109" position = { x = 438 y = 171 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s110" position = { x = 446 y = 165 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s111" position = { x = 454 y = 157 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s112" position = { x = 460 y = 149 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		buttonType = { name = "NSP_fo_neptune_s113" position = { x = 464 y = 141 } spriteType = "GFX_NSP_seg_8" pdx_tooltip = "NSP_TT_NEPTUNE" pdx_tooltip_delayed = "NSP_TT_NEPTUNE_D" clicksound = click_default }
+		iconType = { name = "NSP_fout_frame" position = { x = 0 y = 0 } spriteType = "GFX_NSP_map_frame" alwaystransparent = yes }
+	}
+}

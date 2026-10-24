@@ -1,0 +1,10 @@
+# r69：帮助层贴图（work/r69/art.py）。遮罩半分辨率，gui 里 scale = 2；加页要改 noOfFrames。r81b：遮罩去掉青框
+spriteTypes = {
+	spriteType = { name = "GFX_NSP_help_overlay" texturefile = "gfx/interface/NSP/help/nsp_help_overlay.dds" noOfFrames = 7 legacy_lazy_load = no }
+	spriteType = { name = "GFX_NSP_help_prev"  texturefile = "gfx/interface/NSP/help/nsp_help_prev.dds"  effectFile = "gfx/FX/buttonstate.lua" }
+	spriteType = { name = "GFX_NSP_help_next"  texturefile = "gfx/interface/NSP/help/nsp_help_next.dds"  effectFile = "gfx/FX/buttonstate.lua" }
+	spriteType = { name = "GFX_NSP_help_toc"   texturefile = "gfx/interface/NSP/help/nsp_help_toc.dds"   effectFile = "gfx/FX/buttonstate.lua" }
+	spriteType = { name = "GFX_NSP_help_close" texturefile = "gfx/interface/NSP/help/nsp_help_close.dds" effectFile = "gfx/FX/buttonstate.lua" }
+	spriteType = { name = "GFX_NSP_help_link"  texturefile = "gfx/interface/NSP/help/nsp_help_link.dds"  effectFile = "gfx/FX/buttonstate.lua" }
+	spriteType = { name = "GFX_NSP_help_div"   texturefile = "gfx/interface/NSP/help/nsp_help_div.dds" }
+}

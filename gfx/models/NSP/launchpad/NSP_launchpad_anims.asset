@@ -1,0 +1,11 @@
+# =============================================================================
+#  r42b 发射架动画声明（被 gfx/entities/NSP_launchpad.gfx 的 pdxmesh animation type 引用）
+#  ⚠ 2026-10-21 error.log「pdxmeshtype.cpp:607 Failed to find animation NSP_launchpad_*_anim」出现两次：
+#     r41 写完整路径 file = "gfx/models/NSP/launchpad/xxx.anim"，r41e 挪到 gfx/entities 都报错
+#  ⭐ wiki Entity modding：animation 的 file 是「相对路径」→ 相对本 .asset 所在目录，只写文件名
+# =============================================================================
+animation = { name = "NSP_launchpad_empty_anim"  file = "nsp_launchpad_empty.anim" }
+animation = { name = "NSP_launchpad_ready_anim"  file = "nsp_launchpad_ready.anim" }
+animation = { name = "NSP_launchpad_launch_anim" file = "nsp_launchpad_launch.anim" }   # r46：2790 帧 @30fps ≈ 93 秒（飞行 90 秒）；ready = 60 帧静态（排气改粒子）
+animation = { name = "NSP_launchpad_fail_pad_anim" file = "nsp_launchpad_fail_pad.anim" }   # r48 发射台爆炸：900 帧 / 30 s，4.5 s 爆炸
+animation = { name = "NSP_launchpad_fail_air_anim" file = "nsp_launchpad_fail_air.anim" }   # r48 中途爆炸：1080 帧 / 36 s，16 s（起飞后 13 s）爆炸

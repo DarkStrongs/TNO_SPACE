@@ -1,0 +1,358 @@
+#############################################################################
+#  NSP_core_effects.txt：核心：开新局初始化、静态数据表、每日 / 每周结算、预算、通用工具。
+#  想改「开局有什么、各载荷 / 火箭 / 目的地 / 修正的数值」→ 看「静态数据表」段，所有数值只写在那里。
+#
+#  目录
+#    1. 开新局初始化：NSP_init、NSP_clear_arrays
+#    2. 静态数据表（所有数值）：NSP_data_payloads、NSP_data_vehicles、NSP_data_destinations、NSP_data_modifiers、NSP_data_programs
+#    3. 每日 / 每周结算（on_actions 调用）：NSP_daily_tick、NSP_weekly_tick
+#    4. 预算 / 拨款 / 公众支持度：NSP_econ_weekly、NSP_budget_weekly、NSP_budget_disp
+#    5. 通用工具：NSP_ln、NSP_frame_from_ratio
+#  模组整体结构、数据流、「新增 X 要改哪里」见 documentation/CODE_MAP.md。
+#############################################################################
+
+# ===========================================================================
+# 1. 开新局初始化
+# ===========================================================================
+
+#############################################################################
+#  开新局初始化（on_startup 调用一次）。顺序有依赖，不要随意调换：
+#    1. 全局变量 → 2. 静态数据表（NSP_data_*）→ 3. 名册 / 历史档案 → 4. 研发（建表 → 1962 开局科技 → 重算解锁）
+#    → 5. 规划器默认选择 → 6. 刷新主页显示
+#############################################################################
+NSP_init = {
+	set_country_flag = NSP_program_active
+
+	# ---- UI 状态 ----
+	set_variable = { NSP_program = 0 }        # 开局只有水星计划；双子星 1962.1.12、阿波罗 1962.5.25 由日期事件开放
+	set_variable = { NSP_view = 0 }
+	set_variable = { NSP_orbit_sel = 0 }
+	set_variable = { NSP_mc_tab = 0 }
+	set_variable = { NSP_dirty = 0 }
+	set_variable = { NSP_orbit_filter = 0 }
+
+	# ---- 全局资源 ----
+	set_variable = { NSP_space_budget = 9800 }   # 百万美元（显示时换算成 B）
+	set_variable = { NSP_tech = 0 }              # 太空科技：第 2 级 0/50（门槛 = 30 + 10 × 等级）
+	set_variable = { NSP_tech_tier = 2 }
+	set_variable = { NSP_tech_max = 50 }
+	set_variable = { NSP_popularity = 55 }       # NASA 公众支持度
+	set_variable = { NSP_income = 0 }
+	set_variable = { NSP_pay_weeks = 0 }         # 拨款每 26 周发一次
+	set_variable = { NSP_pay_accum = 0 }
+	set_variable = { NSP_pay_last = 0 }
+	set_variable = { NSP_science = 0 }
+	set_variable = { NSP_reputation = 0 }
+	set_variable = { NSP_cost_mult = 18 }        # 原型成本 × 18 = 显示成本
+	set_variable = { NSP_dv_k = 2.14 }           # Delta-V 游戏化系数
+
+	# ---- 静态数据表（见本文件第 2 段）----
+	NSP_clear_arrays = yes
+	NSP_data_programs = yes
+	NSP_data_payloads = yes
+	NSP_data_vehicles = yes
+	NSP_data_destinations = yes
+	NSP_data_modifiers = yes
+
+	# ---- 任务阶段基础天数：0 规划 / 1 制造 / 2 验证 / 3 总装 / 4 乘组（仅载人）/ 5 发射 / 6 在轨 / 7 返程（仅载人）----
+	clear_array = NSP_phase_base
+	add_to_array = { NSP_phase_base = 12 } add_to_array = { NSP_phase_base = 76 } add_to_array = { NSP_phase_base = 62 }
+	add_to_array = { NSP_phase_base = 16 } add_to_array = { NSP_phase_base = 20 } add_to_array = { NSP_phase_base = 12 }
+	add_to_array = { NSP_phase_base = 16 } add_to_array = { NSP_phase_base = 6 }
+
+	# ---- 驱动 gridbox 的下标列表 ----
+	clear_array = NSP_site_ids  for_loop_effect = { start = 0 end = 8 value = k add_to_array = { NSP_site_ids = k } }   # 8 个发射场
+	clear_array = NSP_phase_ids for_loop_effect = { start = 0 end = 8 value = k add_to_array = { NSP_phase_ids = k } }  # 规划器重算时按载人 / 无人重建
+	clear_array = NSP_sat_cnt NSP_sat_sync = yes   # 卫星轨道计数
+	NSP_astro_init = yes                           # 宇航员名册
+
+	# ---- 任务数据（按任务 id 下标并行存放；开局没有进行中的任务）----
+	set_variable = { NSP_mission_count = 0 }
+	clear_array = NSP_missions
+	set_variable = { NSP_newest_mid = -1 }
+	clear_array = NSP_missions_hist clear_array = NSP_hist_fail clear_array = NSP_m_end
+	clear_array = NSP_m_veh clear_array = NSP_m_site
+	clear_array = NSP_m_payload clear_array = NSP_m_num clear_array = NSP_m_dest clear_array = NSP_m_phase
+	clear_array = NSP_m_phase_left clear_array = NSP_m_total clear_array = NSP_m_total_left
+	clear_array = NSP_m_time_mult clear_array = NSP_m_rel clear_array = NSP_m_dock clear_array = NSP_m_eva
+	NSP_hist_archive_init = yes   # 1957–1961 史实发射写进「历史」页签
+
+	# ---- 研发 ----
+	NSP_rd_init = yes             # 研发树全部数据（0..94）
+	NSP_tier_refresh = yes        # 太空科技等级的被动加成
+	NSP_rd_init_unlocks = yes     # 每个研发完成后的解锁效果表
+	NSP_rd_start_1962 = yes       # 1962 年前已完成的项目直接标为完成
+	NSP_rd_apply_unlocks = yes    # 按完成状态重算解锁（必须在 reset_planner 之前：调色板读 NSP_mod_unl）
+
+	# ---- 规划器默认选择 + 首次刷新 ----
+	NSP_reset_planner = yes
+	NSP_recalc_home = yes
+}
+
+NSP_clear_arrays = {
+	clear_array = NSP_prog_unlocked
+	clear_array = NSP_prog_budget
+	clear_array = NSP_prog_budget_max
+	clear_array = NSP_obj_req
+	clear_array = NSP_obj_prog
+}
+
+# ===========================================================================
+# 2. 静态数据表（所有数值）
+# ===========================================================================
+
+#############################################################################
+#  静态数据表：载荷 / 火箭 / 目的地 / 修正 / 计划目标的全部数值都在这里。
+#  只在 NSP_init（开新局）里跑一次。改数值直接改这一处；新增一项就在表尾加一行，
+#  并按 documentation/CODE_MAP.md「新增载荷 / 火箭 …」的清单补齐解锁、贴图帧和本地化。
+#  下标就是行号（从 0 起），其他系统都按下标查表。
+#############################################################################
+NSP_data_payloads = {
+	clear_array = NSP_pl_mass clear_array = NSP_pl_cost clear_array = NSP_pl_rel clear_array = NSP_pl_next clear_array = NSP_pl_icon clear_array = NSP_pl_pslots
+	#  下标  质量 t / 原型成本 / 基础可靠性 / 下一次任务编号 / 图标帧 / 载荷类修正槽位（0..4）
+	add_to_array = { NSP_pl_mass = 3.5 }    add_to_array = { NSP_pl_cost = 13 }     add_to_array = { NSP_pl_rel = 80 }     add_to_array = { NSP_pl_next = 1 }      add_to_array = { NSP_pl_icon = 1 }   add_to_array = { NSP_pl_pslots = 3 }   # 0 双子星飞船
+	add_to_array = { NSP_pl_mass = 28.8 }   add_to_array = { NSP_pl_cost = 55 }     add_to_array = { NSP_pl_rel = 70 }     add_to_array = { NSP_pl_next = 1 }      add_to_array = { NSP_pl_icon = 2 }   add_to_array = { NSP_pl_pslots = 4 }   # 1 阿波罗指令服务舱
+	add_to_array = { NSP_pl_mass = 0.13 }   add_to_array = { NSP_pl_cost = 3 }      add_to_array = { NSP_pl_rel = 90 }     add_to_array = { NSP_pl_next = 4 }      add_to_array = { NSP_pl_icon = 3 }   add_to_array = { NSP_pl_pslots = 1 }   # 2 TIROS 气象卫星
+	add_to_array = { NSP_pl_mass = 0.26 }   add_to_array = { NSP_pl_cost = 8 }      add_to_array = { NSP_pl_rel = 75 }     add_to_array = { NSP_pl_next = 1 }      add_to_array = { NSP_pl_icon = 3 }   add_to_array = { NSP_pl_pslots = 2 }   # 3 水手号探测器
+	add_to_array = { NSP_pl_mass = 1.4 }    add_to_array = { NSP_pl_cost = 6 }      add_to_array = { NSP_pl_rel = 85 }     add_to_array = { NSP_pl_next = 1 }      add_to_array = { NSP_pl_icon = 3 }   add_to_array = { NSP_pl_pslots = 1 }   # 4 水星飞船
+	add_to_array = { NSP_pl_mass = 0.07 }   add_to_array = { NSP_pl_cost = 4 }      add_to_array = { NSP_pl_rel = 80 }     add_to_array = { NSP_pl_next = 1 }      add_to_array = { NSP_pl_icon = 3 }   add_to_array = { NSP_pl_pslots = 1 }   # 5 Syncom 通信卫星
+	add_to_array = { NSP_pl_mass = 0.38 }   add_to_array = { NSP_pl_cost = 6 }      add_to_array = { NSP_pl_rel = 85 }     add_to_array = { NSP_pl_next = 1 }      add_to_array = { NSP_pl_icon = 3 }   add_to_array = { NSP_pl_pslots = 2 }   # 6 雨云号气象卫星
+	add_to_array = { NSP_pl_mass = 1.0 }    add_to_array = { NSP_pl_cost = 10 }     add_to_array = { NSP_pl_rel = 70 }     add_to_array = { NSP_pl_next = 1 }      add_to_array = { NSP_pl_icon = 3 }   add_to_array = { NSP_pl_pslots = 2 }   # 7 勘测者号着陆器
+	add_to_array = { NSP_pl_mass = 77 }     add_to_array = { NSP_pl_cost = 90 }     add_to_array = { NSP_pl_rel = 75 }     add_to_array = { NSP_pl_next = 1 }      add_to_array = { NSP_pl_icon = 2 }   add_to_array = { NSP_pl_pslots = 4 }   # 8 天空实验室
+	add_to_array = { NSP_pl_mass = 0.014 }  add_to_array = { NSP_pl_cost = 1 }      add_to_array = { NSP_pl_rel = 75 }     add_to_array = { NSP_pl_next = 1 }      add_to_array = { NSP_pl_icon = 3 }   add_to_array = { NSP_pl_pslots = 0 }   # 9 试验性载荷
+	add_to_array = { NSP_pl_mass = 0.49 }   add_to_array = { NSP_pl_cost = 8 }      add_to_array = { NSP_pl_rel = 80 }     add_to_array = { NSP_pl_next = 1 }      add_to_array = { NSP_pl_icon = 3 }   add_to_array = { NSP_pl_pslots = 1 }   # 10 科研卫星
+	add_to_array = { NSP_pl_mass = 0.39 }   add_to_array = { NSP_pl_cost = 10 }     add_to_array = { NSP_pl_rel = 75 }     add_to_array = { NSP_pl_next = 1 }      add_to_array = { NSP_pl_icon = 3 }   add_to_array = { NSP_pl_pslots = 2 }   # 11 月球轨道器
+}
+
+NSP_data_vehicles = {
+	clear_array = NSP_ve_dry clear_array = NSP_ve_fuel clear_array = NSP_ve_isp clear_array = NSP_ve_cost clear_array = NSP_ve_rel clear_array = NSP_ve_heavy clear_array = NSP_ve_lslots
+	#  干重 t / 燃料 t / 比冲 s / 原型成本 / 基础可靠性 / 重型（1 = 土星系列）/ 发射类修正槽位（0..4）
+	add_to_array = { NSP_ve_dry = 114 }    add_to_array = { NSP_ve_fuel = 512 }    add_to_array = { NSP_ve_isp = 316 }    add_to_array = { NSP_ve_cost = 18 }     add_to_array = { NSP_ve_rel = 80 }     add_to_array = { NSP_ve_heavy = 0 }   add_to_array = { NSP_ve_lslots = 3 }   # 0 泰坦 IIIC
+	add_to_array = { NSP_ve_dry = 28 }     add_to_array = { NSP_ve_fuel = 118 }    add_to_array = { NSP_ve_isp = 300 }    add_to_array = { NSP_ve_cost = 9 }      add_to_array = { NSP_ve_rel = 85 }     add_to_array = { NSP_ve_heavy = 0 }   add_to_array = { NSP_ve_lslots = 2 }   # 1 泰坦 II GLV
+	add_to_array = { NSP_ve_dry = 85 }     add_to_array = { NSP_ve_fuel = 500 }    add_to_array = { NSP_ve_isp = 330 }    add_to_array = { NSP_ve_cost = 40 }     add_to_array = { NSP_ve_rel = 78 }     add_to_array = { NSP_ve_heavy = 1 }   add_to_array = { NSP_ve_lslots = 3 }   # 2 土星 IB
+	add_to_array = { NSP_ve_dry = 190 }    add_to_array = { NSP_ve_fuel = 2750 }   add_to_array = { NSP_ve_isp = 350 }    add_to_array = { NSP_ve_cost = 185 }    add_to_array = { NSP_ve_rel = 70 }     add_to_array = { NSP_ve_heavy = 1 }   add_to_array = { NSP_ve_lslots = 4 }   # 3 土星五号
+	add_to_array = { NSP_ve_dry = 5 }      add_to_array = { NSP_ve_fuel = 27 }     add_to_array = { NSP_ve_isp = 235 }    add_to_array = { NSP_ve_cost = 3 }      add_to_array = { NSP_ve_rel = 90 }     add_to_array = { NSP_ve_heavy = 0 }   add_to_array = { NSP_ve_lslots = 1 }   # 4 红石 MRLV
+	add_to_array = { NSP_ve_dry = 20 }     add_to_array = { NSP_ve_fuel = 74 }     add_to_array = { NSP_ve_isp = 309 }    add_to_array = { NSP_ve_cost = 7 }      add_to_array = { NSP_ve_rel = 82 }     add_to_array = { NSP_ve_heavy = 0 }   add_to_array = { NSP_ve_lslots = 1 }   # 5 宇宙神 LV-3B
+	add_to_array = { NSP_ve_dry = 21 }     add_to_array = { NSP_ve_fuel = 80 }     add_to_array = { NSP_ve_isp = 315 }    add_to_array = { NSP_ve_cost = 9 }      add_to_array = { NSP_ve_rel = 80 }     add_to_array = { NSP_ve_heavy = 0 }   add_to_array = { NSP_ve_lslots = 2 }   # 6 宇宙神-阿金纳
+	add_to_array = { NSP_ve_dry = 22 }     add_to_array = { NSP_ve_fuel = 92 }     add_to_array = { NSP_ve_isp = 330 }    add_to_array = { NSP_ve_cost = 12 }     add_to_array = { NSP_ve_rel = 75 }     add_to_array = { NSP_ve_heavy = 0 }   add_to_array = { NSP_ve_lslots = 2 }   # 7 宇宙神-半人马
+	add_to_array = { NSP_ve_dry = 4 }      add_to_array = { NSP_ve_fuel = 21 }     add_to_array = { NSP_ve_isp = 255 }    add_to_array = { NSP_ve_cost = 2 }      add_to_array = { NSP_ve_rel = 70 }     add_to_array = { NSP_ve_heavy = 0 }   add_to_array = { NSP_ve_lslots = 0 }   # 8 试验性火箭
+}
+
+NSP_data_destinations = {
+	# 所需 Delta-V（km/s，游戏化数值）
+	clear_array = NSP_dest_dv
+	add_to_array = { NSP_dest_dv = 9.4 }   # 0 近地轨道
+	add_to_array = { NSP_dest_dv = 9.6 }   # 1 交会：MOL 2 空间站
+	add_to_array = { NSP_dest_dv = 12.0 }   # 2 地球静止轨道
+	add_to_array = { NSP_dest_dv = 9.9 }   # 3 极地轨道
+	add_to_array = { NSP_dest_dv = 10.8 }   # 4 地月转移
+	add_to_array = { NSP_dest_dv = 11.2 }   # 5 逃逸地球
+	add_to_array = { NSP_dest_dv = 10.2 }   # 6 中地球轨道
+	add_to_array = { NSP_dest_dv = 11.1 }   # 7 月球轨道
+	# 规划器里的显示顺序（值 = 目的地下标）
+	clear_array = NSP_dest_ids
+	add_to_array = { NSP_dest_ids = 0 } add_to_array = { NSP_dest_ids = 1 } add_to_array = { NSP_dest_ids = 6 } add_to_array = { NSP_dest_ids = 2 }
+	add_to_array = { NSP_dest_ids = 3 } add_to_array = { NSP_dest_ids = 4 } add_to_array = { NSP_dest_ids = 7 } add_to_array = { NSP_dest_ids = 5 }
+}
+
+NSP_data_modifiers = {
+	clear_array = NSP_mod_type clear_array = NSP_mod_dv clear_array = NSP_mod_rel clear_array = NSP_mod_cost clear_array = NSP_mod_sel
+	#  类型（0 发射类 / 1 载荷类）/ Delta-V / 可靠性 / 成本。适用条件见 trigger NSP_mod_fits，解锁见 NSP_unlock_modifiers
+	add_to_array = { NSP_mod_type = 0 }      add_to_array = { NSP_mod_dv = 0.6 }    add_to_array = { NSP_mod_rel = -5 }     add_to_array = { NSP_mod_cost = 6 }   # 0 捆绑助推器
+	add_to_array = { NSP_mod_type = 0 }      add_to_array = { NSP_mod_dv = 0.9 }    add_to_array = { NSP_mod_rel = -8 }     add_to_array = { NSP_mod_cost = 12 }   # 1 半人马上面级
+	add_to_array = { NSP_mod_type = 0 }      add_to_array = { NSP_mod_dv = 0.3 }    add_to_array = { NSP_mod_rel = -3 }     add_to_array = { NSP_mod_cost = 4 }   # 2 改进型发动机
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = -10 }    add_to_array = { NSP_mod_cost = 20 }   # 3 先进双子星改装
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 0 }      add_to_array = { NSP_mod_cost = 3 }   # 4 基础对接系统
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 0 }      add_to_array = { NSP_mod_cost = 2 }   # 5 基础舱外活动系统
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 5 }      add_to_array = { NSP_mod_cost = 2 }   # 6 太阳能电池板
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 3 }      add_to_array = { NSP_mod_cost = 2 }   # 7 额外燃料电池
+	add_to_array = { NSP_mod_type = 0 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 4 }      add_to_array = { NSP_mod_cost = 3 }   # 8 冗余制导
+	add_to_array = { NSP_mod_type = 0 }      add_to_array = { NSP_mod_dv = 0.4 }    add_to_array = { NSP_mod_rel = -2 }     add_to_array = { NSP_mod_cost = 8 }   # 9 S-IVB 二次点火
+	add_to_array = { NSP_mod_type = 0 }      add_to_array = { NSP_mod_dv = 0.5 }    add_to_array = { NSP_mod_rel = -4 }     add_to_array = { NSP_mod_cost = 10 }   # 10 F-1 推力提升
+	add_to_array = { NSP_mod_type = 0 }      add_to_array = { NSP_mod_dv = 1.2 }    add_to_array = { NSP_mod_rel = -10 }    add_to_array = { NSP_mod_cost = 30 }   # 11 NERVA 核热上面级
+	add_to_array = { NSP_mod_type = 0 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = -3 }     add_to_array = { NSP_mod_cost = 2 }   # 12 快速发射流程
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 4 }      add_to_array = { NSP_mod_cost = 2 }   # 13 交会雷达
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 4 }      add_to_array = { NSP_mod_cost = 3 }   # 14 加厚防热罩
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 2 }      add_to_array = { NSP_mod_cost = 1 }   # 15 生存装备包
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 2 }      add_to_array = { NSP_mod_cost = 4 }   # 16 载人机动装置 MMU
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 3 }      add_to_array = { NSP_mod_cost = 2 }   # 17 S 波段应答机
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 6 }      add_to_array = { NSP_mod_cost = 6 }   # 18 同位素电源 RTG
+	add_to_array = { NSP_mod_type = 1 }      add_to_array = { NSP_mod_dv = 0 }      add_to_array = { NSP_mod_rel = 5 }      add_to_array = { NSP_mod_cost = 8 }   # 19 闭环生保
+	for_loop_effect = { start = 0 end = 20 value = k add_to_array = { NSP_mod_sel = 0 } }
+}
+
+NSP_data_programs = {
+	# 计划：0 水星 / 1 双子星 / 2 阿波罗 / 3..6 后续计划。1 = 已开放；双子星、阿波罗等由日期事件开放
+	clear_array = NSP_prog_unlocked
+	add_to_array = { NSP_prog_unlocked = 1 }
+	for_loop_effect = { start = 1 end = 7 value = k add_to_array = { NSP_prog_unlocked = 0 } }
+	# 目标 o = 计划 × 2 + k：所需次数 / 已完成次数（按 1962.1.1 的史实进度）
+	clear_array = NSP_obj_req clear_array = NSP_obj_prog
+	add_to_array = { NSP_obj_req = 2 } add_to_array = { NSP_obj_prog = 2 }    # Mercury A：2 次亚轨道（谢泼德、格里索姆，1961）
+	add_to_array = { NSP_obj_req = 1 } add_to_array = { NSP_obj_prog = 0 }    # Mercury B
+	add_to_array = { NSP_obj_req = 3 } add_to_array = { NSP_obj_prog = 0 }    # Gemini A：3 次对接任务
+	add_to_array = { NSP_obj_req = 2 } add_to_array = { NSP_obj_prog = 0 }    # Gemini B：2 次 EVA 任务
+	add_to_array = { NSP_obj_req = 1 } add_to_array = { NSP_obj_prog = 0 }    # Apollo A：载人绕月
+	add_to_array = { NSP_obj_req = 2 } add_to_array = { NSP_obj_prog = 0 }    # Apollo B：2 次近地轨道测试
+	add_to_array = { NSP_obj_req = 2 } add_to_array = { NSP_obj_prog = 0 }    # 6  应用卫星 A
+	add_to_array = { NSP_obj_req = 2 } add_to_array = { NSP_obj_prog = 0 }    # 7  应用卫星 B
+	add_to_array = { NSP_obj_req = 2 } add_to_array = { NSP_obj_prog = 0 }    # 8  勘测者 A
+	add_to_array = { NSP_obj_req = 1 } add_to_array = { NSP_obj_prog = 0 }    # 9  勘测者 B
+	add_to_array = { NSP_obj_req = 1 } add_to_array = { NSP_obj_prog = 0 }    # 10 水手 A
+	add_to_array = { NSP_obj_req = 3 } add_to_array = { NSP_obj_prog = 0 }    # 11 水手 B
+	add_to_array = { NSP_obj_req = 1 } add_to_array = { NSP_obj_prog = 0 }    # 12 天空实验室 A
+	add_to_array = { NSP_obj_req = 3 } add_to_array = { NSP_obj_prog = 0 }    # 13 天空实验室 B
+}
+
+# ===========================================================================
+# 3. 每日 / 每周结算（on_actions 调用）
+# ===========================================================================
+
+# 研发进度 + 任务阶段改为每日结算（面板天数每天变化）；经济仍每周
+NSP_daily_tick = {
+	NSP_rd_daily = yes   # 取代 NSP_rd_weekly（每日 +100/工期，完成通知 / 解锁 / 升级都在里面）
+	clear_array = NSP_done_tmp
+	for_each_loop = { array = NSP_missions      value = nsp_mid  set_variable = { NSP_arg_mid = nsp_mid } NSP_advance_mission = yes }
+	for_each_loop = {
+		array = NSP_done_tmp
+		value = nsp_mid
+		if = { limit = { is_in_array = { array = NSP_missions      value = nsp_mid } } remove_from_array = { array = NSP_missions      value = nsp_mid } }   # 先判断再删，避免 Invalid index 报错
+	}
+	NSP_newest_mid_update = yes
+	NSP_pad_update = yes   # 地图发射架模型（空 / 火箭 / 发射）
+	NSP_crew_paused_refresh = yes   # 任务卡「暂停」标记（新任务 id 补齐）
+	NSP_lsite_update = yes   # 地图发射场标记帧（空闲 / 占用）
+	NSP_programs_date_check = yes  # 新计划日期事件
+	NSP_evq_tick = yes   # 任务结果事件队列，一次弹一个
+	NSP_hook_on_daily = yes   # 扩展槽钩子
+	NSP_budget_peak_update = yes
+	NSP_tick_refresh_ui = yes   # 窗口关着不重算主页
+}
+
+NSP_weekly_tick = {
+	NSP_econ_weekly = yes   # 支持度回归 50 + 拨款累计
+	NSP_budget_peak_update = yes
+	NSP_tick_refresh_ui = yes
+}
+
+# ===========================================================================
+# 4. 预算 / 拨款 / 公众支持度
+# ===========================================================================
+
+# 经济周结算：公众支持度向 50 回落，按公众支持度累计拨款
+NSP_econ_weekly = {
+	set_temp_variable = { nsp_d = 50 }
+	subtract_from_temp_variable = { nsp_d = NSP_popularity }
+	divide_temp_variable = { nsp_d = 100 }
+	add_to_variable = { NSP_popularity = nsp_d }
+	NSP_budget_weekly = yes   # 拨款改为每 26 周发一次
+}
+
+# 每周：按当周公众支持度累计额度，满 26 周（约半年）一次拨付
+NSP_budget_weekly = {
+	if = { limit = { NOT = { has_variable = NSP_pay_weeks } } set_variable = { NSP_pay_weeks = 0 } set_variable = { NSP_pay_accum = 0 } set_variable = { NSP_pay_last = 0 } }
+	# 每周额度（百万美元）= 30 + 公众支持度 × 0.8 → 支持 50% 时约 $70M/周，半年约 $1.8B
+	set_variable = { NSP_income = NSP_popularity }
+	multiply_variable = { NSP_income = 0.8 }
+	add_to_variable = { NSP_income = 30 }
+	round_variable = NSP_income
+	NSP_dir_income = yes   # 局长特质：华盛顿老手
+	add_to_variable = { NSP_pay_accum = NSP_income }
+	add_to_variable = { NSP_pay_weeks = 1 }
+	if = {
+		limit = { check_variable = { NSP_pay_weeks > 25 } }
+		set_variable = { NSP_pay_last = NSP_pay_accum }
+		add_to_variable = { NSP_space_budget = NSP_pay_accum }
+		set_variable = { NSP_pay_accum = 0 }
+		set_variable = { NSP_pay_weeks = 0 }
+		NSP_budget_disp = yes
+		country_event = { id = nsp.12 }
+	}
+	NSP_budget_disp = yes
+}
+
+#############################################################################
+#  预算显示单位改为十亿美元（B）+ 半年度拨款
+#  内部仍按百万美元记账（NSP_space_budget 等不变，成本、研发费用照旧），只在显示时 ÷1000。
+#############################################################################
+
+# 显示用变量（÷1000，保留 3 位小数，本地化里用 |.2 显示）
+NSP_budget_disp = {
+	set_variable = { NSP_bud_b = NSP_space_budget }       divide_variable = { NSP_bud_b = 1000 }
+	if = { limit = { has_variable = NSP_budget_peak } set_variable = { NSP_peak_b = NSP_budget_peak } divide_variable = { NSP_peak_b = 1000 } }
+	set_variable = { NSP_left_b = NSP_calc_left }         divide_variable = { NSP_left_b = 1000 }
+	# 下次拨款预估 = 已累计 + 本周额度 × 剩余周数
+	# 开局第一周结算前 NSP_income 还没算，预估会显示 0 → 这里按当前公众支持度现算
+	set_variable = { NSP_income = NSP_popularity }
+	multiply_variable = { NSP_income = 0.8 }
+	add_to_variable = { NSP_income = 30 }
+	round_variable = NSP_income
+	NSP_dir_income = yes   # 局长特质：华盛顿老手
+	if = { limit = { NOT = { has_variable = NSP_pay_weeks } } set_variable = { NSP_pay_weeks = 0 } }
+	set_variable = { NSP_pay_left_w = 26 }
+	subtract_from_variable = { NSP_pay_left_w = NSP_pay_weeks }
+	set_variable = { NSP_pay_est_b = NSP_income }
+	multiply_variable = { NSP_pay_est_b = NSP_pay_left_w }
+	add_to_variable = { NSP_pay_est_b = NSP_pay_accum }
+	divide_variable = { NSP_pay_est_b = 1000 }
+	set_variable = { NSP_pay_last_b = NSP_pay_last }      divide_variable = { NSP_pay_last_b = 1000 }
+}
+
+# ===========================================================================
+# 5. 通用工具
+# ===========================================================================
+
+# ln(x)：HOI4 没有对数函数。输入：变量 NSP_arg_ln_in（> 0）；输出：变量 NSP_arg_ln_out
+#   1) 区间缩减：x > 1.5 时反复 /2，并累加 ln2 = 0.693
+#   2) 级数：ln(x) = 2*(y + y^3/3 + y^5/5 + y^7/7)，y = (x-1)/(x+1)，|y| < 0.2 时误差 < 0.001
+NSP_ln = {
+	set_temp_variable = { ln_x = NSP_arg_ln_in }
+	set_temp_variable = { ln_acc = 0 }
+	while_loop_effect = {
+		limit = { check_variable = { ln_x > 1.5 } }
+		divide_temp_variable = { ln_x = 2 }
+		add_to_temp_variable = { ln_acc = 0.693 }
+	}
+	set_temp_variable = { ln_y = ln_x }
+	subtract_from_temp_variable = { ln_y = 1 }
+	set_temp_variable = { ln_den = ln_x }
+	add_to_temp_variable = { ln_den = 1 }
+	divide_temp_variable = { ln_y = ln_den }
+	set_temp_variable = { ln_y2 = ln_y }
+	multiply_temp_variable = { ln_y2 = ln_y }
+	set_variable = { NSP_arg_ln_out = ln_y }
+	set_temp_variable = { ln_term = ln_y }
+	multiply_temp_variable = { ln_term = ln_y2 }
+	set_temp_variable = { ln_add = ln_term } divide_temp_variable = { ln_add = 3 } add_to_variable = { NSP_arg_ln_out = ln_add }
+	multiply_temp_variable = { ln_term = ln_y2 }
+	set_temp_variable = { ln_add = ln_term } divide_temp_variable = { ln_add = 5 } add_to_variable = { NSP_arg_ln_out = ln_add }
+	multiply_temp_variable = { ln_term = ln_y2 }
+	set_temp_variable = { ln_add = ln_term } divide_temp_variable = { ln_add = 7 } add_to_variable = { NSP_arg_ln_out = ln_add }
+	multiply_variable = { NSP_arg_ln_out = 2 }
+	add_to_variable = { NSP_arg_ln_out = ln_acc }
+}
+
+#############################################################################
+#  NSP scripted effects
+#  单位：质量 = 吨（避免超过变量上限 2,147,483）、成本 = 百万美元、ΔV = km/s
+#############################################################################
+
+#############################################################################
+# 初始化（on_startup 调用，作用域：拥有太空计划的国家）
+#############################################################################
+#
+#  重要：HOI4 的 scripted effect 不接受参数，并且只能调用“已经定义过”的 effect，
+#  所以本文件按“被调用者在前”排列，参数一律改成调用前写 NSP_arg_* 持久变量（实测 temp 跨 effect 不可靠）。
+#############################################################################
+
+# 输入：变量 NSP_arg_fr_val / NSP_arg_fr_max；输出：变量 NSP_arg_fr_out（帧 1..21）
+NSP_frame_from_ratio = {
+	set_variable = { NSP_arg_fr_out = NSP_arg_fr_val }
+	multiply_variable = { NSP_arg_fr_out = 20 }
+	divide_variable = { NSP_arg_fr_out = NSP_arg_fr_max }
+	round_variable = NSP_arg_fr_out
+	add_to_variable = { NSP_arg_fr_out = 1 }
+	if = { limit = { check_variable = { NSP_arg_fr_out < 1 } } set_variable = { NSP_arg_fr_out = 1 } }
+	if = { limit = { check_variable = { NSP_arg_fr_out > 21 } } set_variable = { NSP_arg_fr_out = 21 } }
+}
+

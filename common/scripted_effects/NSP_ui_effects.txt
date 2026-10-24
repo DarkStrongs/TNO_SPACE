@@ -1,0 +1,805 @@
+#############################################################################
+#  NSP_ui_effects.txt：界面：主窗开关、页面切换、主页显示、任务规划器（选择 + 数值重算）、帮助层。
+#  GUI 按钮只调这里的效果；改完数值走 NSP_recalc_home / NSP_recalc_planner，并累加 NSP_dirty。
+#
+#  目录
+#    1. 主窗 / 页面切换：NSP_toggle_home、NSP_open_planner、NSP_close_planner、NSP_set_view、NSP_orbit_click、NSP_set_program、NSP_ptab_press、NSP_prog_tabs_build
+#    2. 主页显示：NSP_budget_peak_update、NSP_tick_refresh_ui、NSP_recalc_home、NSP_focus_planet、NSP_fanim_refresh、NSP_calc_obj_box、NSP_mc_orbit_match、NSP_mc_sync、NSP_lsite_update
+#    3. 任务规划器：NSP_reset_planner、NSP_cycle_payload、NSP_cycle_vehicle、NSP_toggle_mod、NSP_pick_free_site、NSP_mod_drop_overflow、NSP_mod_drop_unfit、NSP_recalc_planner、NSP_site_req_dv
+#    4. 帮助层：NSP_help_refresh、NSP_help_open、NSP_help_close、NSP_help_toggle
+#  模组整体结构、数据流、「新增 X 要改哪里」见 documentation/CODE_MAP.md。
+#############################################################################
+
+# ===========================================================================
+# 1. 主窗 / 页面切换
+# ===========================================================================
+
+NSP_toggle_home = {
+	if = {
+		limit = { has_country_flag = NSP_home_open }
+		# 关窗只清 home_open，不清 planner_open → 外壳滑出时当前页内容保留、跟着一起滑走
+		clr_country_flag = NSP_home_open
+	}
+	else = {
+		# 重新打开时总是回到主页（planner_open 在这里清，而不是在关窗时清）
+		clr_country_flag = NSP_planner_open
+		clr_country_flag = NSP_rd_open
+		NSP_recalc_home = yes
+		set_country_flag = NSP_home_open
+		add_to_variable = { NSP_dirty = 1 }
+	}
+}
+
+# ⭐ 2026-10-21 一个外壳窗 NSP_home_window + 两个内容页（独立容器，parent_window_name 挂外壳）。
+#   外壳 visible = home_open（只有它决定开关，开关动画由它播）。
+#   内容页 visible 只看 NSP_planner_open（主页 = NOT，规划器 = 有），不看 home_open：
+#   子窗口本来就只在父窗可见时显示（Wiki: Parent window），若也看 home_open，关窗瞬间子窗先消失，
+#   滑出动画只剩空壳。
+#   ⛔ 教训：嵌套容器的 _visible 实机不生效，别再把页面嵌进外壳靠 _visible 切。
+NSP_open_planner = {
+	NSP_rd_apply_unlocks = yes
+	NSP_recalc_planner = yes
+	set_country_flag = NSP_planner_open
+	add_to_variable = { NSP_dirty = 1 }   # flag 改完再刷一次，保证切页
+}
+
+NSP_close_planner = {
+	clr_country_flag = NSP_planner_open
+	NSP_recalc_home = yes
+}
+
+# 调用前先 set_variable = { NSP_view = X }
+NSP_set_view = {
+	set_variable = { NSP_orbit_sel = 0 }
+	set_variable = { NSP_orbit_filter = 0 }
+	NSP_sat_sync = yes   # 切视图时刷新卫星显示（dirty）
+	NSP_recalc_home = yes
+}
+
+# 调用前 set_variable = { NSP_arg_orbit = 行号 }。同一行再点一次取消筛选
+NSP_orbit_click = {
+	if = {
+		limit = { check_variable = { NSP_orbit_filter = 1 } check_variable = { NSP_orbit_sel = NSP_arg_orbit } }
+		set_variable = { NSP_orbit_filter = 0 }
+	}
+	else = {
+		set_variable = { NSP_orbit_filter = 1 }
+		set_variable = { NSP_orbit_sel = NSP_arg_orbit }
+	}
+	NSP_recalc_home = yes
+}
+
+# 调用前先 set_variable = { NSP_program = X }
+NSP_set_program = {
+	NSP_recalc_home = yes
+}
+
+# 页签点击。调用前 set_temp_variable = { t_v = 条目值 }
+NSP_ptab_press = {
+	if = { limit = { check_variable = { t_v > -1 } } set_variable = { NSP_program = t_v } NSP_set_program = yes }
+	else_if = { limit = { check_variable = { t_v = -3 } } subtract_from_variable = { NSP_prog_page = 1 } NSP_recalc_home = yes }
+	else_if = { limit = { check_variable = { t_v = -4 } } add_to_variable = { NSP_prog_page = 1 } NSP_recalc_home = yes }
+}
+
+# 计划页签列表。计划数 = NSP_prog_unlocked 长度（新增计划：往各计划数组追加一项即可）
+#   NSP_prog_tab_all = 计划 0..n-1，补 -2（锁定占位）到 6 格，末尾 -1（未知）
+#   ≤ 7 格全部显示；否则分页：-3（上一页）+ 5 格 + -4（下一页），页码 NSP_prog_page / 页数 NSP_prog_pages
+NSP_prog_tabs_build = {
+	clear_array = NSP_prog_tab_all
+	for_each_loop = { array = NSP_prog_unlocked index = nsp_pk add_to_array = { NSP_prog_tab_all = nsp_pk } }
+	while_loop_effect = { limit = { check_variable = { NSP_prog_tab_all^num < 6 } } add_to_array = { NSP_prog_tab_all = -2 } }
+	add_to_array = { NSP_prog_tab_all = -1 }
+	clear_array = NSP_prog_tab_view
+	set_temp_variable = { nsp_pn = NSP_prog_tab_all^num }
+	if = {
+		limit = { check_variable = { nsp_pn < 8 } }
+		set_variable = { NSP_prog_page = 0 } set_variable = { NSP_prog_pages = 1 }
+		for_each_loop = { array = NSP_prog_tab_all value = nsp_pv add_to_array = { NSP_prog_tab_view = nsp_pv } }
+	}
+	else = {
+		set_variable = { NSP_prog_pages = 0 }
+		set_temp_variable = { nsp_pr = nsp_pn }
+		while_loop_effect = { limit = { check_variable = { nsp_pr > 0 } } add_to_variable = { NSP_prog_pages = 1 } subtract_from_temp_variable = { nsp_pr = 5 } }
+		set_temp_variable = { nsp_lp = NSP_prog_pages } subtract_from_temp_variable = { nsp_lp = 1 }
+		if = { limit = { check_variable = { NSP_prog_page > nsp_lp } } set_variable = { NSP_prog_page = nsp_lp } }
+		if = { limit = { check_variable = { NSP_prog_page < 0 } } set_variable = { NSP_prog_page = 0 } }
+		add_to_array = { NSP_prog_tab_view = -3 }
+		set_temp_variable = { nsp_pi = NSP_prog_page } multiply_temp_variable = { nsp_pi = 5 }
+		set_temp_variable = { nsp_pe = nsp_pi } add_to_temp_variable = { nsp_pe = 5 }
+		while_loop_effect = {
+			limit = { check_variable = { nsp_pi < nsp_pe } check_variable = { nsp_pi < nsp_pn } }
+			add_to_array = { NSP_prog_tab_view = NSP_prog_tab_all^nsp_pi }
+			add_to_temp_variable = { nsp_pi = 1 }
+		}
+		add_to_array = { NSP_prog_tab_view = -4 }
+	}
+}
+
+# ===========================================================================
+# 2. 主页显示
+# ===========================================================================
+
+# 预算历史峰值：游戏状态，不能只在主页重算时更新 → 每日结算无条件调用
+NSP_budget_peak_update = {
+	if = { limit = { NOT = { has_variable = NSP_budget_peak } } set_variable = { NSP_budget_peak = NSP_space_budget } }
+	if = { limit = { check_variable = { NSP_space_budget > NSP_budget_peak } } set_variable = { NSP_budget_peak = NSP_space_budget } }
+	if = { limit = { check_variable = { NSP_budget_peak < 1 } } set_variable = { NSP_budget_peak = 1 } }
+}
+
+# 每日 / 每周结算后的界面刷新：窗口关着什么都不做（打开时 NSP_toggle_home 会重算）
+#   主页可见 → 重算主页（末尾自带 dirty +1）；规划器 / 研发页 / 乘组窗口开着 → 只刷 dirty，行为与原来一致
+NSP_tick_refresh_ui = {
+	if = {
+		limit = { has_country_flag = NSP_home_open NOT = { has_country_flag = NSP_planner_open } NOT = { has_country_flag = NSP_rd_open } }
+		NSP_recalc_home = yes
+	}
+	else_if = {
+		limit = { OR = { has_country_flag = NSP_home_open has_country_flag = NSP_crew_win } }
+		add_to_variable = { NSP_dirty = 1 }
+	}
+}
+
+NSP_recalc_home = {
+	NSP_mc_sync = yes
+	set_temp_variable = { P = NSP_program }
+
+	NSP_prog_tabs_build = yes   # 页签列表（帧在条目自己的 visible 里算）
+
+	# 目标 A / B
+	set_temp_variable = { oa = P } multiply_temp_variable = { oa = 2 }
+	set_temp_variable = { ob = oa } add_to_temp_variable = { ob = 1 }
+	set_variable = { NSP_obj_a = oa }
+	set_variable = { NSP_obj_b = ob }
+	set_variable = { NSP_arg_ob_o = oa } set_variable = { NSP_arg_ob_j = 0 } NSP_calc_obj_box = yes set_variable = { NSP_f_obj_a0 = NSP_arg_ob_out }
+	set_variable = { NSP_arg_ob_o = oa } set_variable = { NSP_arg_ob_j = 1 } NSP_calc_obj_box = yes set_variable = { NSP_f_obj_a1 = NSP_arg_ob_out }
+	set_variable = { NSP_arg_ob_o = oa } set_variable = { NSP_arg_ob_j = 2 } NSP_calc_obj_box = yes set_variable = { NSP_f_obj_a2 = NSP_arg_ob_out }
+	set_variable = { NSP_arg_ob_o = ob } set_variable = { NSP_arg_ob_j = 0 } NSP_calc_obj_box = yes set_variable = { NSP_f_obj_b0 = NSP_arg_ob_out }
+	set_variable = { NSP_arg_ob_o = ob } set_variable = { NSP_arg_ob_j = 1 } NSP_calc_obj_box = yes set_variable = { NSP_f_obj_b1 = NSP_arg_ob_out }
+	set_variable = { NSP_arg_ob_o = ob } set_variable = { NSP_arg_ob_j = 2 } NSP_calc_obj_box = yes set_variable = { NSP_f_obj_b2 = NSP_arg_ob_out }
+	# 目标卡进度条帧 = base(总数) + 已完成 + 1；状态文字用 NSP_obj_*_done / *_req
+	set_variable = { NSP_obj_a_req = NSP_obj_req^oa } set_variable = { NSP_obj_a_done = NSP_obj_prog^oa }
+	set_variable = { NSP_obj_b_req = NSP_obj_req^ob } set_variable = { NSP_obj_b_done = NSP_obj_prog^ob }
+	if = { limit = { check_variable = { NSP_obj_a_done > NSP_obj_a_req } } set_variable = { NSP_obj_a_done = NSP_obj_a_req } }
+	if = { limit = { check_variable = { NSP_obj_b_done > NSP_obj_b_req } } set_variable = { NSP_obj_b_done = NSP_obj_b_req } }
+	set_variable = { NSP_f_obj_a_bar = NSP_obj_a_done } add_to_variable = { NSP_f_obj_a_bar = 1 }
+	if = { limit = { check_variable = { NSP_obj_a_req = 2 } } add_to_variable = { NSP_f_obj_a_bar = 2 } }
+	if = { limit = { check_variable = { NSP_obj_a_req > 2 } } add_to_variable = { NSP_f_obj_a_bar = 5 } }
+	set_variable = { NSP_f_obj_b_bar = NSP_obj_b_done } add_to_variable = { NSP_f_obj_b_bar = 1 }
+	if = { limit = { check_variable = { NSP_obj_b_req = 2 } } add_to_variable = { NSP_f_obj_b_bar = 2 } }
+	if = { limit = { check_variable = { NSP_obj_b_req > 2 } } add_to_variable = { NSP_f_obj_b_bar = 5 } }
+	set_variable = { NSP_obj_met = 0 }
+	if = { limit = { NOT = { check_variable = { NSP_obj_prog^oa < NSP_obj_req^oa } } } add_to_variable = { NSP_obj_met = 1 } }
+	if = { limit = { NOT = { check_variable = { NSP_obj_prog^ob < NSP_obj_req^ob } } } add_to_variable = { NSP_obj_met = 1 } }
+
+	# 条形帧
+	# 各计划共用 NASA 统一预算 NSP_space_budget；条 = 当前预算 / 历史峰值
+	NSP_budget_peak_update = yes
+	set_variable = { NSP_arg_fr_val = NSP_space_budget } set_variable = { NSP_arg_fr_max = NSP_budget_peak } NSP_frame_from_ratio = yes set_variable = { NSP_f_budget = NSP_arg_fr_out }
+	set_variable = { NSP_arg_fr_val = NSP_tech } set_variable = { NSP_arg_fr_max = NSP_tech_max } NSP_frame_from_ratio = yes set_variable = { NSP_f_tech = NSP_arg_fr_out }
+	set_variable = { NSP_arg_fr_val = NSP_popularity } set_variable = { NSP_arg_fr_max = 100 } NSP_frame_from_ratio = yes set_variable = { NSP_f_popularity = NSP_arg_fr_out }
+	set_variable = { NSP_cur_budget = NSP_space_budget }   # 统一预算（原为 NSP_prog_budget^P）
+	NSP_budget_disp = yes   # B 单位显示
+	set_variable = { NSP_tech_tier_next = NSP_tech_tier }
+	add_to_variable = { NSP_tech_tier_next = 1 }
+
+	# 视图 / Mission Control 页签帧
+	set_variable = { NSP_f_view_0 = 1 } set_variable = { NSP_f_view_1 = 1 } set_variable = { NSP_f_view_2 = 1 }
+	if = { limit = { check_variable = { NSP_view = 0 } } set_variable = { NSP_f_view_0 = 2 } }
+	if = { limit = { check_variable = { NSP_view = 1 } } set_variable = { NSP_f_view_1 = 2 } }
+	if = { limit = { check_variable = { NSP_view = 2 } } set_variable = { NSP_f_view_2 = 2 } }
+	set_variable = { NSP_f_mc_0 = 1 } set_variable = { NSP_f_mc_1 = 1 }
+	if = { limit = { check_variable = { NSP_mc_tab = 0 } } set_variable = { NSP_f_mc_0 = 2 } }
+	else = { set_variable = { NSP_f_mc_1 = 2 } }
+
+	# 轨道行：选中帧 + 各行在轨任务数
+	set_variable = { NSP_f_orbit_0 = 1 } set_variable = { NSP_f_orbit_1 = 1 } set_variable = { NSP_f_orbit_2 = 1 }
+	if = {
+		limit = { check_variable = { NSP_orbit_filter = 1 } }   # 选中态 = 正在按该行筛选任务
+		if = { limit = { check_variable = { NSP_orbit_sel = 0 } } set_variable = { NSP_f_orbit_0 = 2 } }
+		if = { limit = { check_variable = { NSP_orbit_sel = 1 } } set_variable = { NSP_f_orbit_1 = 2 } }
+		if = { limit = { check_variable = { NSP_orbit_sel = 2 } } set_variable = { NSP_f_orbit_2 = 2 } }
+	}
+	set_variable = { NSP_orbit_n_0 = 0 } set_variable = { NSP_orbit_n_1 = 0 } set_variable = { NSP_orbit_n_2 = 0 }
+	for_each_loop = {
+		array = NSP_missions
+		value = nsp_mid
+		set_temp_variable = { d = NSP_m_dest^nsp_mid }
+		# 视图 / 行改查 NSP_dest_view / NSP_dest_row
+		if = {
+			limit = { check_variable = { NSP_dest_view^num > d } check_variable = { NSP_dest_view^d = NSP_view } }
+			set_temp_variable = { t_or = NSP_dest_row^d }
+			if = { limit = { check_variable = { t_or = 0 } } add_to_variable = { NSP_orbit_n_0 = 1 } }
+			if = { limit = { check_variable = { t_or = 1 } } add_to_variable = { NSP_orbit_n_1 = 1 } }
+			if = { limit = { check_variable = { t_or = 2 } } add_to_variable = { NSP_orbit_n_2 = 1 } }
+		}
+	}
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+# ⭐ 聚焦动画重播：每次切换聚焦都清空 16 个数组，再只往当前那一个里放一个新值。
+#   动态列表条目被销毁重建 → frameAnimatedSpriteType(play_on_show) 从第 0 帧重新播放。
+#   （隐藏 / 显示窗口、properties 切换 A/B 精灵，实机都证明不会重播）
+# 点太阳系里某颗行星（或它轨道上的命中块）→ 聚焦这颗行星。调用前 nsp_fp = 1 水星 … 8 海王星
+NSP_focus_planet = {
+	set_variable = { NSP_focus = nsp_fp }
+	set_variable = { NSP_fmode = 1 }
+	add_to_variable = { NSP_dirty = 1 }
+	NSP_fanim_refresh = yes
+}
+
+NSP_fanim_refresh = {
+	NSP_sat_sync = yes   # 刷新当前聚焦行星的卫星计数
+	add_to_variable = { NSP_fanim_seq = 1 }
+	if = { limit = { check_variable = { NSP_fanim_seq > 1000 } } set_variable = { NSP_fanim_seq = 1 } }
+	clear_array = NSP_fin_arr_1
+	clear_array = NSP_fout_arr_1
+	clear_array = NSP_fin_arr_2
+	clear_array = NSP_fout_arr_2
+	clear_array = NSP_fin_arr_3
+	clear_array = NSP_fout_arr_3
+	clear_array = NSP_fin_arr_4
+	clear_array = NSP_fout_arr_4
+	clear_array = NSP_fin_arr_5
+	clear_array = NSP_fout_arr_5
+	clear_array = NSP_fin_arr_6
+	clear_array = NSP_fout_arr_6
+	clear_array = NSP_fin_arr_7
+	clear_array = NSP_fout_arr_7
+	clear_array = NSP_fin_arr_8
+	clear_array = NSP_fout_arr_8
+	if = {
+		limit = { check_variable = { NSP_fmode = 1 } }
+		if = { limit = { check_variable = { NSP_focus = 1 } } add_to_array = { NSP_fin_arr_1 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 2 } } add_to_array = { NSP_fin_arr_2 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 3 } } add_to_array = { NSP_fin_arr_3 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 4 } } add_to_array = { NSP_fin_arr_4 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 5 } } add_to_array = { NSP_fin_arr_5 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 6 } } add_to_array = { NSP_fin_arr_6 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 7 } } add_to_array = { NSP_fin_arr_7 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 8 } } add_to_array = { NSP_fin_arr_8 = NSP_fanim_seq } }
+	}
+	else_if = {
+		limit = { check_variable = { NSP_fmode = 2 } }
+		if = { limit = { check_variable = { NSP_focus = 1 } } add_to_array = { NSP_fout_arr_1 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 2 } } add_to_array = { NSP_fout_arr_2 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 3 } } add_to_array = { NSP_fout_arr_3 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 4 } } add_to_array = { NSP_fout_arr_4 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 5 } } add_to_array = { NSP_fout_arr_5 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 6 } } add_to_array = { NSP_fout_arr_6 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 7 } } add_to_array = { NSP_fout_arr_7 = NSP_fanim_seq } }
+		if = { limit = { check_variable = { NSP_focus = 8 } } add_to_array = { NSP_fout_arr_8 = NSP_fanim_seq } }
+	}
+}
+
+# 勾选框帧。输入：变量 NSP_arg_ob_o（目标号）/ NSP_arg_ob_j（第几格）；输出 NSP_arg_ob_out：0 隐藏 / 2 完成 / 3 未完成
+NSP_calc_obj_box = {
+	set_temp_variable = { ob_o = NSP_arg_ob_o }
+	set_temp_variable = { ob_j = NSP_arg_ob_j }
+	set_variable = { NSP_arg_ob_out = 0 }
+	if = {
+		limit = { check_variable = { NSP_obj_req^ob_o > ob_j } }
+		set_variable = { NSP_arg_ob_out = 3 }
+		if = {
+			limit = { check_variable = { NSP_obj_prog^ob_o > ob_j } }
+			set_variable = { NSP_arg_ob_out = 2 }
+		}
+	}
+}
+
+# Mission Control 列表：容器 _visible 引擎不认 → 两个 gridbox 用互斥数组，只填当前页签那个
+# NSP_orbit_filter = 1 时只放「目的地落在当前视图第 NSP_orbit_sel 行」的任务（映射同 NSP_recalc_home 的计数）
+NSP_mc_orbit_match = {
+	# 调用前 set_variable = { NSP_arg_mid = 任务 id }；输出 NSP_arg_match 0/1
+	set_variable = { NSP_arg_match = 1 }
+	if = {
+		limit = { check_variable = { NSP_orbit_filter = 1 } }
+		set_variable = { NSP_arg_match = 0 }
+		set_temp_variable = { nsp_mm = NSP_arg_mid }
+		set_temp_variable = { nsp_md = NSP_m_dest^nsp_mm }
+		set_temp_variable = { nsp_row = -1 }
+		# 视图 / 行改查 NSP_dest_view / NSP_dest_row
+		if = { limit = { check_variable = { NSP_dest_view^num > nsp_md } check_variable = { NSP_dest_view^nsp_md = NSP_view } } set_temp_variable = { nsp_row = NSP_dest_row^nsp_md } }
+		if = { limit = { check_variable = { nsp_row = NSP_orbit_sel } } set_variable = { NSP_arg_match = 1 } }
+	}
+}
+
+NSP_mc_sync = {
+	clear_array = NSP_mc_nat_view
+	clear_array = NSP_mc_intl_view
+	if = { limit = { NOT = { has_variable = NSP_orbit_filter } } set_variable = { NSP_orbit_filter = 0 } }
+	# 旧存档里的国际任务并入「本国」页显示，避免消失。
+	# 页签 1 改为「历史」：NSP_missions_hist（已结束的本国任务，最新在前），结果见 NSP_hist_fail
+	if = {
+		limit = { check_variable = { NSP_mc_tab = 1 } }
+		for_each_loop = { array = NSP_missions_hist value = nsp_mv add_to_array = { NSP_mc_intl_view = nsp_mv } }
+	}
+	if = {
+		limit = { check_variable = { NSP_mc_tab = 0 } }
+		for_each_loop = {
+			array = NSP_missions value = nsp_mv
+			set_variable = { NSP_arg_mid = nsp_mv } NSP_mc_orbit_match = yes
+			if = { limit = { check_variable = { NSP_arg_match = 1 } } add_to_array = { NSP_mc_nat_view = nsp_mv } }
+		}
+	}
+}
+
+# 地图发射场标记帧 NSP_f_lsite_0..7（1 空闲 / 2 占用），每日结算和开任务时刷新
+NSP_lsite_update = {
+	# 先把 8 个发射场清成空闲，再逐个任务标记（发射场 ≥ 0 且阶段 < 5 → 占用）
+	clear_array = NSP_lsite_busy
+	for_loop_effect = { start = 0 end = 8 value = k  add_to_array = { NSP_lsite_busy = 0 } }
+	for_each_loop = {
+		array = NSP_missions value = t_lm
+		if = {
+			limit = {
+				check_variable = { NSP_m_site^num > t_lm }
+				check_variable = { NSP_m_phase^num > t_lm }
+				check_variable = { NSP_m_phase^t_lm < 6 }   # 发射阶段 4 → 5
+			}
+			set_temp_variable = { t_ls = NSP_m_site^t_lm }
+			if = {
+				limit = { check_variable = { t_ls > -1 } check_variable = { t_ls < 8 } }
+				set_variable = { NSP_lsite_busy^t_ls = 1 }
+			}
+		}
+	}
+	for_loop_effect = {
+		start = 0 end = 8 value = k
+		set_temp_variable = { t_lf = NSP_lsite_busy^k }
+		add_to_temp_variable = { t_lf = 1 }
+		if = { limit = { check_variable = { k = 0 } } set_variable = { NSP_f_lsite_0 = t_lf } }
+		if = { limit = { check_variable = { k = 1 } } set_variable = { NSP_f_lsite_1 = t_lf } }
+		if = { limit = { check_variable = { k = 2 } } set_variable = { NSP_f_lsite_2 = t_lf } }
+		if = { limit = { check_variable = { k = 3 } } set_variable = { NSP_f_lsite_3 = t_lf } }
+		if = { limit = { check_variable = { k = 4 } } set_variable = { NSP_f_lsite_4 = t_lf } }
+		if = { limit = { check_variable = { k = 5 } } set_variable = { NSP_f_lsite_5 = t_lf } }
+		if = { limit = { check_variable = { k = 6 } } set_variable = { NSP_f_lsite_6 = t_lf } }
+		if = { limit = { check_variable = { k = 7 } } set_variable = { NSP_f_lsite_7 = t_lf } }
+	}
+}
+
+# ===========================================================================
+# 3. 任务规划器
+# ===========================================================================
+
+NSP_reset_planner = {
+	set_variable = { NSP_sel_payload = 9 }   # 默认试验性载荷 / 试验性火箭（开局唯一常开的组合）
+	set_variable = { NSP_sel_vehicle = 8 }
+	set_variable = { NSP_sel_site = 0 }
+	NSP_lsite_update = yes   # 先算占用数组
+	NSP_pick_free_site = yes   # 卡角被占用时换第一个空闲的已解锁发射场
+	set_variable = { NSP_sel_dest = 0 }   # 原为 4（地月转移）；载人地月转移现需研发「月球返回再入」
+	for_loop_effect = { start = 0 end = 20 value = k  set_variable = { NSP_mod_sel^k = 0 } }
+	NSP_recalc_planner = yes
+}
+
+# 调用前先 set_variable = { NSP_arg_step = 1 或 -1 }
+NSP_cycle_payload = {
+	# 不再循环回绕；往 NSP_arg_step 方向找下一个已解锁项，找不到就不动（按钮此时已置灰）
+	set_temp_variable = { t_cur = NSP_sel_payload }
+	set_temp_variable = { t_found = 0 }
+	set_temp_variable = { t_max = NSP_pl_unl^num }
+	while_loop_effect = {   # 上限改读数组长度（子模组加的载荷也能切到）
+		limit = { check_variable = { t_found = 0 } }
+		add_to_temp_variable = { t_cur = NSP_arg_step }
+		if = { limit = { OR = { check_variable = { t_cur < 0 } NOT = { check_variable = { t_cur < t_max } } } } set_temp_variable = { t_found = -1 } }
+		else_if = { limit = { check_variable = { NSP_pl_unl^t_cur = 1 } } set_temp_variable = { t_found = 1 } }
+	}
+	if = { limit = { check_variable = { t_found = 1 } } set_variable = { NSP_sel_payload = t_cur } }
+	# Alterations 仅限 Gemini
+	if = {
+		limit = { NOT = { check_variable = { NSP_sel_payload = 0 } } }
+		set_variable = { NSP_mod_sel^3 = 0 }
+	}
+	NSP_recalc_planner = yes
+}
+
+# 调用前先 set_variable = { NSP_arg_step = 1 或 -1 }
+NSP_cycle_vehicle = {
+	# 不再循环回绕；往 NSP_arg_step 方向找下一个已解锁项，找不到就不动（按钮此时已置灰）
+	set_temp_variable = { t_cur = NSP_sel_vehicle }
+	set_temp_variable = { t_found = 0 }
+	set_temp_variable = { t_max = NSP_ve_unl^num }
+	while_loop_effect = {   # 上限改读数组长度
+		limit = { check_variable = { t_found = 0 } }
+		add_to_temp_variable = { t_cur = NSP_arg_step }
+		if = { limit = { OR = { check_variable = { t_cur < 0 } NOT = { check_variable = { t_cur < t_max } } } } set_temp_variable = { t_found = -1 } }
+		else_if = { limit = { check_variable = { NSP_ve_unl^t_cur = 1 } } set_temp_variable = { t_found = 1 } }
+	}
+	if = { limit = { check_variable = { t_found = 1 } } set_variable = { NSP_sel_vehicle = t_cur } }
+	NSP_recalc_planner = yes
+}
+
+# 调用前先 set_variable = { NSP_arg_m = 修正 nsp_mid }
+NSP_toggle_mod = {
+	set_temp_variable = { t_M = NSP_arg_m }
+	if = {
+		limit = { check_variable = { NSP_mod_sel^t_M = 1 } }
+		set_variable = { NSP_mod_sel^t_M = 0 }
+	}
+	else_if = {
+		limit = { NSP_can_add_mod = yes }
+		set_variable = { NSP_mod_sel^t_M = 1 }
+	}
+	NSP_recalc_planner = yes
+}
+
+# 当前选中的发射场被占用 → 换第一个空闲且已解锁的发射场（都占用就保持不动，开始按钮会提示）
+NSP_pick_free_site = {
+	set_temp_variable = { t_S = NSP_sel_site }
+	if = {
+		limit = { NSP_site_busy = yes }
+		set_temp_variable = { t_pick = -1 }
+		for_loop_effect = {
+			start = 0 end = 8 value = k
+			if = {
+				limit = { check_variable = { t_pick = -1 } check_variable = { NSP_site_unl^k = 1 } }
+				set_temp_variable = { t_S = k }
+				if = { limit = { NOT = { NSP_site_busy = yes } } set_temp_variable = { t_pick = k } }
+			}
+		}
+		if = { limit = { check_variable = { t_pick > -1 } } set_variable = { NSP_sel_site = t_pick } }
+	}
+}
+
+# NSP_recalc_planner 里调用：换成槽位更少的火箭 / 载荷时，按修正编号从小到大保留，超出上限的卸下
+NSP_mod_drop_overflow = {
+	set_temp_variable = { t_nl = 0 }
+	set_temp_variable = { t_np = 0 }
+	for_loop_effect = {
+		start = 0 end = 20 value = m
+		if = {
+			limit = { check_variable = { NSP_mod_sel^m = 1 } }
+			if = {
+				limit = { check_variable = { NSP_mod_type^m = 0 } }
+				if = { limit = { check_variable = { t_nl < NSP_calc_lslots } } add_to_temp_variable = { t_nl = 1 } }
+				else = { set_variable = { NSP_mod_sel^m = 0 } }
+			}
+			else = {
+				if = { limit = { check_variable = { t_np < NSP_calc_pslots } } add_to_temp_variable = { t_np = 1 } }
+				else = { set_variable = { NSP_mod_sel^m = 0 } }
+			}
+		}
+	}
+}
+
+# NSP_recalc_planner 里调用：已装配但不再适用（换了载荷 / 火箭）或未解锁的修正自动卸下
+NSP_mod_drop_unfit = {
+	for_loop_effect = {
+		start = 0 end = 20 value = m
+		if = {
+			limit = {
+				check_variable = { NSP_mod_sel^m = 1 }
+				set_temp_variable = { t_M = m }
+				OR = {
+					NOT = { NSP_mod_fits = yes }
+					check_variable = { NSP_mod_unl^m = 0 }
+				}
+			}
+			set_variable = { NSP_mod_sel^m = 0 }
+		}
+	}
+}
+
+NSP_recalc_planner = {
+	set_temp_variable = { p = NSP_sel_payload }
+	set_temp_variable = { ve = NSP_sel_vehicle }
+	set_temp_variable = { s = NSP_sel_site }
+	set_temp_variable = { d = NSP_sel_dest }
+
+	# ---- 槽位与可选列表 ----
+	clear_array = NSP_launch_slots
+	clear_array = NSP_payload_slots
+	clear_array = NSP_palette
+	# 修正槽位上限：火箭决定发射类，载荷决定载荷类（NSP_ve_lslots / NSP_pl_pslots）
+	set_variable = { NSP_calc_lslots = 0 }
+	set_variable = { NSP_calc_pslots = 0 }
+	if = { limit = { check_variable = { NSP_ve_lslots^num > ve } } set_variable = { NSP_calc_lslots = NSP_ve_lslots^ve } }
+	if = { limit = { check_variable = { NSP_pl_pslots^num > p } } set_variable = { NSP_calc_pslots = NSP_pl_pslots^p } }
+	NSP_mod_drop_unfit = yes
+	NSP_mod_drop_overflow = yes
+	for_loop_effect = {
+		start = 0 end = 20 value = m   # 8 → 20
+		if = {
+			limit = { check_variable = { NSP_mod_sel^m = 1 } }
+			if = {
+				limit = { check_variable = { NSP_mod_type^m = 0 } }
+				add_to_array = { NSP_launch_slots = m }
+			}
+			else = { add_to_array = { NSP_payload_slots = m } }
+		}
+		else = {
+			# Alterations 只对 Gemini 出现在调色板
+			if = {
+				limit = {
+					check_variable = { NSP_mod_unl^m = 1 }   # 研发解锁
+					set_temp_variable = { t_M = m }
+					NSP_mod_fits = yes   # 适用性（原来只有 3 号限双子星）
+				}
+				add_to_array = { NSP_palette = m }
+			}
+		}
+	}
+
+	set_variable = { NSP_calc_lused = NSP_launch_slots^num }   # 标题「已用 / 上限」
+	set_variable = { NSP_calc_pused = NSP_payload_slots^num }
+	# 槽位框帧：1 = 可用，3 = 锁定（超出当前火箭 / 载荷的槽位数）
+	set_variable = { NSP_f_lslot_0 = 3 } set_variable = { NSP_f_lslot_1 = 3 } set_variable = { NSP_f_lslot_2 = 3 } set_variable = { NSP_f_lslot_3 = 3 }
+	set_variable = { NSP_f_pslot_0 = 3 } set_variable = { NSP_f_pslot_1 = 3 } set_variable = { NSP_f_pslot_2 = 3 } set_variable = { NSP_f_pslot_3 = 3 }
+	if = { limit = { check_variable = { NSP_calc_lslots > 0 } } set_variable = { NSP_f_lslot_0 = 1 } }
+	if = { limit = { check_variable = { NSP_calc_lslots > 1 } } set_variable = { NSP_f_lslot_1 = 1 } }
+	if = { limit = { check_variable = { NSP_calc_lslots > 2 } } set_variable = { NSP_f_lslot_2 = 1 } }
+	if = { limit = { check_variable = { NSP_calc_lslots > 3 } } set_variable = { NSP_f_lslot_3 = 1 } }
+	if = { limit = { check_variable = { NSP_calc_pslots > 0 } } set_variable = { NSP_f_pslot_0 = 1 } }
+	if = { limit = { check_variable = { NSP_calc_pslots > 1 } } set_variable = { NSP_f_pslot_1 = 1 } }
+	if = { limit = { check_variable = { NSP_calc_pslots > 2 } } set_variable = { NSP_f_pslot_2 = 1 } }
+	if = { limit = { check_variable = { NSP_calc_pslots > 3 } } set_variable = { NSP_f_pslot_3 = 1 } }
+
+	# ---- 质量（吨）----
+	set_variable = { NSP_calc_payload_mass = NSP_pl_mass^p }
+	if = {
+		limit = { check_variable = { NSP_mod_sel^3 = 1 } }
+		multiply_variable = { NSP_calc_payload_mass = 1.2 }
+	}
+	set_temp_variable = { m_f = NSP_ve_dry^ve }
+	add_to_temp_variable = { m_f = NSP_calc_payload_mass }
+	set_temp_variable = { m_i = m_f }
+	add_to_temp_variable = { m_i = NSP_ve_fuel^ve }
+	set_temp_variable = { ratio = m_i }
+	divide_temp_variable = { ratio = m_f }
+
+	# ---- 实际 ΔV = Isp · g0 · ln(mi/mf) / 1000 · K + 发射修正 ----
+	set_variable = { NSP_arg_ln_in = ratio }
+	NSP_ln = yes
+	set_temp_variable = { ln_r = NSP_arg_ln_out }
+	set_variable = { NSP_calc_act_dv = NSP_ve_isp^ve }
+	multiply_variable = { NSP_calc_act_dv = 9.81 }
+	multiply_variable = { NSP_calc_act_dv = ln_r }
+	divide_variable = { NSP_calc_act_dv = 1000 }
+	multiply_variable = { NSP_calc_act_dv = NSP_dv_k }
+	set_variable = { NSP_bd_dv_base = NSP_calc_act_dv }   # 加成明细快照（tooltip 用）
+
+	# ---- 可靠性 ----
+	set_variable = { NSP_calc_rel_payload = NSP_pl_rel^p }
+	set_variable = { NSP_calc_rel_vehicle = NSP_ve_rel^ve }
+
+	# ---- 成本（原型值）----
+	set_temp_variable = { cost = NSP_pl_cost^p }
+	add_to_temp_variable = { cost = NSP_ve_cost^ve }
+	set_variable = { NSP_bd_c0 = cost } set_variable = { NSP_bd_pr0 = NSP_calc_rel_payload } set_variable = { NSP_bd_vr0 = NSP_calc_rel_vehicle }
+
+	for_loop_effect = {
+		start = 0 end = 20 value = m   # 8 → 20
+		if = {
+			limit = { check_variable = { NSP_mod_sel^m = 1 } }
+			add_to_variable = { NSP_calc_act_dv = NSP_mod_dv^m }
+			add_to_temp_variable = { cost = NSP_mod_cost^m }
+			if = {
+				limit = { check_variable = { NSP_mod_type^m = 0 } }
+				add_to_variable = { NSP_calc_rel_vehicle = NSP_mod_rel^m }
+			}
+			else = { add_to_variable = { NSP_calc_rel_payload = NSP_mod_rel^m } }
+		}
+	}
+	# 改装件合计
+	set_variable = { NSP_bd_dv_mod = NSP_calc_act_dv } subtract_from_variable = { NSP_bd_dv_mod = NSP_bd_dv_base }
+	set_variable = { NSP_bd_cost_mod = cost } subtract_from_variable = { NSP_bd_cost_mod = NSP_bd_c0 }
+	set_variable = { NSP_bd_pl_mod = NSP_calc_rel_payload } subtract_from_variable = { NSP_bd_pl_mod = NSP_bd_pr0 }
+	set_variable = { NSP_bd_ve_mod = NSP_calc_rel_vehicle } subtract_from_variable = { NSP_bd_ve_mod = NSP_bd_vr0 }
+	set_variable = { NSP_bd_dv_tech = NSP_calc_act_dv }
+	NSP_rdfx_dv = yes   # 科技 ΔV 加成
+	set_variable = { NSP_bd_dv_tech = NSP_calc_act_dv } subtract_from_variable = { NSP_bd_dv_tech = NSP_bd_dv_mod } subtract_from_variable = { NSP_bd_dv_tech = NSP_bd_dv_base }
+	# 研发被动加成：火箭全部吃 b_vrel；载人载荷（0/1）吃 b_prel，无人（2/3）吃 b_probe
+	add_to_variable = { NSP_calc_rel_vehicle = NSP_rd_b_vrel }
+	add_to_variable = { NSP_calc_rel_vehicle = NSP_tier_rel }   # 太空科技等级 +1 / 级
+	set_variable = { NSP_bd_ve_rd = NSP_rd_b_vrel } set_variable = { NSP_bd_ve_tier = NSP_tier_rel }
+	set_variable = { NSP_bd_pr0 = NSP_calc_rel_payload }
+	# 载人 = 0 双子星 / 1 阿波罗 / 4 水星 / 8 天空实验室
+	if = { limit = { check_variable = { NSP_pl_crewed^p = 1 } } add_to_variable = { NSP_calc_rel_payload = NSP_rd_b_prel } }   # 载人标记改查 NSP_pl_crewed
+	else = { add_to_variable = { NSP_calc_rel_payload = NSP_rd_b_probe } }
+	set_variable = { NSP_bd_pl_rd = NSP_calc_rel_payload } subtract_from_variable = { NSP_bd_pl_rd = NSP_bd_pr0 }
+	set_variable = { NSP_bd_pr0 = NSP_calc_rel_payload } set_variable = { NSP_bd_vr0 = NSP_calc_rel_vehicle }
+	set_variable = { NSP_bd_p1 = NSP_calc_rel_payload } set_variable = { NSP_bd_v1 = NSP_calc_rel_vehicle }   # NSP_rdfx_rel 里在局长特质前再记一次
+	NSP_rdfx_rel = yes  # 科技可靠性加成（按火箭系列 / 载荷 / 目的地）
+	# 科技项目 / 局长特质
+	set_variable = { NSP_bd_pl_tech = NSP_bd_p1 } subtract_from_variable = { NSP_bd_pl_tech = NSP_bd_pr0 }
+	set_variable = { NSP_bd_ve_tech = NSP_bd_v1 } subtract_from_variable = { NSP_bd_ve_tech = NSP_bd_vr0 }
+	set_variable = { NSP_bd_pl_dir = NSP_calc_rel_payload } subtract_from_variable = { NSP_bd_pl_dir = NSP_bd_p1 }
+	set_variable = { NSP_bd_ve_dir = NSP_calc_rel_vehicle } subtract_from_variable = { NSP_bd_ve_dir = NSP_bd_v1 }
+	# 基础可靠性按 75% 计，全部加成（净值为正时）减半；净值为负的惩罚照算
+	set_variable = { NSP_calc_rel_pl_base = NSP_pl_rel^p }
+	multiply_variable = { NSP_calc_rel_pl_base = 0.75 }
+	set_temp_variable = { nsp_rb = NSP_calc_rel_payload }
+	subtract_from_temp_variable = { nsp_rb = NSP_pl_rel^p }
+	if = { limit = { check_variable = { nsp_rb > 0 } } multiply_temp_variable = { nsp_rb = 0.5 } }
+	set_variable = { NSP_bd_pl_raw = NSP_pl_rel^p } set_variable = { NSP_bd_pl_cut = NSP_bd_pl_raw } multiply_variable = { NSP_bd_pl_cut = -0.25 }
+	set_variable = { NSP_bd_pl_half = 0 } if = { limit = { check_variable = { nsp_rb > 0 } } set_variable = { NSP_bd_pl_half = nsp_rb } multiply_variable = { NSP_bd_pl_half = -1 } }
+	set_variable = { NSP_calc_rel_payload = NSP_calc_rel_pl_base }
+	add_to_variable = { NSP_calc_rel_payload = nsp_rb }
+	set_variable = { NSP_calc_rel_ve_base = NSP_ve_rel^ve }
+	multiply_variable = { NSP_calc_rel_ve_base = 0.75 }
+	set_temp_variable = { nsp_rb = NSP_calc_rel_vehicle }
+	subtract_from_temp_variable = { nsp_rb = NSP_ve_rel^ve }
+	if = { limit = { check_variable = { nsp_rb > 0 } } multiply_temp_variable = { nsp_rb = 0.5 } }
+	set_variable = { NSP_bd_ve_raw = NSP_ve_rel^ve } set_variable = { NSP_bd_ve_cut = NSP_bd_ve_raw } multiply_variable = { NSP_bd_ve_cut = -0.25 }
+	set_variable = { NSP_bd_ve_half = 0 } if = { limit = { check_variable = { nsp_rb > 0 } } set_variable = { NSP_bd_ve_half = nsp_rb } multiply_variable = { NSP_bd_ve_half = -1 } }
+	set_variable = { NSP_calc_rel_vehicle = NSP_calc_rel_ve_base }
+	add_to_variable = { NSP_calc_rel_vehicle = nsp_rb }
+	if = { limit = { check_variable = { NSP_calc_rel_payload < 0 } } set_variable = { NSP_calc_rel_payload = 0 } }
+	if = { limit = { check_variable = { NSP_calc_rel_payload > 100 } } set_variable = { NSP_calc_rel_payload = 100 } }
+	if = { limit = { check_variable = { NSP_calc_rel_vehicle < 0 } } set_variable = { NSP_calc_rel_vehicle = 0 } }
+	if = { limit = { check_variable = { NSP_calc_rel_vehicle > 100 } } set_variable = { NSP_calc_rel_vehicle = 100 } }
+	set_variable = { NSP_calc_rel_final = NSP_calc_rel_payload }
+	multiply_variable = { NSP_calc_rel_final = NSP_calc_rel_vehicle }
+	divide_variable = { NSP_calc_rel_final = 100 }
+	round_variable = NSP_calc_rel_final
+	# 事件接口 NSP_ev_next_rel：下一次任务成功率加成（启动任务时清零）
+	add_to_variable = { NSP_calc_rel_final = NSP_ev_next_rel }
+	if = { limit = { check_variable = { NSP_calc_rel_final < 0 } } set_variable = { NSP_calc_rel_final = 0 } }
+	if = { limit = { check_variable = { NSP_calc_rel_final > 100 } } set_variable = { NSP_calc_rel_final = 100 } }
+
+	# ---- 所需 ΔV（发射场修正）----
+	set_variable = { NSP_calc_req_dv = NSP_dest_dv^d }
+	set_variable = { NSP_bd_req_base = NSP_calc_req_dv }
+	NSP_site_req_dv = yes   # 8 个发射场的纬度修正
+	set_variable = { NSP_bd_req_site = NSP_calc_req_dv } subtract_from_variable = { NSP_bd_req_site = NSP_bd_req_base }
+	NSP_rdfx_req_dv = yes  # 惯性测量单元 / SLC-6
+	set_variable = { NSP_bd_req_tech = NSP_calc_req_dv } subtract_from_variable = { NSP_bd_req_tech = NSP_bd_req_base } subtract_from_variable = { NSP_bd_req_tech = NSP_bd_req_site }
+	set_variable = { NSP_calc_margin = NSP_calc_act_dv }
+	subtract_from_variable = { NSP_calc_margin = NSP_calc_req_dv }
+
+	# ---- 成本 ----
+	# 明细：各部件按「原型 × 系数 ÷ 1000」折成 B，修正按连乘百分比
+	set_variable = { NSP_bd_c_pl = NSP_pl_cost^p } multiply_variable = { NSP_bd_c_pl = NSP_cost_mult } divide_variable = { NSP_bd_c_pl = 1000 }
+	set_variable = { NSP_bd_c_ve = NSP_ve_cost^ve } multiply_variable = { NSP_bd_c_ve = NSP_cost_mult } divide_variable = { NSP_bd_c_ve = 1000 }
+	set_variable = { NSP_bd_c_mod = NSP_bd_cost_mod } multiply_variable = { NSP_bd_c_mod = NSP_cost_mult } divide_variable = { NSP_bd_c_mod = 1000 }
+	set_variable = { NSP_bd_c0 = cost }
+	if = { limit = { NSP_small_site = yes } multiply_temp_variable = { cost = 1.05 } }
+	if = { limit = { check_variable = { s = 6 } } multiply_temp_variable = { cost = 1.1 } }   # 约翰斯顿环礁：远洋补给
+	set_variable = { NSP_bd_cp_site = 0 }
+	if = { limit = { check_variable = { NSP_bd_c0 > 0 } } set_variable = { NSP_bd_cp_site = cost } divide_variable = { NSP_bd_cp_site = NSP_bd_c0 } add_to_variable = { NSP_bd_cp_site = -1 } multiply_variable = { NSP_bd_cp_site = 100 } }
+	multiply_temp_variable = { cost = NSP_cost_mult }
+	set_variable = { NSP_bd_c0 = cost } set_variable = { NSP_bd_c1 = cost }   # NSP_rdfx_cost 里在局长特质前再记 c1
+	NSP_rdfx_cost = yes   # 土星 INT-21
+	set_variable = { NSP_bd_cp_tech = 0 } set_variable = { NSP_bd_cp_dir = 0 }
+	if = { limit = { check_variable = { NSP_bd_c0 > 0 } } set_variable = { NSP_bd_cp_tech = NSP_bd_c1 } divide_variable = { NSP_bd_cp_tech = NSP_bd_c0 } add_to_variable = { NSP_bd_cp_tech = -1 } multiply_variable = { NSP_bd_cp_tech = 100 } }
+	if = { limit = { check_variable = { NSP_bd_c1 > 0 } } set_variable = { NSP_bd_cp_dir = cost } divide_variable = { NSP_bd_cp_dir = NSP_bd_c1 } add_to_variable = { NSP_bd_cp_dir = -1 } multiply_variable = { NSP_bd_cp_dir = 100 } }
+	set_variable = { NSP_bd_cp_rd = NSP_rd_b_cost } multiply_variable = { NSP_bd_cp_rd = -1 }
+	# 研发成本减免 cost × (100 - b_cost) / 100
+	set_temp_variable = { nsp_cr = 100 }
+	subtract_from_temp_variable = { nsp_cr = NSP_rd_b_cost }
+	multiply_temp_variable = { cost = nsp_cr }
+	divide_temp_variable = { cost = 100 }
+	# 事件接口 NSP_ev_next_cost：下一次任务成本 ±%（启动任务时清零）
+	set_temp_variable = { nsp_cr = 100 }
+	add_to_temp_variable = { nsp_cr = NSP_ev_next_cost }
+	multiply_temp_variable = { cost = nsp_cr }
+	divide_temp_variable = { cost = 100 }
+	round_temp_variable = cost
+	set_variable = { NSP_calc_cost = cost }
+	# 成本显示改为 B（内部仍按百万记账，只在显示时 ÷1000）
+	set_variable = { NSP_calc_cost_b = cost } divide_variable = { NSP_calc_cost_b = 1000 }
+	set_variable = { NSP_pl_cost_b = NSP_pl_cost^p } divide_variable = { NSP_pl_cost_b = 1000 }
+	set_variable = { NSP_ve_cost_b = NSP_ve_cost^ve } divide_variable = { NSP_ve_cost_b = 1000 }
+	set_variable = { NSP_calc_left = NSP_space_budget }
+	subtract_from_variable = { NSP_calc_left = NSP_calc_cost }
+	NSP_budget_disp = yes
+
+	# ---- 时间线 ----
+	set_variable = { NSP_calc_time_mult = 1 }
+	if = { limit = { check_variable = { NSP_mod_sel^3 = 1 } } add_to_variable = { NSP_calc_time_mult = 0.3 } }
+	if = { limit = { check_variable = { NSP_mod_sel^12 = 1 } } add_to_variable = { NSP_calc_time_mult = -0.15 } }   # 快速发射流程
+	if = { limit = { NSP_small_site = yes } add_to_variable = { NSP_calc_time_mult = 0.15 } }
+	# 研发工期减免 × (100 - b_time) / 100
+	set_temp_variable = { nsp_tr = 100 }
+	subtract_from_temp_variable = { nsp_tr = NSP_rd_b_time }
+	multiply_variable = { NSP_calc_time_mult = nsp_tr }
+	divide_variable = { NSP_calc_time_mult = 100 }
+	clear_array = NSP_calc_phase_days
+	clear_array = NSP_calc_phase_cum
+	clear_array = NSP_calc_phase_start   # 各阶段开始日（行 tooltip 用）
+	set_variable = { NSP_calc_total_days = 0 }
+	# 8 个阶段；4 乘组 / 7 返程只有载人任务才有（无人任务工期 0、时间线不显示）
+	set_variable = { NSP_calc_crewed = 0 }
+	if = { limit = { check_variable = { NSP_pl_crewed^p = 1 } } set_variable = { NSP_calc_crewed = 1 } }
+	clear_array = NSP_phase_ids
+	for_loop_effect = {
+		start = 0 end = 8 value = k
+		set_temp_variable = { pd = NSP_phase_base^k }
+		multiply_temp_variable = { pd = NSP_calc_time_mult }
+		round_temp_variable = pd
+		if = { limit = { check_variable = { NSP_calc_crewed = 0 } OR = { check_variable = { k = 4 } check_variable = { k = 7 } } } set_temp_variable = { pd = 0 } }
+		else = { add_to_array = { NSP_phase_ids = k } }
+		add_to_array = { NSP_calc_phase_days = pd }
+		add_to_array = { NSP_calc_phase_start = NSP_calc_total_days }
+		add_to_variable = { NSP_calc_total_days = pd }
+		add_to_array = { NSP_calc_phase_cum = NSP_calc_total_days }
+	}
+
+	# ---- 帧与名称 ----
+	set_variable = { NSP_f_payload_art = p }  add_to_variable = { NSP_f_payload_art = 1 }
+	set_variable = { NSP_f_vehicle_art = ve } add_to_variable = { NSP_f_vehicle_art = 1 }
+	set_variable = { NSP_f_trajectory = d }   add_to_variable = { NSP_f_trajectory = 1 }
+	# 子模组自带图（*_cart = 1）→ 用它自己的 sprite（本地化 NSP_PLART_<id> 等）和帧号
+	if = { limit = { check_variable = { NSP_pl_cart^p = 1 } } set_variable = { NSP_f_payload_art = NSP_pl_afr^p } }
+	if = { limit = { check_variable = { NSP_ve_cart^ve = 1 } } set_variable = { NSP_f_vehicle_art = NSP_ve_afr^ve } }
+	if = { limit = { check_variable = { NSP_dest_cart^d = 1 } } set_variable = { NSP_f_trajectory = NSP_dest_afr^d } }
+	set_variable = { NSP_calc_name_num = NSP_pl_next^p }
+
+	# ---- 成功奖励预览（与 nsp.1 选项、NSP_tier_mission_xp、NSP_rdfx_success 一致）----
+	set_variable = { NSP_calc_win_pop = 3 }
+	if = {
+		limit = { check_variable = { p = 1 } check_variable = { d = 4 } }   # 阿波罗地月转移：登月舱 / 月球车 / A7LB 月面服
+		if = { limit = { check_variable = { NSP_rd_state^19 = 3 } } add_to_variable = { NSP_calc_win_pop = 3 } }
+		if = { limit = { check_variable = { NSP_rd_state^20 = 3 } } add_to_variable = { NSP_calc_win_pop = 2 } }
+		if = { limit = { check_variable = { NSP_rd_state^76 = 3 } } add_to_variable = { NSP_calc_win_pop = 2 } }
+	}
+	set_variable = { NSP_calc_win_xp = 5 }
+	if = { limit = { check_variable = { NSP_dest_xp^num > d } } set_variable = { NSP_calc_win_xp = NSP_dest_xp^d } }
+	if = { limit = { check_variable = { NSP_pl_crewed^p = 1 } } add_to_variable = { NSP_calc_win_xp = 3 } }
+
+	NSP_hook_on_recalc = yes   # 扩展槽钩子（可改 NSP_calc_*）
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+# 发射场对所需 ΔV 的修正（NSP_recalc_planner 里替换原来的 CCAFS / 范登堡两段；s / d 是临时变量）
+NSP_site_req_dv = {
+	# 范登堡：极地 -0.3，其他 +0.3
+	if = {
+		limit = { check_variable = { s = 1 } }
+		if = { limit = { check_variable = { d = 3 } } add_to_variable = { NSP_calc_req_dv = -0.3 } }
+		else = { add_to_variable = { NSP_calc_req_dv = 0.3 } }
+	}
+	# 卡纳维拉尔角 / 肯尼迪：极地 +0.3
+	if = {
+		limit = { OR = { check_variable = { s = 0 } check_variable = { s = 5 } } check_variable = { d = 3 } }
+		add_to_variable = { NSP_calc_req_dv = 0.3 }
+	}
+	# 太平洋导弹靶场（北纬 22°）：地球静止 -0.1
+	if = { limit = { check_variable = { s = 3 } check_variable = { d = 2 } } add_to_variable = { NSP_calc_req_dv = -0.1 } }
+	# 约翰斯顿环礁（北纬 16.7°）：静止 -0.2；极地 +0.3
+	if = {
+		limit = { check_variable = { s = 6 } }
+		if = { limit = { check_variable = { d = 2 } } add_to_variable = { NSP_calc_req_dv = -0.2 } }
+		else_if = { limit = { check_variable = { d = 3 } } add_to_variable = { NSP_calc_req_dv = 0.3 } }
+	}
+	# 波克平原（北纬 65°）：极地 -0.4，其他 +0.4
+	if = {
+		limit = { check_variable = { s = 7 } }
+		if = { limit = { check_variable = { d = 3 } } add_to_variable = { NSP_calc_req_dv = -0.4 } }
+		else = { add_to_variable = { NSP_calc_req_dv = 0.4 } }
+	}
+}
+
+# ===========================================================================
+# 4. 帮助层
+# ===========================================================================
+
+# 帮助层（work/r69/gen.py 生成）
+NSP_help_refresh = {
+	set_variable = { NSP_help_last = 6 }
+	if = { limit = { check_variable = { NSP_help_page < 0 } } set_variable = { NSP_help_page = 0 } }
+	if = { limit = { check_variable = { NSP_help_page > NSP_help_last } } set_variable = { NSP_help_page = NSP_help_last } }
+	set_variable = { NSP_help_pg = NSP_help_page } add_to_variable = { NSP_help_pg = 1 }
+	set_variable = { NSP_help_frame = NSP_help_pg }
+	set_variable = { NSP_help_n = 7 }
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+NSP_help_open = {
+	clear_array = NSP_help_arr
+	add_to_array = { NSP_help_arr = 0 }
+	set_variable = { NSP_help_page = 0 }
+	NSP_help_refresh = yes
+}
+
+NSP_help_close = {
+	clear_array = NSP_help_arr
+	add_to_variable = { NSP_dirty = 1 }
+}
+
+NSP_help_toggle = {
+	if = { limit = { check_variable = { NSP_help_arr^num > 0 } } NSP_help_close = yes }
+	else = { NSP_help_open = yes }
+}
+

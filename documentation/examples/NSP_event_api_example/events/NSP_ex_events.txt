@@ -1,0 +1,64 @@
+# 事件接口示例：只写事件文件 + 本地化，不改 SPACE 本体任何文件。
+# 接口说明：SPACE/documentation/EVENT_API.md
+add_namespace = nsp_ex
+
+# 1. 国会听证会：经费 / 支持度 / 下一次任务
+country_event = {
+	id = nsp_ex.1
+	title = nsp_ex.1.t
+	desc = nsp_ex.1.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+
+	option = {   # 争取追加拨款：经费 +0.5B，支持度 -3
+		name = nsp_ex.1.a
+		set_temp_variable = { ev_val = 0.5 } NSP_ev_add_budget = yes
+		set_temp_variable = { ev_val = -3 }  NSP_ev_add_popularity = yes
+	}
+	option = {   # 承诺压缩开支：下一次任务成本 -20%，成功率 -5
+		name = nsp_ex.1.b
+		set_temp_variable = { ev_val = -20 } NSP_ev_next_cost = yes
+		set_temp_variable = { ev_val = -5 }  NSP_ev_next_rel = yes
+	}
+}
+
+# 2. 发射前检查发现隐患：作用在最新的进行中任务上
+country_event = {
+	id = nsp_ex.2
+	title = nsp_ex.2.t
+	desc = nsp_ex.2.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+
+	option = {   # 推迟发射彻底排查：推迟 14 天，成功率 +10
+		name = nsp_ex.2.a
+		NSP_ev_newest_mission = yes
+		set_temp_variable = { ev_val = 14 } NSP_ev_mission_delay = yes
+		set_temp_variable = { ev_val = 10 } NSP_ev_mission_rel = yes
+	}
+	option = {   # 按计划发射：成功率 -8
+		name = nsp_ex.2.b
+		NSP_ev_newest_mission = yes
+		set_temp_variable = { ev_val = -8 } NSP_ev_mission_rel = yes
+	}
+}
+
+# 3. 技术突破：直接完成研发 53（39 号发射复合体）/ 给研发 20（月球车）进度
+country_event = {
+	id = nsp_ex.3
+	title = nsp_ex.3.t
+	desc = nsp_ex.3.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+
+	option = {
+		name = nsp_ex.3.a
+		set_temp_variable = { ev_id = 53 } NSP_ev_complete_rd = yes
+		set_temp_variable = { ev_val = 40 } NSP_ev_add_tech = yes
+	}
+	option = {
+		name = nsp_ex.3.b
+		set_temp_variable = { ev_id = 20 } set_temp_variable = { ev_val = 50 } NSP_ev_rd_progress = yes
+		set_temp_variable = { ev_val = 5 } NSP_ev_add_popularity = yes
+	}
+}

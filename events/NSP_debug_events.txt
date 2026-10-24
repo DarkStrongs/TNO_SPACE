@@ -1,0 +1,152 @@
+# 调试事件：测试事件接口 NSP_ev_*（documentation/EVENT_API.md）
+# 入口：-debug 启动，调试决议「事件接口测试」。
+# 每个事件的描述是当前读数；点选项执行接口后会重新弹出同一个事件，直接对照数值变化。
+# 鼠标停在选项上，核对接口自带的提示（数值是否正确、正负颜色、不生效时是否隐藏）。
+add_namespace = nsp_dbg
+
+# 1. 菜单
+country_event = {
+	id = nsp_dbg.1
+	title = nsp_dbg.1.t
+	desc = nsp_dbg.1.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	immediate = { hidden_effect = { NSP_ev_dbg_readout = yes } }
+
+	option = { name = nsp_dbg.1.a country_event = nsp_dbg.2 }
+	option = { name = nsp_dbg.1.b country_event = nsp_dbg.3 }
+	option = { name = nsp_dbg.1.c country_event = nsp_dbg.4 }
+	option = { name = nsp_dbg.1.d_opt country_event = nsp_dbg.5 }
+	option = { name = nsp_dbg.close }
+}
+
+# 2. 国家：经费 / 支持度 / 太空科技经验，含静默模式
+country_event = {
+	id = nsp_dbg.2
+	title = nsp_dbg.2.t
+	desc = nsp_dbg.2.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	immediate = { hidden_effect = { NSP_ev_dbg_readout = yes } }
+
+	option = {   # 正数：经费 +0.5B、支持度 +5、经验 +40
+		name = nsp_dbg.2.a
+		set_temp_variable = { ev_val = 0.5 } NSP_ev_add_budget = yes
+		set_temp_variable = { ev_val = 5 }   NSP_ev_add_popularity = yes
+		set_temp_variable = { ev_val = 40 }  NSP_ev_add_tech = yes
+		country_event = nsp_dbg.2
+	}
+	option = {   # 负数：经费 -0.25B、支持度 -5（提示应为红色）
+		name = nsp_dbg.2.b
+		set_temp_variable = { ev_val = -0.25 } NSP_ev_add_budget = yes
+		set_temp_variable = { ev_val = -5 }    NSP_ev_add_popularity = yes
+		country_event = nsp_dbg.2
+	}
+	option = {   # 静默：经费 +1B，接口不出提示，只显示自写提示
+		name = nsp_dbg.2.c
+		custom_effect_tooltip = NSP_DBG_TT_SILENT
+		set_temp_variable = { ev_silent = 1 }
+		set_temp_variable = { ev_val = 1 } NSP_ev_add_budget = yes
+		country_event = nsp_dbg.2
+	}
+	option = { name = nsp_dbg.back country_event = nsp_dbg.1 }
+}
+
+# 3. 研发：对研发页当前选中的项目（NSP_rd_sel）操作
+country_event = {
+	id = nsp_dbg.3
+	title = nsp_dbg.3.t
+	desc = nsp_dbg.3.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	immediate = { hidden_effect = { NSP_ev_dbg_readout = yes } }
+
+	option = {   # 立即完成（已完成时提示应隐藏）
+		name = nsp_dbg.3.a
+		set_temp_variable = { ev_id = NSP_rd_sel } NSP_ev_complete_rd = yes
+		country_event = nsp_dbg.3
+	}
+	option = {   # 进度 +50%（没在研发时提示应隐藏、数值不变）
+		name = nsp_dbg.3.b
+		set_temp_variable = { ev_id = NSP_rd_sel } set_temp_variable = { ev_val = 50 } NSP_ev_rd_progress = yes
+		country_event = nsp_dbg.3
+	}
+	option = {   # 进度 -30%
+		name = nsp_dbg.3.c
+		set_temp_variable = { ev_id = NSP_rd_sel } set_temp_variable = { ev_val = -30 } NSP_ev_rd_progress = yes
+		country_event = nsp_dbg.3
+	}
+	option = { name = nsp_dbg.back country_event = nsp_dbg.1 }
+}
+
+# 4. 进行中的任务：对最新的进行中任务操作（没有任务时提示应全部隐藏）
+country_event = {
+	id = nsp_dbg.4
+	title = nsp_dbg.4.t
+	desc = nsp_dbg.4.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	immediate = { hidden_effect = { NSP_ev_dbg_readout = yes } }
+
+	option = {   # 成功率 +30
+		name = nsp_dbg.4.a
+		NSP_ev_newest_mission = yes
+		set_temp_variable = { ev_val = 30 } NSP_ev_mission_rel = yes
+		country_event = nsp_dbg.4
+	}
+	option = {   # 成功率 -100：必定失败（已掷骰时 fkind 应变成 3/4/5）
+		name = nsp_dbg.4.b
+		NSP_ev_newest_mission = yes
+		set_temp_variable = { ev_val = -100 } NSP_ev_mission_rel = yes
+		country_event = nsp_dbg.4
+	}
+	option = {   # 当前阶段提前 30 天（最少剩 1 天）
+		name = nsp_dbg.4.c
+		NSP_ev_newest_mission = yes
+		set_temp_variable = { ev_val = -30 } NSP_ev_mission_delay = yes
+		country_event = nsp_dbg.4
+	}
+	option = {   # 推迟 14 天 + 返程可靠性 -100（载人任务乘组必定遇难）
+		name = nsp_dbg.4.d_opt
+		NSP_ev_newest_mission = yes
+		set_temp_variable = { ev_val = 14 }   NSP_ev_mission_delay = yes
+		set_temp_variable = { ev_val = -100 } NSP_ev_mission_return_rel = yes
+		country_event = nsp_dbg.4
+	}
+	option = { name = nsp_dbg.back country_event = nsp_dbg.1 }
+}
+
+# 5. 下一次任务：打开规划器后看可靠性 / 成本提示里的「事件」一项，启动任务后应清零
+country_event = {
+	id = nsp_dbg.5
+	title = nsp_dbg.5.t
+	desc = nsp_dbg.5.d
+	picture = GFX_report_event_generic_rally
+	is_triggered_only = yes
+	immediate = { hidden_effect = { NSP_ev_dbg_readout = yes } }
+
+	option = {   # 成功率 +10、成本 -20%
+		name = nsp_dbg.5.a
+		set_temp_variable = { ev_val = 10 }  NSP_ev_next_rel = yes
+		set_temp_variable = { ev_val = -20 } NSP_ev_next_cost = yes
+		country_event = nsp_dbg.5
+	}
+	option = {   # 成功率 -15、成本 +50%
+		name = nsp_dbg.5.b
+		set_temp_variable = { ev_val = -15 } NSP_ev_next_rel = yes
+		set_temp_variable = { ev_val = 50 }  NSP_ev_next_cost = yes
+		country_event = nsp_dbg.5
+	}
+	option = {   # 清零（直接改变量，不走接口）
+		name = nsp_dbg.5.c
+		hidden_effect = {
+			set_variable = { NSP_ev_next_rel = 0 }
+			set_variable = { NSP_ev_next_cost = 0 }
+			NSP_recalc_home = yes
+			if = { limit = { has_country_flag = NSP_planner_open } NSP_recalc_planner = yes }
+			add_to_variable = { NSP_dirty = 1 }
+		}
+		country_event = nsp_dbg.5
+	}
+	option = { name = nsp_dbg.back country_event = nsp_dbg.1 }
+}

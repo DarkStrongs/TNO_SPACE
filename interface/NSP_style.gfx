@@ -1,0 +1,17 @@
+# 通用像素风小部件（work/style/gen_style.py 生成，勿手改）
+spriteTypes = {
+	spriteType = {
+		name = "GFX_NSP_divider"
+		texturefile = "gfx/interface/NSP/planner/destination/nsp_divider.dds"
+	}
+	spriteType = {
+		name = "GFX_NSP_start_btn2"
+		texturefile = "gfx/interface/NSP/planner/nsp_start_btn.dds"
+	}
+	spriteType = {
+		name = "GFX_NSP_tab_mc2"
+		texturefile = "gfx/interface/NSP/home/mission_control/nsp_tab_mc.dds"
+		noOfFrames = 2
+		legacy_lazy_load = no
+	}
+}

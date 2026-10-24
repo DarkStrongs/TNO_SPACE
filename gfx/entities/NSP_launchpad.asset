@@ -1,0 +1,45 @@
+# =============================================================================
+#  地图发射台：脚本实体（create_entity / set_entity_animation，见 NSP_launchpad_effects.txt）
+#  状态名与动画 id 相同。
+#  模型太大 / 太小：scale 一起改。
+# =============================================================================
+entity = {
+	name = "NSP_launchpad_entity"
+	pdxmesh = "NSP_launchpad_mesh"
+	scale = 1.0
+	default_state = "empty"
+	state = { name = "empty" animation = "empty" animation_blend_time = 0.0 animation_speed = 1.0 looping = yes }
+	state = { name = "ready" animation = "ready" animation_blend_time = 0.0 animation_speed = 1.0 looping = yes
+		event = { trigger_once = yes time = 0 node = "vent" particle = "NSP_pad_vent_particle" keep_particle = yes }   # r45 液氧排气（粒子）
+	}
+	state = { name = "launch" animation = "launch" animation_blend_time = 0.0 animation_speed = 1.0 looping = no next_state = "empty"
+		event = { trigger_once = yes time = 0   node = "vent"    particle = "NSP_pad_vent_short_particle" keep_particle = yes }
+		event = { trigger_once = yes time = 2.0 node = "plume"   particle = "NSP_pad_flame_particle"      keep_particle = yes }
+		event = { trigger_once = yes time = 2.0 node = "smoke_l" particle = "NSP_pad_smoke_L_particle"    keep_particle = yes }
+		event = { trigger_once = yes time = 2.0 node = "smoke_r" particle = "NSP_pad_smoke_R_particle"    keep_particle = yes }
+		event = { trigger_once = yes time = 2.3 node = "root"    particle = "NSP_pad_smoke_C_particle"    keep_particle = yes }
+		event = { trigger_once = yes time = 3.0 node = "plume"   particle = "NSP_pad_trail_particle"      keep_particle = yes }
+	}
+	state = { name = "fail_pad" animation = "fail_pad" animation_blend_time = 0.0 animation_speed = 1.0 looping = no next_state = "empty"
+		event = { trigger_once = yes time = 0   node = "vent"    particle = "NSP_pad_vent_short_particle" keep_particle = yes }
+		event = { trigger_once = yes time = 2.0 node = "plume"   particle = "NSP_pad_flame_padx_particle" keep_particle = yes }
+		event = { trigger_once = yes time = 2.0 node = "smoke_l" particle = "NSP_pad_smoke_L_particle"    keep_particle = yes }
+		event = { trigger_once = yes time = 2.0 node = "smoke_r" particle = "NSP_pad_smoke_R_particle"    keep_particle = yes }
+		event = { trigger_once = yes time = 4.5 node = "boom"    particle = "NSP_pad_fireball_particle"   keep_particle = yes }
+		event = { trigger_once = yes time = 4.5 node = "boom"    particle = "NSP_pad_debris_particle"     keep_particle = yes }
+		event = { trigger_once = yes time = 4.6 node = "boom"    particle = "NSP_pad_boomsmoke_particle"  keep_particle = yes }
+		event = { trigger_once = yes time = 5.0 node = "root"    particle = "NSP_pad_fire_particle"       keep_particle = yes }
+		event = { trigger_once = yes time = 5.0 node = "root"    particle = "NSP_pad_firesmoke_particle"  keep_particle = yes }
+	}
+	state = { name = "fail_air" animation = "fail_air" animation_blend_time = 0.0 animation_speed = 1.0 looping = no next_state = "empty"
+		event = { trigger_once = yes time = 0    node = "vent"    particle = "NSP_pad_vent_short_particle" keep_particle = yes }
+		event = { trigger_once = yes time = 2.0  node = "plume"   particle = "NSP_pad_flame_air_particle"  keep_particle = yes }
+		event = { trigger_once = yes time = 2.0  node = "smoke_l" particle = "NSP_pad_smoke_L_particle"    keep_particle = yes }
+		event = { trigger_once = yes time = 2.0  node = "smoke_r" particle = "NSP_pad_smoke_R_particle"    keep_particle = yes }
+		event = { trigger_once = yes time = 2.3  node = "root"    particle = "NSP_pad_smoke_C_particle"    keep_particle = yes }
+		event = { trigger_once = yes time = 3.0  node = "plume"   particle = "NSP_pad_trail_air_particle"  keep_particle = yes }
+		event = { trigger_once = yes time = 16.0 node = "boom"    particle = "NSP_pad_fireball_particle"   keep_particle = yes }
+		event = { trigger_once = yes time = 16.0 node = "boom"    particle = "NSP_pad_debris_particle"     keep_particle = yes }
+		event = { trigger_once = yes time = 16.1 node = "boom"    particle = "NSP_pad_boomsmoke_particle"  keep_particle = yes }
+	}
+}

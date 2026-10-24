@@ -1,0 +1,152 @@
+#############################################################################
+#  任务规划器页 NSP_planner_body（挂外壳 NSP_home_window）
+#
+#  ⛔ 文件名前的数字 = 注册顺序（引擎按文件名排序创建 scripted gui）：
+#     外壳 NSP_home_window 必须最先创建，parent_window_name 才挂得上；帮助层、乘组窗口最后创建，叠在最上面。
+#############################################################################
+
+scripted_gui = {
+
+	#########################################################################
+	# 任务规划器页（独立容器 NSP_planner_body，挂外壳 NSP_home_window）
+	#########################################################################
+	NSP_planner = {
+		context_type = player_context
+		window_name = "NSP_planner_body"
+		parent_window_name = NSP_home_window
+		dirty = NSP_dirty
+		visible = { has_country_flag = NSP_planner_open }
+
+		dynamic_lists = {
+			NSP_site_grid = {
+				array = NSP_site_ids        # 0..4
+				value = v
+				index = i
+				change_scope = no
+				entry_container = "NSP_site_entry"
+			}
+			NSP_dest_grid = {
+				array = NSP_dest_ids        # 0..5
+				value = v
+				index = i
+				change_scope = no
+				entry_container = "NSP_dest_entry"
+			}
+			NSP_launch_slot_grid = {
+				array = NSP_launch_slots    # 已选发射修正 id
+				value = v
+				index = i
+				change_scope = no
+				entry_container = "NSP_slot_entry"
+			}
+			NSP_payload_slot_grid = {
+				array = NSP_payload_slots   # 已选载荷修正 id
+				value = v
+				index = i
+				change_scope = no
+				entry_container = "NSP_slot_entry"
+			}
+			NSP_palette_grid = {
+				array = NSP_palette         # 当前载荷/火箭可用、且尚未选中的修正 id
+				value = v
+				index = i
+				change_scope = no
+				entry_container = "NSP_palette_entry"
+			}
+			NSP_timeline_grid = {
+				array = NSP_phase_ids       # 0..7（无人任务没有 4 / 7），由 NSP_recalc_planner 重建
+				value = v
+				index = i
+				change_scope = no
+				entry_container = "NSP_timeline_entry"
+			}
+		}
+
+		effects = {
+			NSP_back_button_click = { NSP_close_planner = yes }
+
+			NSP_payload_prev_click = { set_variable = { NSP_arg_step = -1 } NSP_cycle_payload = yes }
+			NSP_payload_next_click = { set_variable = { NSP_arg_step = 1 } NSP_cycle_payload = yes }
+			NSP_vehicle_prev_click = { set_variable = { NSP_arg_step = -1 } NSP_cycle_vehicle = yes }
+			NSP_vehicle_next_click = { set_variable = { NSP_arg_step = 1 } NSP_cycle_vehicle = yes }
+
+			NSP_site_row_click = { set_variable = { NSP_sel_site = v } NSP_recalc_planner = yes }
+			NSP_dest_row_click = { set_variable = { NSP_sel_dest = v } NSP_recalc_planner = yes }
+
+			NSP_palette_icon_click = { set_variable = { NSP_arg_m = v } NSP_toggle_mod = yes }
+			NSP_slot_icon_click    = { set_variable = { NSP_arg_m = v } NSP_toggle_mod = yes }
+
+			NSP_start_button_click = { NSP_start_mission = yes }
+		}
+
+		triggers = {
+			NSP_payload_prev_click_enabled = { NSP_payload_has_prev = yes }
+			NSP_payload_prev_visible = { NSP_payload_has_prev = yes }   # 没有下一项时隐藏亮箭头，露出下面的灰箭头
+			NSP_payload_prev_off_visible = { NOT = { NSP_payload_has_prev = yes } }
+			NSP_payload_next_click_enabled = { NSP_payload_has_next = yes }
+			NSP_payload_next_visible = { NSP_payload_has_next = yes }   # 没有下一项时隐藏亮箭头，露出下面的灰箭头
+			NSP_payload_next_off_visible = { NOT = { NSP_payload_has_next = yes } }
+			NSP_vehicle_prev_click_enabled = { NSP_vehicle_has_prev = yes }
+			NSP_vehicle_prev_visible = { NSP_vehicle_has_prev = yes }   # 没有下一项时隐藏亮箭头，露出下面的灰箭头
+			NSP_vehicle_prev_off_visible = { NOT = { NSP_vehicle_has_prev = yes } }
+			NSP_vehicle_next_click_enabled = { NSP_vehicle_has_next = yes }
+			NSP_vehicle_next_visible = { NSP_vehicle_has_next = yes }   # 没有下一项时隐藏亮箭头，露出下面的灰箭头
+			NSP_vehicle_next_off_visible = { NOT = { NSP_vehicle_has_next = yes } }
+			NSP_site_row_click_enabled    = { set_temp_variable = { t_S = v } NSP_site_allowed = yes }
+			NSP_dest_row_click_enabled    = { set_temp_variable = { t_D = v } NSP_dest_allowed = yes }
+			NSP_palette_icon_click_enabled = { set_temp_variable = { t_M = v } NSP_can_add_mod = yes }
+			NSP_start_button_click_enabled = { NSP_can_start_mission = yes }
+
+			NSP_req_mod_alter_visible = { set_temp_variable = { t_M = 3 } NSP_needs_mod = yes }
+			NSP_req_mod_dock_visible  = { set_temp_variable = { t_M = 4 } NSP_needs_mod = yes }
+			NSP_req_mod_none_visible  = {
+				set_temp_variable = { t_M = 3 }
+				NOT = { NSP_needs_mod = yes }
+				set_temp_variable = { t_M = 4 }
+				NOT = { NSP_needs_mod = yes }
+			}
+
+			# ---- 条目帧 ----
+			NSP_site_text_visible = {
+				set_temp_variable = { t_row = 1 }
+				if = { limit = { check_variable = { NSP_sel_site = v } } set_temp_variable = { t_row = 2 } }
+				set_temp_variable = { t_S = v }
+				if = { limit = { NOT = { NSP_site_allowed = yes } } set_temp_variable = { t_row = 3 } }
+				always = yes
+			}
+			NSP_dest_text_visible = {
+				set_temp_variable = { t_drow = 1 }
+				if = { limit = { check_variable = { NSP_sel_dest = v } } set_temp_variable = { t_drow = 2 } }
+				set_temp_variable = { t_D = v }
+				if = { limit = { NOT = { NSP_dest_allowed = yes } } set_temp_variable = { t_drow = 3 } }
+				always = yes
+			}
+			NSP_slot_icon_visible = {
+				set_temp_variable = { t_mod = v } add_to_temp_variable = { t_mod = 1 }
+				always = yes
+			}
+			NSP_palette_icon_visible = {
+				set_temp_variable = { t_pmod = v } add_to_temp_variable = { t_pmod = 1 }
+				always = yes
+			}
+			NSP_tl_row_visible = { set_temp_variable = { t_tlc = v } add_to_temp_variable = { t_tlc = 1 } always = yes }   # 行框帧 = 阶段 + 1
+		}
+
+		properties = {
+			NSP_pl_badge     = { image = "[GetNSPPayloadBadge]" }
+			NSP_payload_art  = { image = "[GetNSPPayloadArt]" frame = NSP_f_payload_art }   # 子模组可换 sprite
+			NSP_vehicle_art  = { image = "[GetNSPVehicleArt]" frame = NSP_f_vehicle_art }
+			NSP_trajectory   = { image = "[GetNSPTrajArt]" frame = NSP_f_trajectory }
+
+			NSP_site_row     = { frame = t_row }
+			NSP_dest_row     = { frame = t_drow }
+			NSP_slot_icon    = { frame = t_mod }
+			NSP_lslot_0 = { frame = NSP_f_lslot_0 }   NSP_lslot_1 = { frame = NSP_f_lslot_1 }   NSP_lslot_2 = { frame = NSP_f_lslot_2 }   NSP_lslot_3 = { frame = NSP_f_lslot_3 }   # 槽位框：1 可用 / 3 锁定
+			NSP_pslot_0 = { frame = NSP_f_pslot_0 }   NSP_pslot_1 = { frame = NSP_f_pslot_1 }   NSP_pslot_2 = { frame = NSP_f_pslot_2 }   NSP_pslot_3 = { frame = NSP_f_pslot_3 }
+			NSP_palette_icon = { frame = t_pmod }
+			NSP_tl_row       = { frame = t_tlc }
+		}
+
+		ai_enabled = { always = no }
+	}
+}

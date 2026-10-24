@@ -1,0 +1,218 @@
+#############################################################################
+#  NSP_launchpad_effects.txt：地图发射台 + 发射镜头
+#  设计（不用建筑，改用脚本实体，避免发射动画没播完就被切成空台）：
+#    · 不再用建筑。每个发射场一个脚本实体 NSP_launchpad_entity（gfx/entities/NSP_launchpad.asset），
+#      create_entity 放到地图上，set_entity_animation 切状态。状态名与动画 id 相同：
+#      empty / ready / launch / fail_pad / fail_air
+#    · 实体 id = 7700 + 发射场下标（卡角和 KSC 共用 7700）。create_entity 同 id 会替换旧实体，所以每次切换都先重建一次，
+#      读档后实体丢失也能在下一次切换时自愈；调试决议「恢复自动」会强制全部重建。
+#    · 模式 NSP_pe_mode^发射场：-9 待重建 · -1 不显示 · 0 空 · 1 火箭在台上 · 2 发射 · 3 台上爆炸 · 4 空中爆炸
+#    · ⭐ 防截断规则：发射 / 爆炸（2..4）播放后保持不动，任务离开发射阶段时不再切回空台
+#      （发射动画末帧本来就是空架）；只有下一枚火箭上台（1）或下一次发射才会替换。
+#    · 坐标（x，z 作 y）写在各 NSP_pe_set_<k> 里。
+#  子模组加发射场：照抄一组 NSP_pe_set_<k> 并在 NSP_pad_update 里加一行 NSP_pe_eval。
+#############################################################################
+
+# 发射台 0：按 nsp_ps 设状态（-1 删除）
+NSP_pe_set_0 = {
+	if = { limit = { check_variable = { nsp_ps < 0 } } destroy_entity = 7700 }
+	else = {
+		create_entity = { entity = NSP_launchpad_entity id = 7700 x = 1407 y = 1683 rotation = 0 min_zoom = 3000 }
+		if = { limit = { check_variable = { nsp_ps = 0 } } set_entity_animation = { id = 7700 animation = "empty" } }
+		else_if = { limit = { check_variable = { nsp_ps = 1 } } set_entity_animation = { id = 7700 animation = "ready" } }
+		else_if = { limit = { check_variable = { nsp_ps = 2 } } set_entity_animation = { id = 7700 animation = "launch" } }
+		else_if = { limit = { check_variable = { nsp_ps = 3 } } set_entity_animation = { id = 7700 animation = "fail_pad" } }
+		else_if = { limit = { check_variable = { nsp_ps = 4 } } set_entity_animation = { id = 7700 animation = "fail_air" } }
+	}
+	set_variable = { NSP_pe_mode^0 = nsp_ps }
+	log = "NSP pad entity 0: state [?nsp_ps]"
+}
+# 发射台 1：按 nsp_ps 设状态（-1 删除）
+NSP_pe_set_1 = {
+	if = { limit = { check_variable = { nsp_ps < 0 } } destroy_entity = 7701 }
+	else = {
+		create_entity = { entity = NSP_launchpad_entity id = 7701 x = 850 y = 1776 rotation = 0 min_zoom = 3000 }
+		if = { limit = { check_variable = { nsp_ps = 0 } } set_entity_animation = { id = 7701 animation = "empty" } }
+		else_if = { limit = { check_variable = { nsp_ps = 1 } } set_entity_animation = { id = 7701 animation = "ready" } }
+		else_if = { limit = { check_variable = { nsp_ps = 2 } } set_entity_animation = { id = 7701 animation = "launch" } }
+		else_if = { limit = { check_variable = { nsp_ps = 3 } } set_entity_animation = { id = 7701 animation = "fail_pad" } }
+		else_if = { limit = { check_variable = { nsp_ps = 4 } } set_entity_animation = { id = 7701 animation = "fail_air" } }
+	}
+	set_variable = { NSP_pe_mode^1 = nsp_ps }
+	log = "NSP pad entity 1: state [?nsp_ps]"
+}
+# 发射台 2：按 nsp_ps 设状态（-1 删除）
+NSP_pe_set_2 = {
+	if = { limit = { check_variable = { nsp_ps < 0 } } destroy_entity = 7702 }
+	else = {
+		create_entity = { entity = NSP_launchpad_entity id = 7702 x = 1484 y = 1823 rotation = 0 min_zoom = 3000 }
+		if = { limit = { check_variable = { nsp_ps = 0 } } set_entity_animation = { id = 7702 animation = "empty" } }
+		else_if = { limit = { check_variable = { nsp_ps = 1 } } set_entity_animation = { id = 7702 animation = "ready" } }
+		else_if = { limit = { check_variable = { nsp_ps = 2 } } set_entity_animation = { id = 7702 animation = "launch" } }
+		else_if = { limit = { check_variable = { nsp_ps = 3 } } set_entity_animation = { id = 7702 animation = "fail_pad" } }
+		else_if = { limit = { check_variable = { nsp_ps = 4 } } set_entity_animation = { id = 7702 animation = "fail_air" } }
+	}
+	set_variable = { NSP_pe_mode^2 = nsp_ps }
+	log = "NSP pad entity 2: state [?nsp_ps]"
+}
+# 发射台 3：按 nsp_ps 设状态（-1 删除）
+NSP_pe_set_3 = {
+	if = { limit = { check_variable = { nsp_ps < 0 } } destroy_entity = 7703 }
+	else = {
+		create_entity = { entity = NSP_launchpad_entity id = 7703 x = 292 y = 1580 rotation = 0 min_zoom = 3000 }
+		if = { limit = { check_variable = { nsp_ps = 0 } } set_entity_animation = { id = 7703 animation = "empty" } }
+		else_if = { limit = { check_variable = { nsp_ps = 1 } } set_entity_animation = { id = 7703 animation = "ready" } }
+		else_if = { limit = { check_variable = { nsp_ps = 2 } } set_entity_animation = { id = 7703 animation = "launch" } }
+		else_if = { limit = { check_variable = { nsp_ps = 3 } } set_entity_animation = { id = 7703 animation = "fail_pad" } }
+		else_if = { limit = { check_variable = { nsp_ps = 4 } } set_entity_animation = { id = 7703 animation = "fail_air" } }
+	}
+	set_variable = { NSP_pe_mode^3 = nsp_ps }
+	log = "NSP pad entity 3: state [?nsp_ps]"
+}
+# 发射台 4：按 nsp_ps 设状态（-1 删除）
+NSP_pe_set_4 = {
+	if = { limit = { check_variable = { nsp_ps < 0 } } destroy_entity = 7704 }
+	else = {
+		create_entity = { entity = NSP_launchpad_entity id = 7704 x = 1052 y = 1739 rotation = 0 min_zoom = 3000 }
+		if = { limit = { check_variable = { nsp_ps = 0 } } set_entity_animation = { id = 7704 animation = "empty" } }
+		else_if = { limit = { check_variable = { nsp_ps = 1 } } set_entity_animation = { id = 7704 animation = "ready" } }
+		else_if = { limit = { check_variable = { nsp_ps = 2 } } set_entity_animation = { id = 7704 animation = "launch" } }
+		else_if = { limit = { check_variable = { nsp_ps = 3 } } set_entity_animation = { id = 7704 animation = "fail_pad" } }
+		else_if = { limit = { check_variable = { nsp_ps = 4 } } set_entity_animation = { id = 7704 animation = "fail_air" } }
+	}
+	set_variable = { NSP_pe_mode^4 = nsp_ps }
+	log = "NSP pad entity 4: state [?nsp_ps]"
+}
+# 发射台 6：按 nsp_ps 设状态（-1 删除）
+NSP_pe_set_6 = {
+	if = { limit = { check_variable = { nsp_ps < 0 } } destroy_entity = 7706 }
+	else = {
+		create_entity = { entity = NSP_launchpad_entity id = 7706 x = 151 y = 1503 rotation = 0 min_zoom = 3000 }
+		if = { limit = { check_variable = { nsp_ps = 0 } } set_entity_animation = { id = 7706 animation = "empty" } }
+		else_if = { limit = { check_variable = { nsp_ps = 1 } } set_entity_animation = { id = 7706 animation = "ready" } }
+		else_if = { limit = { check_variable = { nsp_ps = 2 } } set_entity_animation = { id = 7706 animation = "launch" } }
+		else_if = { limit = { check_variable = { nsp_ps = 3 } } set_entity_animation = { id = 7706 animation = "fail_pad" } }
+		else_if = { limit = { check_variable = { nsp_ps = 4 } } set_entity_animation = { id = 7706 animation = "fail_air" } }
+	}
+	set_variable = { NSP_pe_mode^6 = nsp_ps }
+	log = "NSP pad entity 6: state [?nsp_ps]"
+}
+# 发射台 7：按 nsp_ps 设状态（-1 删除）
+NSP_pe_set_7 = {
+	if = { limit = { check_variable = { nsp_ps < 0 } } destroy_entity = 7707 }
+	else = {
+		create_entity = { entity = NSP_launchpad_entity id = 7707 x = 457 y = 2282 rotation = 0 min_zoom = 3000 }
+		if = { limit = { check_variable = { nsp_ps = 0 } } set_entity_animation = { id = 7707 animation = "empty" } }
+		else_if = { limit = { check_variable = { nsp_ps = 1 } } set_entity_animation = { id = 7707 animation = "ready" } }
+		else_if = { limit = { check_variable = { nsp_ps = 2 } } set_entity_animation = { id = 7707 animation = "launch" } }
+		else_if = { limit = { check_variable = { nsp_ps = 3 } } set_entity_animation = { id = 7707 animation = "fail_pad" } }
+		else_if = { limit = { check_variable = { nsp_ps = 4 } } set_entity_animation = { id = 7707 animation = "fail_air" } }
+	}
+	set_variable = { NSP_pe_mode^7 = nsp_ps }
+	log = "NSP pad entity 7: state [?nsp_ps]"
+}
+
+# 按任务算发射台 nsp_pk 应处的模式 → nsp_pd（-1 / 0 / 1 / 2 / 3 / 4）
+NSP_pe_desired = {
+	set_temp_variable = { nsp_pd = -1 }
+	if = { limit = { check_variable = { nsp_pk = 0 } } set_temp_variable = { nsp_pd = 0 } }   # 卡角开局即有
+	else_if = { limit = { check_variable = { NSP_site_unl^num > nsp_pk } check_variable = { NSP_site_unl^nsp_pk = 1 } } set_temp_variable = { nsp_pd = 0 } }
+	if = {
+		limit = { check_variable = { nsp_pd > -1 } }
+		for_each_loop = {
+			array = NSP_missions
+			value = nsp_pm
+			set_temp_variable = { nsp_hit = 0 }
+			if = { limit = { check_variable = { nsp_pk = 0 } NSP_pad_cape_mission = yes } set_temp_variable = { nsp_hit = 1 } }
+			else_if = { limit = { check_variable = { NSP_m_site^num > nsp_pm } check_variable = { NSP_m_site^nsp_pm = nsp_pk } } set_temp_variable = { nsp_hit = 1 } }
+			if = {
+				limit = { check_variable = { nsp_hit = 1 } }
+				if = { limit = { OR = { check_variable = { NSP_m_phase^nsp_pm = 3 } check_variable = { NSP_m_phase^nsp_pm = 4 } } check_variable = { nsp_pd < 1 } } set_temp_variable = { nsp_pd = 1 } }
+				if = {
+					limit = { check_variable = { NSP_m_phase^nsp_pm = 5 } }
+					set_temp_variable = { nsp_pd = 2 }
+					if = { limit = { check_variable = { NSP_m_fkind^num > nsp_pm } check_variable = { NSP_m_fkind^nsp_pm = 3 } } set_temp_variable = { nsp_pd = 3 } }
+					if = { limit = { check_variable = { NSP_m_fkind^num > nsp_pm } check_variable = { NSP_m_fkind^nsp_pm = 4 } } set_temp_variable = { nsp_pd = 4 } }
+				}
+			}
+		}
+	}
+}
+
+# 比较目标模式和当前模式，决定要不要切（结果 nsp_ps，-99 = 不动）
+NSP_pe_eval = {
+	NSP_pe_desired = yes
+	set_temp_variable = { nsp_cur = NSP_pe_mode^nsp_pk }
+	set_temp_variable = { nsp_ps = -99 }
+	if = { limit = { check_variable = { nsp_cur = -9 } } set_temp_variable = { nsp_ps = nsp_pd } }   # 强制重建
+	else_if = { limit = { check_variable = { nsp_pd = -1 } NOT = { check_variable = { nsp_cur = -1 } } } set_temp_variable = { nsp_ps = -1 } }
+	else_if = {
+		limit = { check_variable = { nsp_pd = 0 } }
+		# 发射 / 爆炸后保持末帧，不切回空台；只有「不显示」或「火箭在台上但任务没了」才改成空台
+		if = { limit = { OR = { check_variable = { nsp_cur = -1 } check_variable = { nsp_cur = 1 } } } set_temp_variable = { nsp_ps = 0 } }
+	}
+	else_if = { limit = { check_variable = { nsp_pd > 0 } NOT = { check_variable = { nsp_cur = nsp_pd } } } set_temp_variable = { nsp_ps = nsp_pd } }
+	# 强制重建时，发射 / 爆炸不重播，直接放空台
+	if = { limit = { check_variable = { nsp_cur = -9 } check_variable = { nsp_ps > 1 } } set_temp_variable = { nsp_ps = 0 } }
+	# 未解锁的发射场首次计算：本来就没有实体，直接记为 -1，不调 destroy_entity（避免 error.log 报找不到实体）
+	if = { limit = { check_variable = { nsp_cur = -9 } check_variable = { nsp_ps = -1 } } set_variable = { NSP_pe_mode^nsp_pk = -1 } set_temp_variable = { nsp_ps = -99 } }
+}
+
+NSP_pe_init = {
+	if = { limit = { NOT = { check_variable = { NSP_pe_mode^num > 7 } } } clear_array = NSP_pe_mode for_loop_effect = { start = 0 end = 8 value = k add_to_array = { NSP_pe_mode = -9 } } }
+}
+
+# 每日调用（NSP_daily_tick）
+NSP_pad_update = {
+	NSP_pe_init = yes
+	if = {
+		limit = { NOT = { has_country_flag = NSP_pad_debug_lock } }
+		set_temp_variable = { nsp_pk = 0 } NSP_pe_eval = yes if = { limit = { NOT = { check_variable = { nsp_ps = -99 } } } NSP_pe_set_0 = yes }
+		set_temp_variable = { nsp_pk = 1 } NSP_pe_eval = yes if = { limit = { NOT = { check_variable = { nsp_ps = -99 } } } NSP_pe_set_1 = yes }
+		set_temp_variable = { nsp_pk = 2 } NSP_pe_eval = yes if = { limit = { NOT = { check_variable = { nsp_ps = -99 } } } NSP_pe_set_2 = yes }
+		set_temp_variable = { nsp_pk = 3 } NSP_pe_eval = yes if = { limit = { NOT = { check_variable = { nsp_ps = -99 } } } NSP_pe_set_3 = yes }
+		set_temp_variable = { nsp_pk = 4 } NSP_pe_eval = yes if = { limit = { NOT = { check_variable = { nsp_ps = -99 } } } NSP_pe_set_4 = yes }
+		set_temp_variable = { nsp_pk = 6 } NSP_pe_eval = yes if = { limit = { NOT = { check_variable = { nsp_ps = -99 } } } NSP_pe_set_6 = yes }
+		set_temp_variable = { nsp_pk = 7 } NSP_pe_eval = yes if = { limit = { NOT = { check_variable = { nsp_ps = -99 } } } NSP_pe_set_7 = yes }
+	}
+}
+
+# 调试：所有发射台强制同一状态并锁定，直到「恢复自动」
+NSP_pe_debug_all = {
+	NSP_pe_init = yes
+	set_country_flag = NSP_pad_debug_lock
+	NSP_pe_set_0 = yes
+	NSP_pe_set_1 = yes
+	NSP_pe_set_2 = yes
+	NSP_pe_set_3 = yes
+	NSP_pe_set_4 = yes
+	NSP_pe_set_6 = yes
+	NSP_pe_set_7 = yes
+}
+NSP_pad_debug_0 = { set_temp_variable = { nsp_ps = 0 } NSP_pe_debug_all = yes }
+NSP_pad_debug_1 = { set_temp_variable = { nsp_ps = 1 } NSP_pe_debug_all = yes }
+NSP_pad_debug_2 = { set_temp_variable = { nsp_ps = 2 } NSP_pe_debug_all = yes }
+NSP_pad_debug_3 = { set_temp_variable = { nsp_ps = 3 } NSP_pe_debug_all = yes }
+NSP_pad_debug_4 = { set_temp_variable = { nsp_ps = 4 } NSP_pe_debug_all = yes }
+NSP_pad_debug_auto = {
+	clr_country_flag = NSP_pad_debug_lock
+	NSP_pe_init = yes
+	for_loop_effect = { start = 0 end = 8 value = k set_variable = { NSP_pe_mode^k = -9 } }   # 全部重建
+	NSP_pad_update = yes
+}
+
+# 任务进入「发射」阶段（ph = 5）时，把镜头拉到该任务的发射台（用户要求）。
+#   goto_province 是普通的国家作用域效果，不需要事件，只移动本国玩家的镜头，对 AI 无影响。
+#   调用前 nsp_mid 已设。省号与 NSP_spad_apply_* 一致；卡角 / KSC / 老任务（-1）/ 未知发射场 → 17301。
+#   子模组新增发射场：在下面加一行 else_if，或者在 NSP_ext_slot 里覆盖。
+NSP_launch_camera = {
+	set_temp_variable = { nsp_cs = -1 }
+	if = { limit = { check_variable = { NSP_m_site^num > nsp_mid } } set_temp_variable = { nsp_cs = NSP_m_site^nsp_mid } }
+	if = { limit = { check_variable = { nsp_cs = 1 } } goto_province = 6881 }
+	else_if = { limit = { check_variable = { nsp_cs = 2 } } goto_province = 3917 }
+	else_if = { limit = { check_variable = { nsp_cs = 3 } } goto_province = 7112 }
+	else_if = { limit = { check_variable = { nsp_cs = 4 } } goto_province = 12791 }
+	else_if = { limit = { check_variable = { nsp_cs = 6 } } goto_province = 19996 }
+	else_if = { limit = { check_variable = { nsp_cs = 7 } } goto_province = 17228 }
+	else = { goto_province = 17301 }
+}
